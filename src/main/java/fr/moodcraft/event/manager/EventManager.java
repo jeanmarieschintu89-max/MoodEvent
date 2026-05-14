@@ -11,7 +11,9 @@ import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -28,6 +30,7 @@ public final class EventManager {
     private static boolean running = false;
 
     private static final Set<UUID> queue = new LinkedHashSet<>();
+    private static final Map<UUID, Location> returnLocations = new HashMap<>();
 
     public static void load() {
 
@@ -38,6 +41,8 @@ public final class EventManager {
         type = EventType.fromText(config.getString("event.type", "AUTRE"));
         queueOpen = config.getBoolean("event.queue-open", false);
         running = false;
+        queue.clear();
+        returnLocations.clear();
 
         String worldName = config.getString("event.location.world", "");
         World world = Bukkit.getWorld(worldName);
@@ -124,6 +129,7 @@ public final class EventManager {
         queueOpen = false;
         running = false;
         queue.clear();
+        returnLocations.clear();
         save();
 
         MoodStyle.successMessage(
@@ -227,6 +233,7 @@ public final class EventManager {
 
         queueOpen = true;
         running = false;
+        returnLocations.clear();
         save();
 
         broadcastEvent(
@@ -261,10 +268,14 @@ public final class EventManager {
             return;
         }
 
+        int returned = returnParticipants();
+
         broadcastEvent(
                 MoodStyle.error("Événement annulé."),
                 MoodStyle.detail("Événement : §e" + name),
-                MoodStyle.detail("Les joueurs ont été retirés de la file")
+                returned > 0
+                        ? MoodStyle.detail("Participants renvoyés : §e" + returned)
+                        : MoodStyle.detail("Les joueurs ont été retirés de la file")
         );
 
         clearEvent();
@@ -277,9 +288,12 @@ public final class EventManager {
             return;
         }
 
+        int returned = returnParticipants();
+
         broadcastEvent(
                 MoodStyle.success("Événement terminé."),
                 MoodStyle.detail("Événement : §e" + name),
+                MoodStyle.detail("Participants renvoyés : §e" + returned),
                 MoodStyle.detail("Merci à tous les participants")
         );
 
@@ -352,6 +366,11 @@ public final class EventManager {
             return;
         }
 
+        if (running) {
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "L'événement est déjà lancé.");
+            return;
+        }
+
         if (queue.isEmpty()) {
             MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucun joueur dans la file d'attente.");
             return;
@@ -359,13 +378,15 @@ public final class EventManager {
 
         queueOpen = false;
         running = true;
+        returnLocations.clear();
         save();
 
         broadcastEvent(
                 MoodStyle.success("L'événement va commencer."),
                 MoodStyle.detail("Événement : §e" + name),
                 MoodStyle.detail("Participants : §e" + queue.size()),
-                MoodStyle.detail("Téléportation dans quelques secondes")
+                MoodStyle.detail("Téléportation dans quelques secondes"),
+                MoodStyle.detail("Position de retour sauvegardée au départ")
         );
 
         countdown(3);
@@ -399,6 +420,9 @@ public final class EventManager {
             if (player == null || !player.isOnline()) {
                 continue;
             }
+
+            returnLocations.put(player.getUniqueId(), player.getLocation().clone());
+
             player.teleport(location);
             player.sendTitle("§aGOOO!", "§f" + name, 0, 40, 10);
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.1f);
@@ -408,7 +432,8 @@ public final class EventManager {
         broadcastEvent(
                 MoodStyle.success("Événement lancé."),
                 MoodStyle.detail("Événement : §e" + name),
-                MoodStyle.detail("Participants téléportés : §e" + teleported)
+                MoodStyle.detail("Participants téléportés : §e" + teleported),
+                MoodStyle.detail("Retour automatique prévu à la fin")
         );
 
         queue.clear();
@@ -429,6 +454,38 @@ public final class EventManager {
                 MoodStyle.detail("/eventcancel"),
                 MoodStyle.detail("/eventgui")
         );
+    }
+
+    private static int returnParticipants() {
+
+        int returned = 0;
+
+        for (Map.Entry<UUID, Location> entry : returnLocations.entrySet()) {
+            Player player = Bukkit.getPlayer(entry.getKey());
+            Location returnLocation = entry.getValue();
+
+            if (player == null || !player.isOnline()) {
+                continue;
+            }
+
+            if (returnLocation == null || returnLocation.getWorld() == null) {
+                continue;
+            }
+
+            player.teleport(returnLocation);
+            player.sendTitle("§aRetour", "§fMerci d'avoir participé", 0, 35, 10);
+            player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.2f);
+            MoodStyle.successMessage(
+                    player,
+                    MoodStyle.MODULE,
+                    "Retour effectué.",
+                    MoodStyle.detail("Vous avez été renvoyé à votre position d'avant événement")
+            );
+            returned++;
+        }
+
+        returnLocations.clear();
+        return returned;
     }
 
     private static void broadcastEvent(String... lines) {
@@ -470,5 +527,6 @@ public final class EventManager {
         queueOpen = false;
         running = false;
         queue.clear();
+        returnLocations.clear();
     }
 }
