@@ -1,0 +1,95 @@
+name: MoodEvent
+version: 1.0
+main: fr.moodcraft.event.Main
+api-version: '1.21'
+author: MoodCraft
+description: Système d'événements immersifs MoodCraft
+
+commands:
+  event:
+    description: Rejoindre ou consulter l'événement en cours.
+    usage: /event
+    aliases:
+      - évent
+      - evt
+      - events
+
+  eventadmin:
+    description: Administration des événements MoodCraft.
+    usage: /eventadmin
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventhelp
+      - eventsadmin
+
+  eventcreate:
+    description: Créer un événement.
+    usage: /eventcreate <nom>
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventnew
+      - eventcreer
+      - eventcréer
+
+  eventdesc:
+    description: Définir la description de l'événement.
+    usage: /eventdesc <description>
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+
+  eventtype:
+    description: Définir le type de l'événement.
+    usage: /eventtype <mini-jeu|activité|pvp|build|autre>
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+
+  eventset:
+    description: Définir le point de téléportation de l'événement.
+    usage: /eventset
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventspawn
+      - eventpos
+
+  eventopen:
+    description: Ouvrir la file d'attente de l'événement.
+    usage: /eventopen
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+
+  eventclose:
+    description: Fermer la file d'attente de l'événement.
+    usage: /eventclose
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+
+  eventgo:
+    description: Lancer l'événement et téléporter la file d'attente.
+    usage: /eventgo
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventstart
+
+  eventstop:
+    description: Terminer l'événement.
+    usage: /eventstop
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventend
+      - eventfinish
+
+  eventcancel:
+    description: Annuler l'événement.
+    usage: /eventcancel
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+
+permissions:
+  moodevent.admin:
+    description: Administration des événements MoodCraft.
+    default: op
