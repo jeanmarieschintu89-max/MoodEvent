@@ -1,0 +1,19 @@
+# =============================
+# MoodEvent - Configuration
+# =============================
+# Ce fichier est sauvegardé automatiquement par le plugin.
+# Il garde le dernier événement préparé, sa description,
+# son type et son point de téléportation.
+
+event:
+  name: ""
+  description: ""
+  type: "AUTRE"
+  queue-open: false
+  location:
+    world: ""
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    yaw: 0.0
+    pitch: 0.0
