@@ -23,6 +23,15 @@ commands:
       - eventhelp
       - eventsadmin
 
+  eventgui:
+    description: Ouvre le centre événementiel admin.
+    usage: /eventgui
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventmenu
+      - eventpanel
+
   eventcreate:
     description: Créer un événement.
     usage: /eventcreate <nom>
