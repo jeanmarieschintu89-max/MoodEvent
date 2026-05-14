@@ -1,5 +1,6 @@
 package fr.moodcraft.event.command;
 
+import fr.moodcraft.event.gui.EventAdminGUI;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.util.MoodStyle;
 
@@ -29,6 +30,11 @@ public class EventAdminCommand implements CommandExecutor {
         String cmd = command.getName().toLowerCase();
 
         switch (cmd) {
+
+            case "eventgui", "eventmenu", "eventpanel" -> {
+                EventAdminGUI.open(player);
+                return true;
+            }
 
             case "eventadmin", "eventhelp", "eventsadmin" -> {
                 EventManager.adminHelp(player);
