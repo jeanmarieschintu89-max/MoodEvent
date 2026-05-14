@@ -70,9 +70,43 @@ public final class EventManager {
             config.set("event.location.z", location.getZ());
             config.set("event.location.yaw", location.getYaw());
             config.set("event.location.pitch", location.getPitch());
+        } else {
+            config.set("event.location", null);
         }
 
         Main.getInstance().saveConfig();
+    }
+
+    public static String getName() {
+        return name == null || name.isBlank() ? "Aucun événement" : name;
+    }
+
+    public static String getDescription() {
+        return description == null || description.isBlank() ? "Aucune description définie." : description;
+    }
+
+    public static EventType getType() {
+        return type == null ? EventType.AUTRE : type;
+    }
+
+    public static int getQueueSize() {
+        return queue.size();
+    }
+
+    public static boolean isQueueOpen() {
+        return queueOpen;
+    }
+
+    public static boolean isRunning() {
+        return running;
+    }
+
+    public static boolean hasLocation() {
+        return location != null && location.getWorld() != null;
+    }
+
+    public static boolean isCreated() {
+        return hasEvent();
     }
 
     public static void createEvent(Player player, String rawName) {
@@ -139,6 +173,30 @@ public final class EventManager {
                 player,
                 MoodStyle.MODULE,
                 "Type d'événement défini.",
+                MoodStyle.detail("Type : " + type.getDisplayName())
+        );
+    }
+
+    public static void cycleType(Player player) {
+
+        if (!ensureEvent(player)) {
+            return;
+        }
+
+        EventType[] values = EventType.values();
+        int index = getType().ordinal() + 1;
+
+        if (index >= values.length) {
+            index = 0;
+        }
+
+        type = values[index];
+        save();
+
+        MoodStyle.successMessage(
+                player,
+                MoodStyle.MODULE,
+                "Type changé.",
                 MoodStyle.detail("Type : " + type.getDisplayName())
         );
     }
@@ -247,7 +305,6 @@ public final class EventManager {
         }
 
         if (queue.add(player.getUniqueId())) {
-
             MoodStyle.successMessage(
                     player,
                     MoodStyle.MODULE,
@@ -257,11 +314,8 @@ public final class EventManager {
                     MoodStyle.detail("Position dans la file : §e" + queue.size()),
                     MoodStyle.detail("Vous serez téléporté au lancement")
             );
-
             player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.8f, 1.2f);
-
         } else {
-
             MoodStyle.infoMessage(
                     player,
                     MoodStyle.MODULE,
@@ -326,11 +380,9 @@ public final class EventManager {
 
         for (UUID uuid : queue) {
             Player player = Bukkit.getPlayer(uuid);
-
             if (player == null || !player.isOnline()) {
                 continue;
             }
-
             player.sendTitle("§6" + number, "§fPréparez-vous", 0, 20, 5);
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1.2f);
         }
@@ -344,11 +396,9 @@ public final class EventManager {
 
         for (UUID uuid : queue) {
             Player player = Bukkit.getPlayer(uuid);
-
             if (player == null || !player.isOnline()) {
                 continue;
             }
-
             player.teleport(location);
             player.sendTitle("§aGOOO!", "§f" + name, 0, 40, 10);
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.1f);
@@ -376,41 +426,35 @@ public final class EventManager {
                 MoodStyle.detail("/eventopen"),
                 MoodStyle.detail("/eventgo"),
                 MoodStyle.detail("/eventstop"),
-                MoodStyle.detail("/eventcancel")
+                MoodStyle.detail("/eventcancel"),
+                MoodStyle.detail("/eventgui")
         );
     }
 
     private static void broadcastEvent(String... lines) {
-
         Bukkit.broadcastMessage("");
         Bukkit.broadcastMessage(MoodStyle.header(MoodStyle.MODULE));
-
         if (lines != null) {
             for (String line : lines) {
                 Bukkit.broadcastMessage(line);
             }
         }
-
         Bukkit.broadcastMessage(MoodStyle.FRAME);
     }
 
     private static boolean ensureEvent(Player player) {
-
         if (!hasEvent()) {
             MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucun événement créé.", MoodStyle.detail("Utilise §e/eventcreate <nom>"));
             return false;
         }
-
         return true;
     }
 
     private static boolean ensureLocation(Player player) {
-
         if (location == null || location.getWorld() == null) {
             MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucun point de téléportation défini.", MoodStyle.detail("Utilise §e/eventset à l'endroit de l'événement"));
             return false;
         }
-
         return true;
     }
 
