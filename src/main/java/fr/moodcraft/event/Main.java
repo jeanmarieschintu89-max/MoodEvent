@@ -7,6 +7,7 @@ import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
 import fr.moodcraft.event.listener.EventChatListener;
+import fr.moodcraft.event.listener.EventGiveRestoreGuard;
 import fr.moodcraft.event.listener.EventLootListener;
 import fr.moodcraft.event.listener.EventProgressListener;
 import fr.moodcraft.event.listener.EventProtectionListener;
@@ -76,6 +77,7 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new GoldRushTask(), this);
         Bukkit.getPluginManager().registerEvents(new GoldRushStopGuard(), this);
         Bukkit.getPluginManager().registerEvents(new GoldRushInventoryGuard(), this);
+        Bukkit.getPluginManager().registerEvents(new EventGiveRestoreGuard(), this);
 
         getLogger().info("MoodEvent active en mode securite TPS.");
     }
