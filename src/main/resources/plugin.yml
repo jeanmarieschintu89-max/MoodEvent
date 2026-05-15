@@ -85,7 +85,7 @@ commands:
 
   eventsalleattente:
     description: Générer la salle d'attente restaurable.
-    usage: /eventsalleattente [petit|medium|grand]
+    usage: /eventsalleattente <mini|petite|moyenne|grande|tresgrande|festival>
     permission: moodevent.admin
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
     aliases:
@@ -131,7 +131,7 @@ commands:
       - eventopen
 
   eventfermer:
-    description: Fermer la file d'attente de l'événement.
+    description: Fermer la file d'attente et envoyer les joueurs en salle d'attente.
     usage: /eventfermer
     permission: moodevent.admin
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
@@ -148,7 +148,7 @@ commands:
       - eventstart
 
   eventstop:
-    description: Terminer l'événement.
+    description: Terminer l'événement, distribuer les récompenses et renvoyer les joueurs.
     usage: /eventstop
     permission: moodevent.admin
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
@@ -158,7 +158,7 @@ commands:
       - eventfinish
 
   eventannuler:
-    description: Annuler l'événement.
+    description: Annuler l'événement sans récompense.
     usage: /eventannuler
     permission: moodevent.admin
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
