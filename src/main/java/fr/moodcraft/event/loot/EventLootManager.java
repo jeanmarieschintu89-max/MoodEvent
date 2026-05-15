@@ -17,16 +17,19 @@ import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
+import java.util.Random;
 import java.util.UUID;
 
 public final class EventLootManager {
 
     private static final int SIZE = 27;
+    private static final Random RANDOM = new Random();
     private static final Map<UUID, LootTier> EDITING_ITEMS = new HashMap<>();
     private static final Map<UUID, LootTier> EDITING_MONEY = new HashMap<>();
     private static File lootFile;
@@ -61,7 +64,14 @@ public final class EventLootManager {
         EDITING_ITEMS.put(player.getUniqueId(), tier);
         player.openInventory(inventory);
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.8f, 1.2f);
-        MoodStyle.infoMessage(player, MoodStyle.MODULE, "Dépose les items de loot.", MoodStyle.detail("Tier : §e" + tier.getDisplayName()), MoodStyle.detail("Ferme le menu pour sauvegarder."));
+        MoodStyle.infoMessage(
+                player,
+                MoodStyle.MODULE,
+                "Dépose les items de loot.",
+                MoodStyle.detail("Tier : §e" + tier.getDisplayName()),
+                MoodStyle.detail("Coffres : tirage aléatoire limité."),
+                MoodStyle.detail("Ferme le menu pour sauvegarder.")
+        );
     }
 
     public static boolean isEditingItems(Player player) {
@@ -82,14 +92,28 @@ public final class EventLootManager {
         }
         save();
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_CLOSE, 0.8f, 1.2f);
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Loot sauvegardé.", MoodStyle.detail("Tier : §e" + tier.getDisplayName()), MoodStyle.detail("Items : §e" + countItems(tier)));
+        MoodStyle.successMessage(
+                player,
+                MoodStyle.MODULE,
+                "Loot sauvegardé.",
+                MoodStyle.detail("Tier : §e" + tier.getDisplayName()),
+                MoodStyle.detail("Items disponibles : §e" + countItems(tier)),
+                MoodStyle.detail("Un coffre donnera seulement une sélection aléatoire.")
+        );
     }
 
     public static void startMoneyInput(Player player, LootTier tier) {
         if (player == null || tier == null) return;
         EDITING_MONEY.put(player.getUniqueId(), tier);
         player.closeInventory();
-        MoodStyle.infoMessage(player, MoodStyle.MODULE, "Écris le montant Vault du loot.", MoodStyle.detail("Tier : §e" + tier.getDisplayName()), MoodStyle.detail("Montant actuel : §a" + formatMoney(getMoney(tier))), MoodStyle.detail("Tape §cannuler §7pour quitter"));
+        MoodStyle.infoMessage(
+                player,
+                MoodStyle.MODULE,
+                "Écris le montant Vault du loot.",
+                MoodStyle.detail("Tier : §e" + tier.getDisplayName()),
+                MoodStyle.detail("Montant actuel : §a" + formatMoney(getMoney(tier))),
+                MoodStyle.detail("Tape §cannuler §7pour quitter")
+        );
     }
 
     public static boolean handleMoneyChat(Player player, String message) {
@@ -158,6 +182,36 @@ public final class EventLootManager {
         save();
     }
 
+    public static void resetGeneratedClaims(Player player) {
+        clearGeneratedLoot();
+        if (player != null) {
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.9f);
+            MoodStyle.successMessage(
+                    player,
+                    MoodStyle.MODULE,
+                    "Coffres générés réinitialisés.",
+                    MoodStyle.detail("Fichier : §eloot-claims.yml"),
+                    MoodStyle.detail("Anciens coffres et claims supprimés.")
+            );
+        }
+    }
+
+    public static void resetLootConfig(Player player) {
+        if (lootConfig == null) return;
+        lootConfig.set("tiers", null);
+        save();
+        if (player != null) {
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.75f);
+            MoodStyle.successMessage(
+                    player,
+                    MoodStyle.MODULE,
+                    "Contenu des loots réinitialisé.",
+                    MoodStyle.detail("Fichier : §eloot.yml"),
+                    MoodStyle.detail("Items et argent des tiers supprimés.")
+            );
+        }
+    }
+
     public static int countItems(LootTier tier) {
         if (tier == null) return 0;
         int count = 0;
@@ -178,18 +232,51 @@ public final class EventLootManager {
     }
 
     private static void giveLoot(Player player, LootTier tier) {
+        List<ItemStack> pool = getLootPool(tier);
+        Collections.shuffle(pool, RANDOM);
+
+        int maxStacks = maxStacks(tier);
+        int givenStacks = 0;
         int items = 0;
-        for (int slot = 0; slot < SIZE; slot++) {
-            ItemStack item = lootConfig.getItemStack(itemPath(tier, slot));
-            if (item == null || item.getType().isAir()) continue;
-            HashMap<Integer, ItemStack> leftovers = player.getInventory().addItem(item.clone());
+
+        for (ItemStack source : pool) {
+            if (givenStacks >= maxStacks) break;
+            ItemStack reward = source.clone();
+            HashMap<Integer, ItemStack> leftovers = player.getInventory().addItem(reward);
             for (ItemStack leftover : leftovers.values()) player.getWorld().dropItemNaturally(player.getLocation(), leftover);
-            items += item.getAmount();
+            items += reward.getAmount();
+            givenStacks++;
         }
+
         double money = getMoney(tier);
         boolean moneyGiven = money > 0 && VaultHook.deposit(player, money);
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.25f);
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Loot récupéré.", MoodStyle.detail("Tier : §e" + tier.getDisplayName()), items > 0 ? MoodStyle.detail("Items : §e" + items) : MoodStyle.detail("Items : §7aucun"), money > 0 && moneyGiven ? MoodStyle.detail("Argent : §a" + formatMoney(money)) : money > 0 ? MoodStyle.detail("Argent : §cVault indisponible") : MoodStyle.detail("Argent : §7aucun"));
+        MoodStyle.successMessage(
+                player,
+                MoodStyle.MODULE,
+                "Loot récupéré.",
+                MoodStyle.detail("Tier : §e" + tier.getDisplayName()),
+                items > 0 ? MoodStyle.detail("Items reçus : §e" + items + " §8• §7Stacks : §e" + givenStacks) : MoodStyle.detail("Items : §7aucun"),
+                money > 0 && moneyGiven ? MoodStyle.detail("Argent : §a" + formatMoney(money)) : money > 0 ? MoodStyle.detail("Argent : §cVault indisponible") : MoodStyle.detail("Argent : §7aucun")
+        );
+    }
+
+    private static List<ItemStack> getLootPool(LootTier tier) {
+        List<ItemStack> pool = new ArrayList<>();
+        if (tier == null) return pool;
+        for (int slot = 0; slot < SIZE; slot++) {
+            ItemStack item = lootConfig.getItemStack(itemPath(tier, slot));
+            if (item == null || item.getType().isAir()) continue;
+            pool.add(item.clone());
+        }
+        return pool;
+    }
+
+    private static int maxStacks(LootTier tier) {
+        return switch (tier) {
+            case COMMUN -> 2;
+            case RARE, EPIQUE -> 1;
+        };
     }
 
     private static String title(LootTier tier) {
