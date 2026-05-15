@@ -15,7 +15,7 @@ public class EventAdminGUIListener implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent event) {
 
-        if (!event.getView().getTitle().equals(EventAdminGUI.TITLE)) {
+        if (!isEventAdminTitle(event.getView().getTitle())) {
             return;
         }
 
@@ -91,6 +91,10 @@ public class EventAdminGUIListener implements Listener {
             default -> {
             }
         }
+    }
+
+    private boolean isEventAdminTitle(String title) {
+        return MoodStyle.cleanTitle(title).equals("centre evenementiel");
     }
 
     private void click(Player player) {
