@@ -112,7 +112,7 @@ public class EventAdminGUIListener implements Listener {
             case 25 -> {
                 click(player);
                 SquidPackManager.generate(player);
-                EventLogManager.log(player, "Pack Survie des Jeux", "Pack spécial généré depuis le menu");
+                EventLogManager.log(player, SquidPackManager.GAME_NAME, "Pack spécial généré depuis le menu");
                 MiniGameGeneratorGUI.openMain(player);
             }
             case 26 -> {
