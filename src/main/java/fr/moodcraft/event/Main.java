@@ -11,6 +11,7 @@ import fr.moodcraft.event.listener.EventLootListener;
 import fr.moodcraft.event.listener.EventProgressListener;
 import fr.moodcraft.event.listener.EventProtectionListener;
 import fr.moodcraft.event.listener.GeneratorInputManager;
+import fr.moodcraft.event.listener.GoldRushTask;
 import fr.moodcraft.event.listener.SurvivalFloorTask;
 import fr.moodcraft.event.loot.EventLootManager;
 import fr.moodcraft.event.manager.EventLogManager;
@@ -70,6 +71,7 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new EventProtectionListener(), this);
         Bukkit.getPluginManager().registerEvents(new EventProgressListener(), this);
         Bukkit.getPluginManager().registerEvents(new SurvivalFloorTask(), this);
+        Bukkit.getPluginManager().registerEvents(new GoldRushTask(), this);
 
         getLogger().info("MoodEvent active avec generateur de mini-jeux V2.");
     }
