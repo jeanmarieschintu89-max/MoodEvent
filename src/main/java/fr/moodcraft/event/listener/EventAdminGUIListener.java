@@ -39,6 +39,11 @@ public class EventAdminGUIListener implements Listener {
             return;
         }
 
+        String title = MoodStyle.cleanTitle(event.getView().getTitle());
+        if (!title.startsWith("recompense ")) {
+            return;
+        }
+
         if (RewardManager.isEditingItems(player)) {
             RewardManager.saveItemEditor(player, event.getInventory());
         }
