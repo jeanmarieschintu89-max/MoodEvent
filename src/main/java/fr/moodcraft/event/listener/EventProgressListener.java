@@ -16,11 +16,13 @@ public class EventProgressListener implements Listener {
         }
 
         Player player = event.getPlayer();
-        if (!EventManager.isAtFinish(player)) {
+
+        if (EventManager.isAtFinish(player)) {
+            EventManager.finishPlayer(player);
             return;
         }
 
-        EventManager.finishPlayer(player);
+        EventManager.checkSurvivalFloorElimination(player);
     }
 
     private boolean hasChangedBlock(Location from, Location to) {
