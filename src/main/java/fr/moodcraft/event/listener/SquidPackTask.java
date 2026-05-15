@@ -24,6 +24,8 @@ public class SquidPackTask implements Listener {
 
     private int tick;
     private boolean green = true;
+    private boolean runtimeStarted;
+    private boolean finished;
     private final Map<UUID, Location> lastRedPositions = new HashMap<>();
     private final Set<UUID> qualified = new HashSet<>();
     private final Set<UUID> eliminated = new HashSet<>();
@@ -39,11 +41,18 @@ public class SquidPackTask implements Listener {
 
     private void runPackTick() {
         if (!SquidPackManager.hasPack() || !EventManager.isRunning()) {
+            resetRuntime();
+            return;
+        }
+
+        if (EventManager.getParticipantSize() <= 0) {
             tick = 0;
             green = true;
-            lastRedPositions.clear();
-            qualified.clear();
-            eliminated.clear();
+            return;
+        }
+
+        if (!runtimeStarted) {
+            startRedGreen();
             return;
         }
 
@@ -64,10 +73,13 @@ public class SquidPackTask implements Listener {
     private void startRedGreen() {
         tick = 0;
         green = true;
+        runtimeStarted = true;
+        finished = false;
         lastRedPositions.clear();
         qualified.clear();
         eliminated.clear();
         SquidPackManager.setStage("RED_GREEN");
+
         Location start = SquidPackManager.location("start");
         if (start != null) {
             for (Player player : Bukkit.getOnlinePlayers()) {
@@ -75,8 +87,17 @@ public class SquidPackTask implements Listener {
                 player.teleport(start);
                 player.sendTitle("§aFeu vert", "§fAvancez jusqu'à la ligne rouge", 0, 45, 10);
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.9f, 1.4f);
+                MoodStyle.infoMessage(
+                        player,
+                        MoodStyle.MODULE,
+                        "Première épreuve lancée.",
+                        MoodStyle.detail("Feu vert : avancez."),
+                        MoodStyle.detail("Feu rouge : ne bougez plus."),
+                        MoodStyle.detail("Objectif : atteindre la ligne rouge.")
+                );
             }
         }
+
         broadcast("Feu Rouge / Feu Vert", "Avancez quand c'est vert. Ne bougez pas quand c'est rouge.");
     }
 
@@ -100,13 +121,26 @@ public class SquidPackTask implements Listener {
         forEachAlive(player -> {
             if (!green) {
                 Location red = lastRedPositions.get(player.getUniqueId());
-                if (red != null && red.distanceSquared(player.getLocation()) > 0.08) eliminate(player, "Mouvement pendant Feu Rouge");
+                if (hasMoved(red, player.getLocation())) {
+                    eliminate(player, "Mouvement pendant Feu Rouge");
+                    return;
+                }
             }
-            if (player.getLocation().getBlockX() >= finishX) qualifyRedGreen(player);
+            if (player.getLocation().getBlockX() >= finishX) {
+                qualifyRedGreen(player);
+            }
         });
 
-        if (tick >= 90 || countAliveNotQualified() <= 0) {
-            startGlassBridge();
+        int aliveNotQualified = countAliveNotQualified();
+        if (tick >= 90) {
+            if (qualified.isEmpty()) finishWithoutWinner("Temps écoulé : aucun joueur qualifié.");
+            else startGlassBridge();
+            return;
+        }
+
+        if (aliveNotQualified <= 0) {
+            if (qualified.isEmpty()) finishWithoutWinner("Tous les joueurs ont été éliminés.");
+            else startGlassBridge();
         }
     }
 
@@ -116,16 +150,31 @@ public class SquidPackTask implements Listener {
         if (bridge != null) player.teleport(bridge);
         player.sendTitle("§aQualifié", "§fPont de verre", 0, 45, 10);
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.2f);
+        MoodStyle.successMessage(
+                player,
+                MoodStyle.MODULE,
+                "Vous êtes qualifié.",
+                MoodStyle.detail("Prochaine épreuve : §ePont de verre"),
+                MoodStyle.detail("Patientez sur la plateforme verte.")
+        );
     }
 
     private void startGlassBridge() {
+        if (qualified.isEmpty()) {
+            finishWithoutWinner("Aucun joueur qualifié pour le Pont de Verre.");
+            return;
+        }
+
         tick = 0;
         SquidPackManager.setStage("GLASS_BRIDGE");
         Location bridge = SquidPackManager.location("bridge-start");
         if (bridge != null) {
             for (UUID uuid : new HashSet<>(qualified)) {
                 Player player = Bukkit.getPlayer(uuid);
-                if (player != null && player.isOnline()) player.teleport(bridge);
+                if (player == null || !player.isOnline() || eliminated.contains(uuid)) continue;
+                player.teleport(bridge);
+                player.sendTitle("§bPont de verre", "§fChoisissez la bonne vitre", 0, 45, 10);
+                player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 1.2f);
             }
         }
         broadcast("Pont de verre", "Choisissez la bonne vitre. La mauvaise casse et élimine.");
@@ -134,6 +183,12 @@ public class SquidPackTask implements Listener {
     private void glassBridgeTick() {
         tick++;
         FileConfiguration config = SquidPackManager.config();
+        Location bridgeStart = SquidPackManager.location("bridge-start");
+        if (bridgeStart == null || bridgeStart.getWorld() == null) {
+            finishWithoutWinner("Pont de verre introuvable.");
+            return;
+        }
+
         int finishX = config.getInt("glass.finish-x");
         int zLeft = config.getInt("glass.z-left");
         int zRight = config.getInt("glass.z-right");
@@ -141,31 +196,68 @@ public class SquidPackTask implements Listener {
         for (UUID uuid : new HashSet<>(qualified)) {
             Player player = Bukkit.getPlayer(uuid);
             if (player == null || !player.isOnline() || eliminated.contains(uuid)) continue;
-            Location loc = player.getLocation();
-            if (loc.getBlockY() < SquidPackManager.location("bridge-start").getBlockY() - 3) eliminate(player, "Chute du pont");
-            if (loc.getBlockX() >= finishX) finishPack(player);
 
-            int step = Math.max(0, Math.min(9, (loc.getBlockX() - (SquidPackManager.location("bridge-start").getBlockX() + 3)) / 3));
+            Location loc = player.getLocation();
+            if (!loc.getWorld().equals(bridgeStart.getWorld())) continue;
+
+            if (loc.getBlockY() < bridgeStart.getBlockY() - 3) {
+                eliminate(player, "Chute du pont");
+                continue;
+            }
+            if (loc.getBlockX() >= finishX) {
+                finishPack(player);
+                return;
+            }
+
+            int step = Math.max(0, Math.min(9, (loc.getBlockX() - (bridgeStart.getBlockX() + 3)) / 3));
             String safe = config.getString("glass.safe." + step, "LEFT");
             boolean onLeft = Math.abs(loc.getBlockZ() - zLeft) <= 1;
             boolean onRight = Math.abs(loc.getBlockZ() - zRight) <= 1;
-            if ((onLeft || onRight) && ((onLeft && safe.equals("RIGHT")) || (onRight && safe.equals("LEFT")))) {
+            boolean wrongLeft = onLeft && safe.equals("RIGHT");
+            boolean wrongRight = onRight && safe.equals("LEFT");
+
+            if (wrongLeft || wrongRight) {
                 loc.getBlock().setType(Material.AIR, false);
                 eliminate(player, "Mauvaise vitre");
             }
         }
 
+        if (countQualifiedAlive() <= 0) {
+            finishWithoutWinner("Tous les qualifiés ont été éliminés.");
+            return;
+        }
+
         if (tick >= 120) {
-            Player winner = qualified.stream().map(Bukkit::getPlayer).filter(p -> p != null && p.isOnline() && !eliminated.contains(p.getUniqueId())).findFirst().orElse(null);
+            Player winner = qualified.stream()
+                    .map(Bukkit::getPlayer)
+                    .filter(player -> player != null && player.isOnline() && !eliminated.contains(player.getUniqueId()))
+                    .findFirst()
+                    .orElse(null);
             if (winner != null) finishPack(winner);
+            else finishWithoutWinner("Temps écoulé : aucun gagnant.");
         }
     }
 
     private void finishPack(Player winner) {
+        if (finished || winner == null) return;
+        finished = true;
+        SquidPackManager.setStage("FINISHED");
         broadcast("Survie des Jeux terminée", "Gagnant : §a" + winner.getName());
         winner.sendTitle("§6Victoire", "§fSurvie des Jeux", 0, 60, 15);
-        SquidPackManager.setStage("FINISHED");
+        winner.playSound(winner.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.9f, 1.1f);
         EventManager.stopEvent(winner);
+    }
+
+    private void finishWithoutWinner(String reason) {
+        if (finished) return;
+        finished = true;
+        SquidPackManager.setStage("FINISHED");
+        broadcast("Survie des Jeux terminée", reason);
+
+        Player anchor = findOnlineEventPlayer();
+        if (anchor != null) {
+            EventManager.stopEvent(anchor);
+        }
     }
 
     private void eliminate(Player player, String reason) {
@@ -193,6 +285,43 @@ public class SquidPackTask implements Listener {
             count++;
         }
         return count;
+    }
+
+    private int countQualifiedAlive() {
+        int count = 0;
+        for (UUID uuid : qualified) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player == null || !player.isOnline()) continue;
+            if (eliminated.contains(uuid)) continue;
+            count++;
+        }
+        return count;
+    }
+
+    private boolean hasMoved(Location from, Location to) {
+        if (from == null || to == null || from.getWorld() == null || to.getWorld() == null) return false;
+        if (!from.getWorld().equals(to.getWorld())) return true;
+        return from.distanceSquared(to) > 0.08;
+    }
+
+    private Player findOnlineEventPlayer() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (EventManager.isEventPlayer(player)) return player;
+        }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            return player;
+        }
+        return null;
+    }
+
+    private void resetRuntime() {
+        tick = 0;
+        green = true;
+        runtimeStarted = false;
+        finished = false;
+        lastRedPositions.clear();
+        qualified.clear();
+        eliminated.clear();
     }
 
     private void broadcast(String title, String detail) {
