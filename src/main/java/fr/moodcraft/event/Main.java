@@ -2,10 +2,12 @@ package fr.moodcraft.event;
 
 import fr.moodcraft.event.command.EventAdminCommand;
 import fr.moodcraft.event.command.EventCommand;
+import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
 import fr.moodcraft.event.listener.EventChatListener;
 import fr.moodcraft.event.listener.EventProtectionListener;
 import fr.moodcraft.event.manager.EventManager;
+import fr.moodcraft.event.manager.RewardManager;
 import fr.moodcraft.event.manager.WaitingRoomManager;
 
 import org.bukkit.Bukkit;
@@ -25,8 +27,10 @@ public class Main extends JavaPlugin {
         instance = this;
         saveDefaultConfig();
 
+        VaultHook.setup();
         EventManager.load();
         WaitingRoomManager.load();
+        RewardManager.load();
 
         EventCommand eventCommand = new EventCommand();
         EventAdminCommand adminCommand = new EventAdminCommand();
@@ -34,21 +38,21 @@ public class Main extends JavaPlugin {
         registerCommand("event", eventCommand);
 
         registerCommand("eventadmin", adminCommand);
-        registerCommand("eventgui", adminCommand);
-        registerCommand("eventcreate", adminCommand);
-        registerCommand("eventdesc", adminCommand);
+        registerCommand("eventmenu", adminCommand);
+        registerCommand("eventcreer", adminCommand);
+        registerCommand("eventdescription", adminCommand);
         registerCommand("eventtype", adminCommand);
-        registerCommand("eventset", adminCommand);
-        registerCommand("eventsetfinish", adminCommand);
-        registerCommand("eventopen", adminCommand);
-        registerCommand("eventclose", adminCommand);
-        registerCommand("eventgo", adminCommand);
+        registerCommand("eventdepart", adminCommand);
+        registerCommand("eventarrivee", adminCommand);
+        registerCommand("eventsalleattente", adminCommand);
+        registerCommand("eventrestaurersalle", adminCommand);
+        registerCommand("eventtpsalle", adminCommand);
+        registerCommand("eventfinirjoueur", adminCommand);
+        registerCommand("eventouvrir", adminCommand);
+        registerCommand("eventfermer", adminCommand);
+        registerCommand("eventlancer", adminCommand);
         registerCommand("eventstop", adminCommand);
-        registerCommand("eventcancel", adminCommand);
-        registerCommand("eventbuildwaiting", adminCommand);
-        registerCommand("eventrestorewaiting", adminCommand);
-        registerCommand("eventwaitingtp", adminCommand);
-        registerCommand("eventfinishplayer", adminCommand);
+        registerCommand("eventannuler", adminCommand);
 
         Bukkit.getPluginManager().registerEvents(new EventAdminGUIListener(), this);
         Bukkit.getPluginManager().registerEvents(new EventChatListener(), this);
@@ -58,6 +62,7 @@ public class Main extends JavaPlugin {
         getLogger().info("✦ MoodEvent activé");
         getLogger().info("Centre événementiel chargé");
         getLogger().info("Salle d'attente restaurable prête");
+        getLogger().info("Récompenses participation et Top 3 prêtes");
         getLogger().info("Protections événementielles actives");
         getLogger().info("=================================");
     }
@@ -66,6 +71,7 @@ public class Main extends JavaPlugin {
     public void onDisable() {
         EventManager.save();
         WaitingRoomManager.save();
+        RewardManager.save();
         getLogger().info("✦ MoodEvent désactivé");
     }
 
