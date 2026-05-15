@@ -4,6 +4,7 @@ import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameSize;
 import fr.moodcraft.event.generator.GeneratedGameStyleManager;
 import fr.moodcraft.event.generator.GeneratedGameType;
+import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.util.EventItem;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Bukkit;
@@ -50,7 +51,7 @@ public final class MiniGameGeneratorGUI {
 
         inv.setItem(25, EventItem.glow(EventItem.item(
                 Material.REDSTONE_TORCH,
-                "§6✦ §fPack Survie des Jeux §6✦",
+                "§6✦ §f" + SquidPackManager.GAME_NAME + " §6✦",
                 MoodStyle.detail("Feu rouge / Feu vert."),
                 MoodStyle.detail("Pont de verre."),
                 MoodStyle.detail("Éliminations + salle liée."),
