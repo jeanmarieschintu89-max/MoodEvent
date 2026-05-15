@@ -16,50 +16,28 @@ public final class WaitingRoomGUI {
     }
 
     public static void open(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 45, TITLE);
+        Inventory inv = Bukkit.createInventory(null, 54, TITLE);
         fill(inv);
 
         inv.setItem(4, EventItem.glow(EventItem.item(
                 Material.ENDER_EYE,
                 "§6✦ §fSalle d'attente §6✦",
                 MoodStyle.detail("État : " + (WaitingRoomManager.hasRoom() ? "§agénérée" : "§cnon générée")),
-                MoodStyle.detail("Les joueurs y attendent le lancement"),
-                MoodStyle.detail("Les arrivants y reviennent après la fin"),
+                MoodStyle.detail("Zone temporaire restaurable"),
+                MoodStyle.detail("File fermée → salle"),
+                MoodStyle.detail("Arrivée → salle"),
                 "",
-                MoodStyle.info("Choisis une taille ou une action")
+                MoodStyle.info("Choisis une taille")
         )));
 
-        inv.setItem(11, EventItem.item(
-                Material.OAK_DOOR,
-                "§6✦ §fPetite salle §6✦",
-                MoodStyle.detail("Taille : §e7x7"),
-                MoodStyle.detail("Pour petits events"),
-                MoodStyle.detail("5 à 10 joueurs"),
-                "",
-                WaitingRoomManager.hasRoom() ? MoodStyle.error("Restaure d'abord l'ancienne salle") : MoodStyle.success("Générer ici")
-        ));
+        addSize(inv, 10, Material.OAK_DOOR, "Mini", "7x7", "3 à 8 joueurs");
+        addSize(inv, 12, Material.SPRUCE_DOOR, "Petite", "9x9", "5 à 15 joueurs");
+        addSize(inv, 14, Material.DARK_OAK_DOOR, "Moyenne", "11x11", "10 à 25 joueurs");
+        addSize(inv, 16, Material.IRON_DOOR, "Grande", "15x15", "20 à 40 joueurs");
+        addSize(inv, 28, Material.COPPER_DOOR, "Très grande", "19x19", "40 à 70 joueurs");
+        addSize(inv, 30, Material.WARPED_DOOR, "Festival", "23x23", "70 joueurs et plus");
 
-        inv.setItem(13, EventItem.item(
-                Material.DARK_OAK_DOOR,
-                "§6✦ §fSalle moyenne §6✦",
-                MoodStyle.detail("Taille : §e11x11"),
-                MoodStyle.detail("Taille conseillée"),
-                MoodStyle.detail("10 à 25 joueurs"),
-                "",
-                WaitingRoomManager.hasRoom() ? MoodStyle.error("Restaure d'abord l'ancienne salle") : MoodStyle.success("Générer ici")
-        ));
-
-        inv.setItem(15, EventItem.item(
-                Material.IRON_DOOR,
-                "§6✦ §fGrande salle §6✦",
-                MoodStyle.detail("Taille : §e15x15"),
-                MoodStyle.detail("Pour gros events"),
-                MoodStyle.detail("25 joueurs et plus"),
-                "",
-                WaitingRoomManager.hasRoom() ? MoodStyle.error("Restaure d'abord l'ancienne salle") : MoodStyle.success("Générer ici")
-        ));
-
-        inv.setItem(29, EventItem.item(
+        inv.setItem(33, EventItem.item(
                 Material.ENDER_PEARL,
                 "§6✦ §fTéléporter à la salle §6✦",
                 MoodStyle.detail("État : " + (WaitingRoomManager.hasRoom() ? "§adisponible" : "§cindisponible")),
@@ -67,7 +45,7 @@ public final class WaitingRoomGUI {
                 MoodStyle.info("Y aller maintenant")
         ));
 
-        inv.setItem(31, EventItem.item(
+        inv.setItem(35, EventItem.item(
                 Material.MAGMA_BLOCK,
                 "§c✦ §fRestaurer la zone §c✦",
                 MoodStyle.detail("Supprime la salle générée"),
@@ -76,13 +54,25 @@ public final class WaitingRoomGUI {
                 MoodStyle.error("Action sensible")
         ));
 
-        inv.setItem(33, EventItem.item(
+        inv.setItem(49, EventItem.item(
                 Material.ARROW,
                 "§6✦ §fRetour §6✦",
                 MoodStyle.detail("Revenir au centre événementiel")
         ));
 
         player.openInventory(inv);
+    }
+
+    private static void addSize(Inventory inv, int slot, Material material, String name, String size, String capacity) {
+        inv.setItem(slot, EventItem.item(
+                material,
+                "§6✦ §f" + name + " §6✦",
+                MoodStyle.detail("Taille : §e" + size),
+                MoodStyle.detail("Capacité : §e" + capacity),
+                MoodStyle.detail("Style : §7bois sombre, vitres, lanternes"),
+                "",
+                WaitingRoomManager.hasRoom() ? MoodStyle.error("Restaure d'abord l'ancienne salle") : MoodStyle.success("Générer ici")
+        ));
     }
 
     private static void fill(Inventory inv) {
