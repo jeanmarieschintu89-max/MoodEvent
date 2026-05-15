@@ -2,6 +2,7 @@ package fr.moodcraft.event;
 
 import fr.moodcraft.event.command.EventAdminCommand;
 import fr.moodcraft.event.command.EventCommand;
+import fr.moodcraft.event.generator.GeneratedArenaDesigner;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
@@ -10,8 +11,11 @@ import fr.moodcraft.event.listener.EventLootListener;
 import fr.moodcraft.event.listener.EventProgressListener;
 import fr.moodcraft.event.listener.EventProtectionListener;
 import fr.moodcraft.event.listener.GeneratorInputManager;
+import fr.moodcraft.event.listener.SurvivalFloorTask;
 import fr.moodcraft.event.loot.EventLootManager;
+import fr.moodcraft.event.manager.EventLogManager;
 import fr.moodcraft.event.manager.EventManager;
+import fr.moodcraft.event.manager.EventSecurityManager;
 import fr.moodcraft.event.manager.RewardManager;
 import fr.moodcraft.event.manager.WaitingRoomManager;
 import org.bukkit.Bukkit;
@@ -35,6 +39,9 @@ public class Main extends JavaPlugin {
         RewardManager.load();
         GeneratedGameManager.load();
         EventLootManager.load();
+        EventLogManager.load();
+        EventSecurityManager.load();
+        GeneratedArenaDesigner.startAutoEnhancer();
 
         EventCommand eventCommand = new EventCommand();
         EventAdminCommand adminCommand = new EventAdminCommand();
@@ -62,8 +69,9 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new EventLootListener(), this);
         Bukkit.getPluginManager().registerEvents(new EventProtectionListener(), this);
         Bukkit.getPluginManager().registerEvents(new EventProgressListener(), this);
+        Bukkit.getPluginManager().registerEvents(new SurvivalFloorTask(), this);
 
-        getLogger().info("MoodEvent active avec generateur de mini-jeux.");
+        getLogger().info("MoodEvent active avec generateur de mini-jeux V2.");
     }
 
     @Override
@@ -73,6 +81,8 @@ public class Main extends JavaPlugin {
         RewardManager.save();
         GeneratedGameManager.save();
         EventLootManager.save();
+        EventLogManager.save();
+        EventSecurityManager.save();
         getLogger().info("MoodEvent desactive.");
     }
 
