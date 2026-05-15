@@ -4,6 +4,7 @@ import fr.moodcraft.event.command.EventAdminCommand;
 import fr.moodcraft.event.command.EventCommand;
 import fr.moodcraft.event.generator.EventGiveStructureManager;
 import fr.moodcraft.event.generator.GeneratedGameManager;
+import fr.moodcraft.event.generator.GeneratedGameplayEnhancer;
 import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
 import fr.moodcraft.event.listener.EventChatListener;
@@ -46,6 +47,7 @@ public class Main extends JavaPlugin {
         EventLootManager.load();
         EventLogManager.load();
         EventSecurityManager.load();
+        GeneratedGameplayEnhancer.start();
 
         EventCommand eventCommand = new EventCommand();
         EventAdminCommand adminCommand = new EventAdminCommand();
