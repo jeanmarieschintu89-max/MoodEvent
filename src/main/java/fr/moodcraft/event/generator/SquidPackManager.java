@@ -22,6 +22,8 @@ import java.util.Random;
 
 public final class SquidPackManager {
 
+    public static final String GAME_NAME = "SquidMoodGame";
+
     private static final Random RANDOM = new Random();
     private static File file;
     private static FileConfiguration config;
@@ -76,7 +78,7 @@ public final class SquidPackManager {
         ensureLoaded();
         if (player == null) return;
         if (hasPack()) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Un pack Survie des Jeux existe déjà.", MoodStyle.detail("Restaure-le avant d'en créer un autre."));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Un pack " + GAME_NAME + " existe déjà.", MoodStyle.detail("Restaure-le avant d'en créer un autre."));
             return;
         }
         if (WaitingRoomManager.hasRoom()) {
@@ -144,7 +146,7 @@ public final class SquidPackManager {
         config.set("players", null);
         save();
 
-        EventManager.createEvent(player, "Survie des Jeux");
+        EventManager.createEvent(player, GAME_NAME);
         EventManager.setDescription(player, "Une suite d'épreuves Minecraft : feu rouge et pont de verre.");
         EventManager.setType(player, "custom");
         player.teleport(start);
@@ -152,15 +154,15 @@ public final class SquidPackManager {
         player.teleport(origin);
 
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack Survie des Jeux généré.", MoodStyle.detail("Salle d'attente + arènes créées."), MoodStyle.detail("Épreuves : Feu Rouge puis Pont de Verre."), MoodStyle.info("Ouvre la file avec §e/eventouvrir"));
-        EventLogManager.log(player, "Pack Survie des Jeux", "Pack spécial généré");
+        MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack " + GAME_NAME + " généré.", MoodStyle.detail("Salle d'attente + arènes créées."), MoodStyle.detail("Épreuves : Feu Rouge puis Pont de Verre."), MoodStyle.info("Ouvre la file avec §e/eventouvrir"));
+        EventLogManager.log(player, "Pack " + GAME_NAME, "Pack spécial généré");
     }
 
     public static void restore(Player player) {
         ensureLoaded();
         ConfigurationSection blocks = config.getConfigurationSection("backup.blocks");
         if (!hasPack() || blocks == null) {
-            if (player != null) MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucun pack Survie des Jeux à restaurer.");
+            if (player != null) MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucun pack " + GAME_NAME + " à restaurer.");
             return;
         }
         int restored = 0;
@@ -182,7 +184,7 @@ public final class SquidPackManager {
         config.set("players", null);
         config.set("backup", null);
         save();
-        if (player != null) MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack Survie des Jeux restauré.", MoodStyle.detail("Blocs restaurés : §e" + restored));
+        if (player != null) MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack " + GAME_NAME + " restauré.", MoodStyle.detail("Blocs restaurés : §e" + restored));
     }
 
     public static Location location(String path) {
