@@ -2,9 +2,10 @@ package fr.moodcraft.event.listener;
 
 import fr.moodcraft.event.Main;
 import fr.moodcraft.event.gui.EventAdminGUI;
+import fr.moodcraft.event.gui.RewardGUI;
 import fr.moodcraft.event.manager.EventManager;
+import fr.moodcraft.event.manager.RewardManager;
 import fr.moodcraft.event.util.MoodStyle;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -31,7 +32,6 @@ public class EventChatListener implements Listener {
     }
 
     private static void start(Player player, Mode mode) {
-
         if (player == null || mode == null) {
             return;
         }
@@ -44,7 +44,7 @@ public class EventChatListener implements Listener {
                     player,
                     MoodStyle.MODULE,
                     MoodStyle.info("Écris le nom de l'événement dans le chat."),
-                    MoodStyle.detail("Exemple : §eTournoi pêche"),
+                    MoodStyle.detail("Exemple : §eLabyrinthe du Spawn"),
                     MoodStyle.detail("Minimum : §e3 caractères"),
                     MoodStyle.detail("Tape §cannuler §7pour quitter"),
                     MoodStyle.detail("Annulation auto dans §e60 secondes")
@@ -67,22 +67,13 @@ public class EventChatListener implements Listener {
                 Main.getInstance(),
                 () -> {
                     Mode current = WAITING.get(player.getUniqueId());
-
                     if (current == null || current != mode) {
                         return;
                     }
-
                     WAITING.remove(player.getUniqueId());
-
-                    if (!player.isOnline()) {
-                        return;
+                    if (player.isOnline()) {
+                        MoodStyle.infoMessage(player, MoodStyle.MODULE, "Saisie annulée : temps écoulé.");
                     }
-
-                    MoodStyle.infoMessage(
-                            player,
-                            MoodStyle.MODULE,
-                            "Saisie annulée : temps écoulé."
-                    );
                 },
                 TIMEOUT_TICKS
         );
@@ -95,25 +86,33 @@ public class EventChatListener implements Listener {
 
     @EventHandler
     public void onChat(AsyncPlayerChatEvent event) {
-
         Player player = event.getPlayer();
-        Mode mode = WAITING.get(player.getUniqueId());
 
+        if (RewardManager.isEditingMoney(player)) {
+            event.setCancelled(true);
+            String message = event.getMessage();
+            Bukkit.getScheduler().runTask(
+                    Main.getInstance(),
+                    () -> {
+                        RewardManager.handleMoneyChat(player, message);
+                        player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 1.4f);
+                        RewardGUI.open(player);
+                    }
+            );
+            return;
+        }
+
+        Mode mode = WAITING.get(player.getUniqueId());
         if (mode == null) {
             return;
         }
 
         event.setCancelled(true);
         String message = event.getMessage();
-
-        Bukkit.getScheduler().runTask(
-                Main.getInstance(),
-                () -> handle(player, mode, message)
-        );
+        Bukkit.getScheduler().runTask(Main.getInstance(), () -> handle(player, mode, message));
     }
 
     private void handle(Player player, Mode mode, String message) {
-
         if (message.equalsIgnoreCase("annuler") || message.equalsIgnoreCase("cancel")) {
             WAITING.remove(player.getUniqueId());
             MoodStyle.infoMessage(player, MoodStyle.MODULE, "Saisie annulée.");
