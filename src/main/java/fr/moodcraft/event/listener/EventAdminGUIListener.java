@@ -170,6 +170,8 @@ public class EventAdminGUIListener implements Listener {
             case 22 -> { click(player); EventLootManager.startMoneyInput(player, LootTier.RARE); }
             case 29, 30 -> { click(player); EventLootManager.openItemEditor(player, LootTier.EPIQUE); }
             case 31 -> { click(player); EventLootManager.startMoneyInput(player, LootTier.EPIQUE); }
+            case 42 -> { no(player); EventLootManager.resetGeneratedClaims(player); EventLootGUI.open(player); }
+            case 43 -> { no(player); EventLootManager.resetLootConfig(player); EventLootGUI.open(player); }
             case 49 -> { click(player); MiniGameGeneratorGUI.openMain(player); }
             default -> { }
         }
