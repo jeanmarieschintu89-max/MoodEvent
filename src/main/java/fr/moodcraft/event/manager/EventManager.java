@@ -2,6 +2,7 @@ package fr.moodcraft.event.manager;
 
 import fr.moodcraft.event.Main;
 import fr.moodcraft.event.generator.GeneratedGameManager;
+import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.model.EventType;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Bukkit;
@@ -35,6 +36,7 @@ public final class EventManager {
     private static Location finishLocation;
     private static boolean queueOpen;
     private static boolean running;
+    private static boolean autoClosing;
     private static final Set<UUID> queue = new LinkedHashSet<>();
     private static final Set<UUID> participants = new LinkedHashSet<>();
     private static final Set<UUID> finishedPlayers = new HashSet<>();
@@ -53,6 +55,7 @@ public final class EventManager {
         type = EventType.fromText(config.getString("event.type", "CUSTOM"));
         queueOpen = config.getBoolean("event.queue-open", false);
         running = false;
+        autoClosing = false;
         queue.clear();
         participants.clear();
         finishedPlayers.clear();
@@ -178,6 +181,7 @@ public final class EventManager {
         if (!ensureEvent(player) || !ensureLocation(player)) return;
         queueOpen = true;
         running = false;
+        autoClosing = false;
         participants.clear();
         finishedPlayers.clear();
         ranking.clear();
@@ -205,28 +209,45 @@ public final class EventManager {
     }
 
     public static void cancelEvent(Player player) {
-        if (!ensureEvent(player)) return;
+        Player actor = resolveActor(player);
+        if (actor == null) return;
+        if (!ensureEvent(actor)) return;
+        autoClosing = false;
         int returned = returnParticipants(false);
         boolean restoredRoom = WaitingRoomManager.hasRoom();
         boolean restoredGenerated = GeneratedGameManager.hasStructure();
-        if (restoredRoom) WaitingRoomManager.restore(player);
-        if (restoredGenerated) GeneratedGameManager.restore(player);
+        boolean restoredSquid = SquidPackManager.hasPack();
+        if (restoredRoom) WaitingRoomManager.restore(actor);
+        if (restoredGenerated) GeneratedGameManager.restore(actor);
+        if (restoredSquid) SquidPackManager.restore(actor);
         broadcastEvent(MoodStyle.error("Événement annulé."), MoodStyle.detail("Participants renvoyés : §e" + returned), MoodStyle.detail("Aucune récompense distribuée."));
         clearEvent();
         save();
     }
 
     public static void stopEvent(Player player) {
-        if (!ensureEvent(player)) return;
+        Player actor = resolveActor(player);
+        if (actor == null) return;
+        if (!ensureEvent(actor)) return;
+        autoClosing = false;
         if (getType().usesSurvivalRanking()) finalizeSurvivalRanking();
         broadcastRanking();
         announceAndRewardTopPlayers();
         int returned = returnParticipants(true);
         boolean restoredRoom = WaitingRoomManager.hasRoom();
         boolean restoredGenerated = GeneratedGameManager.hasStructure();
-        if (restoredRoom) WaitingRoomManager.restore(player);
-        if (restoredGenerated) GeneratedGameManager.restore(player);
-        broadcastEvent(MoodStyle.success("Événement terminé."), MoodStyle.detail("Participants renvoyés : §e" + returned), MoodStyle.detail("Récompenses distribuées."), restoredRoom ? MoodStyle.detail("Salle d'attente restaurée automatiquement.") : MoodStyle.detail("Aucune salle à restaurer."), restoredGenerated ? MoodStyle.detail("Structure générée restaurée automatiquement.") : MoodStyle.detail("Aucune structure générée à restaurer."));
+        boolean restoredSquid = SquidPackManager.hasPack();
+        if (restoredRoom) WaitingRoomManager.restore(actor);
+        if (restoredGenerated) GeneratedGameManager.restore(actor);
+        if (restoredSquid) SquidPackManager.restore(actor);
+        broadcastEvent(
+                MoodStyle.success("Événement terminé."),
+                MoodStyle.detail("Participants renvoyés : §e" + returned),
+                MoodStyle.detail("Récompenses distribuées."),
+                restoredRoom ? MoodStyle.detail("Salle d'attente restaurée automatiquement.") : MoodStyle.detail("Aucune salle à restaurer."),
+                restoredGenerated ? MoodStyle.detail("Structure générée restaurée automatiquement.") : MoodStyle.detail("Aucune structure générée à restaurer."),
+                restoredSquid ? MoodStyle.detail(SquidPackManager.GAME_NAME + " restauré automatiquement.") : MoodStyle.detail("Aucun pack spécial à restaurer.")
+        );
         clearEvent();
         save();
     }
@@ -277,6 +298,7 @@ public final class EventManager {
         }
         queueOpen = false;
         running = true;
+        autoClosing = false;
         participants.clear();
         finishedPlayers.clear();
         ranking.clear();
@@ -303,6 +325,7 @@ public final class EventManager {
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
         MoodStyle.successMessage(player, MoodStyle.MODULE, "Vous avez terminé le mini-jeu.", MoodStyle.detail("Classement : §e" + formatPlace(place)), MoodStyle.detail("Vous êtes envoyé en salle d'attente."));
         broadcastEvent(MoodStyle.info("Un joueur a atteint l'arrivée."), MoodStyle.detail("Joueur : §a" + player.getName()), MoodStyle.detail("Classement : §e" + formatPlace(place)));
+        if (allFinishLinePlayersDone()) scheduleAutoStop(player, "Tous les participants ont terminé le parcours.");
     }
 
     public static void checkSurvivalFloorElimination(Player player) {
@@ -317,10 +340,20 @@ public final class EventManager {
         MoodStyle.errorMessage(player, MoodStyle.MODULE, "Vous êtes éliminé.", MoodStyle.detail("Vous êtes renvoyé en salle d'attente."), MoodStyle.detail("Joueurs encore en jeu : §e" + remaining));
         broadcastEvent(MoodStyle.info("Survie des étages."), MoodStyle.detail("§c" + player.getName() + " §7est tombé."), MoodStyle.detail("Joueurs restants : §e" + remaining));
         if (remaining <= 1) {
-            for (UUID survivor : participants) if (!ranking.contains(survivor)) ranking.add(survivor);
+            for (UUID survivor : new ArrayList<>(participants)) {
+                if (!ranking.contains(survivor)) ranking.add(survivor);
+                Player survivorPlayer = Bukkit.getPlayer(survivor);
+                if (survivorPlayer != null && survivorPlayer.isOnline()) {
+                    WaitingRoomManager.teleport(survivorPlayer);
+                    survivorPlayer.sendTitle("§6Victoire", "§fDernier survivant", 0, 55, 12);
+                    survivorPlayer.playSound(survivorPlayer.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.15f);
+                    MoodStyle.successMessage(survivorPlayer, MoodStyle.MODULE, "Vous êtes le dernier survivant.", MoodStyle.detail("Retour en salle d'attente."), MoodStyle.detail("Clôture automatique en cours."));
+                }
+            }
             for (int i = survivalEliminated.size() - 1; i >= 0; i--) if (!ranking.contains(survivalEliminated.get(i))) ranking.add(survivalEliminated.get(i));
             cancelSurvivalTask();
-            broadcastEvent(MoodStyle.success("Survie des étages terminée."), rankLine(1), rankLine(2), rankLine(3), MoodStyle.info("Clôture avec §e/eventstop"));
+            broadcastEvent(MoodStyle.success("Survie des étages terminée."), rankLine(1), rankLine(2), rankLine(3), MoodStyle.info("Clôture automatique en cours."));
+            scheduleAutoStop(player, "Tous les joueurs sont revenus en salle d'attente.");
         }
     }
 
@@ -460,6 +493,37 @@ public final class EventManager {
         Bukkit.broadcastMessage(MoodStyle.FRAME);
     }
 
+    private static void scheduleAutoStop(Player actor, String reason) {
+        if (!running || autoClosing) return;
+        autoClosing = true;
+        broadcastEvent(MoodStyle.success("Tous les joueurs sont revenus en salle d'attente."), MoodStyle.detail(reason), MoodStyle.info("Clôture automatique dans §e3 secondes"));
+        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
+            if (!running || !hasEvent()) {
+                autoClosing = false;
+                return;
+            }
+            stopEvent(resolveActor(actor));
+        }, 60L);
+    }
+
+    private static boolean allFinishLinePlayersDone() {
+        return running && getType().usesFinishLine() && !participants.isEmpty() && finishedPlayers.containsAll(participants);
+    }
+
+    private static Player resolveActor(Player player) {
+        if (player != null && player.isOnline()) return player;
+        for (UUID uuid : returnLocations.keySet()) {
+            Player online = Bukkit.getPlayer(uuid);
+            if (online != null && online.isOnline()) return online;
+        }
+        for (UUID uuid : participants) {
+            Player online = Bukkit.getPlayer(uuid);
+            if (online != null && online.isOnline()) return online;
+        }
+        for (Player online : Bukkit.getOnlinePlayers()) return online;
+        return null;
+    }
+
     private static void spawnFinishFirework(Location location) {
         if (location == null || location.getWorld() == null) return;
         Firework firework = (Firework) location.getWorld().spawnEntity(location.clone().add(0, 0.4, 0), EntityType.FIREWORK_ROCKET);
@@ -501,6 +565,7 @@ public final class EventManager {
     private static void clearRuntime() {
         queueOpen = false;
         running = false;
+        autoClosing = false;
         queue.clear();
         participants.clear();
         finishedPlayers.clear();
