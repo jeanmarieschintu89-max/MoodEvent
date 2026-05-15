@@ -4,6 +4,8 @@ main: fr.moodcraft.event.Main
 api-version: '1.21'
 author: MoodCraft
 description: Système d'événements immersifs MoodCraft
+softdepend:
+  - Vault
 
 commands:
   event:
@@ -20,67 +22,129 @@ commands:
     permission: moodevent.admin
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
     aliases:
+      - eventaide
       - eventhelp
       - eventsadmin
 
-  eventgui:
+  eventmenu:
     description: Ouvre le centre événementiel admin.
-    usage: /eventgui
+    usage: /eventmenu
     permission: moodevent.admin
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
     aliases:
-      - eventmenu
+      - eventgui
       - eventpanel
 
-  eventcreate:
+  eventcreer:
     description: Créer un événement.
-    usage: /eventcreate <nom>
+    usage: /eventcreer <nom>
     permission: moodevent.admin
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
     aliases:
-      - eventnew
-      - eventcreer
       - eventcréer
+      - eventcreate
+      - eventnew
 
-  eventdesc:
+  eventdescription:
     description: Définir la description de l'événement.
-    usage: /eventdesc <description>
+    usage: /eventdescription <description>
     permission: moodevent.admin
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventdesc
 
   eventtype:
-    description: Définir le type de l'événement.
-    usage: /eventtype <mini-jeu|activité|pvp|build|autre>
-    permission: moodevent.admin
-    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
-
-  eventset:
-    description: Définir le point de téléportation de l'événement.
-    usage: /eventset
+    description: Définir le type de mini-jeu.
+    usage: /eventtype <course|jump|labyrinthe|pvp|quiz|build>
     permission: moodevent.admin
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
     aliases:
+      - eventmode
+      - eventjeu
+
+  eventdepart:
+    description: Définir le point de départ de l'événement.
+    usage: /eventdepart
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventdépart
+      - eventset
       - eventspawn
       - eventpos
 
-  eventopen:
-    description: Ouvrir la file d'attente de l'événement.
-    usage: /eventopen
-    permission: moodevent.admin
-    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
-
-  eventclose:
-    description: Fermer la file d'attente de l'événement.
-    usage: /eventclose
-    permission: moodevent.admin
-    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
-
-  eventgo:
-    description: Lancer l'événement et téléporter la file d'attente.
-    usage: /eventgo
+  eventarrivee:
+    description: Définir le point d'arrivée de l'événement.
+    usage: /eventarrivee
     permission: moodevent.admin
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
     aliases:
+      - eventarrivée
+      - eventsetfinish
+      - eventfinishset
+
+  eventsalleattente:
+    description: Générer la salle d'attente restaurable.
+    usage: /eventsalleattente [petit|medium|grand]
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventsalle
+      - eventattente
+      - eventbuildwaiting
+      - eventgenerersalle
+      - eventgénérersalle
+
+  eventrestaurersalle:
+    description: Restaurer la zone et supprimer la salle d'attente.
+    usage: /eventrestaurersalle
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventrestaurerattente
+      - eventrestorewaiting
+      - eventclearwaiting
+
+  eventtpsalle:
+    description: Se téléporter dans la salle d'attente.
+    usage: /eventtpsalle
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventtpattente
+      - eventwaitingtp
+
+  eventfinirjoueur:
+    description: Valider manuellement l'arrivée d'un joueur.
+    usage: /eventfinirjoueur <joueur>
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventfinishplayer
+
+  eventouvrir:
+    description: Ouvrir la file d'attente de l'événement.
+    usage: /eventouvrir
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventopen
+
+  eventfermer:
+    description: Fermer la file d'attente de l'événement.
+    usage: /eventfermer
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventclose
+
+  eventlancer:
+    description: Lancer l'événement et téléporter la file d'attente.
+    usage: /eventlancer
+    permission: moodevent.admin
+    permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventgo
       - eventstart
 
   eventstop:
@@ -89,14 +153,17 @@ commands:
     permission: moodevent.admin
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
     aliases:
+      - eventterminer
       - eventend
       - eventfinish
 
-  eventcancel:
+  eventannuler:
     description: Annuler l'événement.
-    usage: /eventcancel
+    usage: /eventannuler
     permission: moodevent.admin
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
+    aliases:
+      - eventcancel
 
 permissions:
   moodevent.admin:
