@@ -3,6 +3,7 @@ package fr.moodcraft.event.listener;
 import fr.moodcraft.event.generator.EventGiveStructureManager;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameSize;
+import fr.moodcraft.event.generator.GeneratedGameStyleManager;
 import fr.moodcraft.event.generator.GeneratedGameType;
 import fr.moodcraft.event.gui.EventAdminGUI;
 import fr.moodcraft.event.gui.EventLootGUI;
@@ -11,6 +12,7 @@ import fr.moodcraft.event.gui.RewardGUI;
 import fr.moodcraft.event.gui.WaitingRoomGUI;
 import fr.moodcraft.event.loot.EventLootManager;
 import fr.moodcraft.event.loot.LootTier;
+import fr.moodcraft.event.manager.EventLogManager;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.manager.RewardManager;
 import fr.moodcraft.event.manager.WaitingRoomManager;
@@ -91,9 +93,25 @@ public class EventAdminGUIListener implements Listener {
             case 16 -> openSize(player, GeneratedGameType.WATER_JUMP);
             case 22 -> openSize(player, GeneratedGameType.SURVIE_ETAGES);
             case 24 -> openSize(player, GeneratedGameType.RUEE_OR);
-            case 26 -> { click(player); EventGiveStructureManager.generate(player); MiniGameGeneratorGUI.openMain(player); }
+            case 26 -> {
+                click(player);
+                EventGiveStructureManager.generate(player);
+                EventLogManager.log(player, "Event Give", "Structure de distribution générée");
+                MiniGameGeneratorGUI.openMain(player);
+            }
+            case 28 -> {
+                click(player);
+                GeneratedGameStyleManager.cycle(player);
+                MiniGameGeneratorGUI.openMain(player);
+            }
             case 29 -> { click(player); EventLootGUI.open(player); }
-            case 33 -> { no(player); GeneratedGameManager.restore(player); EventGiveStructureManager.restore(player); MiniGameGeneratorGUI.openMain(player); }
+            case 33 -> {
+                no(player);
+                GeneratedGameManager.restore(player);
+                EventGiveStructureManager.restore(player);
+                EventLogManager.log(player, "Restauration", "Structures générées restaurées depuis le menu");
+                MiniGameGeneratorGUI.openMain(player);
+            }
             case 49 -> { click(player); EventAdminGUI.open(player); }
             default -> { }
         }
@@ -130,6 +148,7 @@ public class EventAdminGUIListener implements Listener {
                 player.closeInventory();
                 if (pending.isCustom()) GeneratedGameManager.generateCustom(player, pending.type(), pending.customValue());
                 else GeneratedGameManager.generate(player, pending.type(), pending.size());
+                EventLogManager.log(player, "Génération", pending.type().getDisplayName() + " - " + pending.describe() + " - style " + GeneratedGameStyleManager.get(player).getDisplayName());
                 MiniGameGeneratorGUI.clearPending(player);
             }
             case 15 -> { no(player); MiniGameGeneratorGUI.clearPending(player); MiniGameGeneratorGUI.openMain(player); }
