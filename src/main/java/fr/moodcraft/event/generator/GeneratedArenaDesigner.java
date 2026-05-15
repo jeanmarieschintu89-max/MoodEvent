@@ -17,19 +17,14 @@ public final class GeneratedArenaDesigner {
 
     private static final Random RANDOM = new Random();
     private static final Material[] WOOL = {
-            Material.WHITE_WOOL,
-            Material.YELLOW_WOOL,
-            Material.ORANGE_WOOL,
-            Material.LIME_WOOL,
-            Material.LIGHT_BLUE_WOOL,
-            Material.CYAN_WOOL,
-            Material.MAGENTA_WOOL,
-            Material.PINK_WOOL
+            Material.WHITE_WOOL, Material.YELLOW_WOOL, Material.ORANGE_WOOL, Material.LIME_WOOL,
+            Material.LIGHT_BLUE_WOOL, Material.CYAN_WOOL, Material.MAGENTA_WOOL, Material.PINK_WOOL
     };
     private static final int[] LANES = {0, 2, 4, 3, 1, -1, -3, -4, -2, 0, 3, 1};
     private static final int[] HEIGHTS = {0, 1, 1, 2, 1, 0, 1, 2, 1, 0, -1, 0};
 
     private static boolean started;
+    private static long lastCheck;
 
     private GeneratedArenaDesigner() {
     }
@@ -42,12 +37,17 @@ public final class GeneratedArenaDesigner {
             public void run() {
                 enhanceIfNeeded();
             }
-        }.runTaskTimer(Main.getInstance(), 40L, 40L);
+        }.runTaskTimer(Main.getInstance(), 100L, 200L);
     }
 
     private static void enhanceIfNeeded() {
+        long now = System.currentTimeMillis();
+        if (now - lastCheck < 9000L) return;
+        lastCheck = now;
+
         File file = new File(Main.getInstance().getDataFolder(), "generated-game.yml");
         if (!file.exists()) return;
+
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
         if (!config.getBoolean("active", false)) return;
 
@@ -64,14 +64,11 @@ public final class GeneratedArenaDesigner {
 
         World world = Bukkit.getWorld(config.getString("region.world", ""));
         if (world == null) return;
+
         Region region = new Region(
                 world,
-                config.getInt("region.min-x"),
-                config.getInt("region.min-y"),
-                config.getInt("region.min-z"),
-                config.getInt("region.max-x"),
-                config.getInt("region.max-y"),
-                config.getInt("region.max-z")
+                config.getInt("region.min-x"), config.getInt("region.min-y"), config.getInt("region.min-z"),
+                config.getInt("region.max-x"), config.getInt("region.max-y"), config.getInt("region.max-z")
         );
         Location start = readLocation(config, "start");
         Location finish = readLocation(config, "finish");
@@ -93,41 +90,33 @@ public final class GeneratedArenaDesigner {
         }
     }
 
-    private static void maze(Region r, Location start, Location finish) {
+    private static void maze(Region region, Location start, Location finish) {
         Palette palette = randomPalette();
-        boxWalls(r, 8, palette.wall(), palette.pillar(), palette.light());
-        floor(r, r.minY() + 1, palette.floor());
+        boxWalls(region, 8, palette.wall(), palette.pillar(), palette.light());
+        floor(region, region.minY() + 1, palette.floor());
 
-        int centerX = (r.minX() + r.maxX()) / 2;
-        int centerZ = (r.minZ() + r.maxZ()) / 2;
-
-        for (int x = r.minX() + 3; x <= r.maxX() - 3; x++) {
-            for (int z = r.minZ() + 3; z <= r.maxZ() - 3; z++) {
+        int centerX = (region.minX() + region.maxX()) / 2;
+        int centerZ = (region.minZ() + region.maxZ()) / 2;
+        for (int x = region.minX() + 3; x <= region.maxX() - 3; x++) {
+            for (int z = region.minZ() + 3; z <= region.maxZ() - 3; z++) {
                 boolean wall = (x % 4 == 0 && z % 3 != 0)
                         || (z % 5 == 0 && x % 3 != 0)
                         || ((x + z + RANDOM.nextInt(4)) % 17 == 0)
-                        || x == r.minX() + 3
-                        || x == r.maxX() - 3
-                        || z == r.minZ() + 3
-                        || z == r.maxZ() - 3;
-
-                if (near(x, z, start, 4) || (finish != null && near(x, z, finish, 5))) {
-                    wall = false;
-                }
-
-                if (wall) {
-                    wallColumn(r.world(), x, r.minY() + 2, z, 6, palette.wall(), palette.pillar(), palette.light());
-                } else if ((Math.abs(x - centerX) + Math.abs(z - centerZ)) % 19 == 0) {
-                    r.world().getBlockAt(x, r.minY() + 2, z).setType(Material.LANTERN, false);
-                }
+                        || x == region.minX() + 3
+                        || x == region.maxX() - 3
+                        || z == region.minZ() + 3
+                        || z == region.maxZ() - 3;
+                if (near(x, z, start, 5) || (finish != null && near(x, z, finish, 6))) wall = false;
+                if (wall) wallColumn(region.world(), x, region.minY() + 2, z, 6, palette.wall(), palette.pillar(), palette.light());
+                else if ((Math.abs(x - centerX) + Math.abs(z - centerZ)) % 19 == 0) region.world().getBlockAt(x, region.minY() + 2, z).setType(Material.LANTERN, false);
             }
         }
 
-        plaza(start, Material.LIME_CONCRETE, Material.EMERALD_BLOCK, Material.LIME_STAINED_GLASS);
-        if (finish != null) finishZone(finish, false);
+        startPortal(start, Material.LIME_CONCRETE, Material.EMERALD_BLOCK, Material.LIME_STAINED_GLASS);
+        if (finish != null) finishPortal(finish, false);
     }
 
-    private static void jump(Region r, Location start, Location finish) {
+    private static void jump(Region region, Location start, Location finish) {
         int variant = RANDOM.nextInt(4);
         Material wall = switch (variant) {
             case 0 -> Material.DARK_OAK_FENCE;
@@ -136,202 +125,207 @@ public final class GeneratedArenaDesigner {
             default -> Material.IRON_BARS;
         };
 
-        linearArena(r, wall, Material.SMOOTH_STONE, 7);
-        floor(r, r.minY(), variant == 2 ? Material.CYAN_CONCRETE : Material.BLUE_CONCRETE);
-        plaza(start, Material.LIME_WOOL, Material.EMERALD_BLOCK, Material.LIME_STAINED_GLASS);
+        linearArena(region, wall, Material.SMOOTH_STONE, 7);
+        floor(region, region.minY(), variant == 2 ? Material.CYAN_CONCRETE : Material.BLUE_CONCRETE);
+        startPortal(start, Material.LIME_WOOL, Material.EMERALD_BLOCK, Material.LIME_STAINED_GLASS);
 
         int x = start.getBlockX();
         int z = start.getBlockZ();
         int y = start.getBlockY();
-        int maxX = finish == null ? r.maxX() - 8 : finish.getBlockX() - 5;
+        int maxX = finish == null ? region.maxX() - 8 : finish.getBlockX() - 5;
         int step = 0;
-
         while (x < maxX) {
             step++;
             x += distance(step);
-            z = clamp(start.getBlockZ() + LANES[(step + variant) % LANES.length], r.minZ() + 4, r.maxZ() - 4);
+            z = clamp(start.getBlockZ() + LANES[(step + variant) % LANES.length], region.minZ() + 4, region.maxZ() - 4);
             y = clamp(start.getBlockY() + HEIGHTS[(step + variant) % HEIGHTS.length], start.getBlockY(), start.getBlockY() + 3);
 
             boolean checkpoint = step % 7 == 0;
             Material material = checkpoint ? Material.GOLD_BLOCK : WOOL[(step + variant) % WOOL.length];
-            parkourPlatform(r.world(), x, y, z, checkpoint ? 2 : 1, material, checkpoint);
-            support(r.world(), x, r.minY() + 1, y - 1, z, checkpoint ? Material.QUARTZ_PILLAR : Material.IRON_BARS);
-
-            if (step % 5 == 0) sideStep(r.world(), x + 1, y, clamp(z + 3, r.minZ() + 4, r.maxZ() - 4), WOOL[(step + 3) % WOOL.length]);
-            if (step % 6 == 0) arch(r.world(), x, y, z, Material.SEA_LANTERN);
-            if (step % 9 == 0) miniBridge(r.world(), x, y, z, variant);
+            parkourPlatform(region.world(), x, y, z, checkpoint ? 2 : 1, material, checkpoint);
+            support(region.world(), x, region.minY() + 1, y - 1, z, checkpoint ? Material.QUARTZ_PILLAR : Material.IRON_BARS);
+            if (step % 5 == 0) sideStep(region.world(), x + 1, y, clamp(z + 3, region.minZ() + 4, region.maxZ() - 4), WOOL[(step + 3) % WOOL.length]);
+            if (step % 6 == 0) arch(region.world(), x, y, z, Material.SEA_LANTERN);
+            if (step % 9 == 0) miniBridge(region.world(), x, y, z, variant);
         }
 
-        if (finish != null) finishZone(finish, true);
+        if (finish != null) finishPortal(finish, true);
     }
 
-    private static void race(Region r, Location start, Location finish) {
-        linearArena(r, Material.IRON_BARS, Material.SMOOTH_STONE, 5);
-
-        for (int x = r.minX() + 4; x <= r.maxX() - 4; x++) {
-            for (int z = r.minZ() + 2; z <= r.maxZ() - 2; z++) {
-                r.world().getBlockAt(x, start.getBlockY() - 1, z).setType((x + z) % 2 == 0 ? Material.SMOOTH_STONE : Material.POLISHED_ANDESITE, false);
+    private static void race(Region region, Location start, Location finish) {
+        linearArena(region, Material.IRON_BARS, Material.SMOOTH_STONE, 5);
+        int floorY = start.getBlockY() - 1;
+        for (int x = region.minX() + 4; x <= region.maxX() - 4; x++) {
+            for (int z = region.minZ() + 2; z <= region.maxZ() - 2; z++) {
+                region.world().getBlockAt(x, floorY, z).setType((x + z) % 2 == 0 ? Material.SMOOTH_STONE : Material.POLISHED_ANDESITE, false);
             }
         }
 
-        int end = finish == null ? r.maxX() - 8 : finish.getBlockX();
+        int end = finish == null ? region.maxX() - 8 : finish.getBlockX();
         int variant = RANDOM.nextInt(3);
         for (int x = start.getBlockX() + 10; x < end; x += 12 + variant) {
             for (int z = start.getBlockZ() - 2; z <= start.getBlockZ() + 2; z++) {
-                if (z != start.getBlockZ()) r.world().getBlockAt(x, start.getBlockY(), z).setType(Material.HAY_BLOCK, false);
+                if (z != start.getBlockZ()) region.world().getBlockAt(x, start.getBlockY(), z).setType(Material.HAY_BLOCK, false);
             }
-            r.world().getBlockAt(x + 4, start.getBlockY(), start.getBlockZ()).setType(Material.OAK_FENCE, false);
-            r.world().getBlockAt(x + 5, start.getBlockY(), start.getBlockZ()).setType(Material.OAK_FENCE, false);
+            region.world().getBlockAt(x + 4, start.getBlockY(), start.getBlockZ()).setType(Material.OAK_FENCE, false);
+            region.world().getBlockAt(x + 5, start.getBlockY(), start.getBlockZ()).setType(Material.OAK_FENCE, false);
             if (variant == 2) {
-                r.world().getBlockAt(x + 7, start.getBlockY(), start.getBlockZ() - 2).setType(Material.SLIME_BLOCK, false);
-                r.world().getBlockAt(x + 7, start.getBlockY(), start.getBlockZ() + 2).setType(Material.SLIME_BLOCK, false);
+                region.world().getBlockAt(x + 7, start.getBlockY(), start.getBlockZ() - 2).setType(Material.SLIME_BLOCK, false);
+                region.world().getBlockAt(x + 7, start.getBlockY(), start.getBlockZ() + 2).setType(Material.SLIME_BLOCK, false);
             }
         }
 
-        plaza(start, Material.LIME_CONCRETE, Material.EMERALD_BLOCK, Material.LIME_STAINED_GLASS);
-        if (finish != null) finishZone(finish, false);
+        startPortal(start, Material.LIME_CONCRETE, Material.EMERALD_BLOCK, Material.LIME_STAINED_GLASS);
+        if (finish != null) finishPortal(finish, false);
     }
 
-    private static void waterJump(Region r, Location start, Location finish) {
+    private static void waterJump(Region region, Location start, Location finish) {
         int variant = RANDOM.nextInt(4);
-        linearArena(r, Material.CYAN_STAINED_GLASS, Material.PRISMARINE_BRICKS, 6);
-
-        for (int x = r.minX() + 2; x <= r.maxX() - 2; x++) {
-            for (int z = r.minZ() + 2; z <= r.maxZ() - 2; z++) {
-                r.world().getBlockAt(x, start.getBlockY() - 2, z).setType(Material.PRISMARINE_BRICKS, false);
-                r.world().getBlockAt(x, start.getBlockY() - 1, z).setType(Material.WATER, false);
+        linearArena(region, Material.CYAN_STAINED_GLASS, Material.PRISMARINE_BRICKS, 6);
+        for (int x = region.minX() + 2; x <= region.maxX() - 2; x++) {
+            for (int z = region.minZ() + 2; z <= region.maxZ() - 2; z++) {
+                region.world().getBlockAt(x, start.getBlockY() - 2, z).setType(Material.PRISMARINE_BRICKS, false);
+                region.world().getBlockAt(x, start.getBlockY() - 1, z).setType(Material.WATER, false);
             }
         }
 
-        plaza(start, Material.LIME_WOOL, Material.EMERALD_BLOCK, Material.LIME_STAINED_GLASS);
-
+        startPortal(start, Material.LIME_WOOL, Material.EMERALD_BLOCK, Material.LIME_STAINED_GLASS);
         int x = start.getBlockX();
         int z = start.getBlockZ();
         int y = start.getBlockY();
-        int maxX = finish == null ? r.maxX() - 8 : finish.getBlockX() - 5;
+        int maxX = finish == null ? region.maxX() - 8 : finish.getBlockX() - 5;
         int step = 0;
-
         while (x < maxX) {
             step++;
             x += step % 4 == 0 ? 4 : 3;
-            z = clamp(start.getBlockZ() + LANES[(step + variant + 4) % LANES.length], r.minZ() + 4, r.maxZ() - 4);
-
+            z = clamp(start.getBlockZ() + LANES[(step + variant + 4) % LANES.length], region.minZ() + 4, region.maxZ() - 4);
             boolean checkpoint = step % 6 == 0;
             int platformY = y + (checkpoint ? 1 : 0);
-            platform(r.world(), x, platformY, z, checkpoint ? 2 : 1, checkpoint ? Material.LIGHT_BLUE_CONCRETE : WOOL[(step + 2 + variant) % WOOL.length]);
-            r.world().getBlockAt(x, platformY - 1, z).setType(Material.SEA_LANTERN, false);
-
-            if (step % 4 == 0) sideStep(r.world(), x + 1, y, clamp(z + 2, r.minZ() + 4, r.maxZ() - 4), WOOL[(step + 5) % WOOL.length]);
-            if (step % 5 == 0) waterObstacle(r.world(), x + 2, y, z, variant);
+            platform(region.world(), x, platformY, z, checkpoint ? 2 : 1, checkpoint ? Material.LIGHT_BLUE_CONCRETE : WOOL[(step + 2 + variant) % WOOL.length]);
+            region.world().getBlockAt(x, platformY - 1, z).setType(Material.SEA_LANTERN, false);
+            if (step % 4 == 0) sideStep(region.world(), x + 1, y, clamp(z + 2, region.minZ() + 4, region.maxZ() - 4), WOOL[(step + 5) % WOOL.length]);
+            if (step % 5 == 0) waterObstacle(region.world(), x + 2, y, z, variant);
         }
 
-        if (finish != null) finishZone(finish, true);
+        if (finish != null) finishPortal(finish, true);
     }
 
-    private static void survival(Region r, Location start) {
-        boxWalls(r, 7, Material.PURPLE_STAINED_GLASS, Material.AMETHYST_BLOCK, Material.SHROOMLIGHT);
-        plaza(start, Material.LIME_CONCRETE, Material.EMERALD_BLOCK, Material.LIME_STAINED_GLASS);
+    private static void survival(Region region, Location start) {
+        boxWalls(region, 7, Material.PURPLE_STAINED_GLASS, Material.AMETHYST_BLOCK, Material.SHROOMLIGHT);
+        startPortal(start, Material.LIME_CONCRETE, Material.EMERALD_BLOCK, Material.LIME_STAINED_GLASS);
     }
 
-    private static void finishZone(Location location, boolean woolStyle) {
+    private static void startPortal(Location location, Material floor, Material pillar, Material glass) {
         World world = location.getWorld();
         if (world == null) return;
         int cx = location.getBlockX();
         int cy = location.getBlockY() - 1;
         int cz = location.getBlockZ();
-
-        Material base = woolStyle ? Material.RED_WOOL : Material.RED_CONCRETE;
-        platform(world, cx, cy, cz, 4, base);
+        platform(world, cx, cy, cz, 5, floor);
         platform(world, cx, cy + 1, cz, 2, Material.WHITE_WOOL);
-        platform(world, cx, cy + 2, cz, 1, Material.RED_WOOL);
-
-        for (int x = cx - 4; x <= cx + 4; x++) {
-            world.getBlockAt(x, cy + 1, cz - 4).setType(Material.OAK_FENCE, false);
-            world.getBlockAt(x, cy + 1, cz + 4).setType(Material.OAK_FENCE, false);
-        }
-        for (int z = cz - 4; z <= cz + 4; z++) {
-            world.getBlockAt(cx - 4, cy + 1, z).setType(Material.OAK_FENCE, false);
-            world.getBlockAt(cx + 4, cy + 1, z).setType(Material.OAK_FENCE, false);
-        }
-
-        for (int y = cy + 1; y <= cy + 5; y++) {
-            world.getBlockAt(cx - 4, y, cz).setType(Material.REDSTONE_BLOCK, false);
-            world.getBlockAt(cx + 4, y, cz).setType(Material.REDSTONE_BLOCK, false);
-        }
-        for (int x = cx - 4; x <= cx + 4; x++) world.getBlockAt(x, cy + 5, cz).setType(Material.RED_STAINED_GLASS, false);
-        world.getBlockAt(cx, cy + 6, cz).setType(Material.SEA_LANTERN, false);
+        ring(world, cx, cy + 1, cz, 5, Material.OAK_FENCE);
+        portalArch(world, cx, cy, cz, pillar, glass);
         world.getBlockAt(cx, cy + 1, cz).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(cx, cy + 5, cz).setType(Material.SEA_LANTERN, false);
+        sideLights(world, cx, cy, cz);
     }
 
-    private static void linearArena(Region r, Material wall, Material base, int height) {
-        for (int x = r.minX(); x <= r.maxX(); x++) {
-            r.world().getBlockAt(x, r.minY() + 1, r.minZ()).setType(base, false);
-            r.world().getBlockAt(x, r.minY() + 1, r.maxZ()).setType(base, false);
-            for (int y = r.minY() + 2; y <= r.minY() + height; y++) {
-                r.world().getBlockAt(x, y, r.minZ()).setType(wall, false);
-                r.world().getBlockAt(x, y, r.maxZ()).setType(wall, false);
+    private static void finishPortal(Location location, boolean woolStyle) {
+        World world = location.getWorld();
+        if (world == null) return;
+        int cx = location.getBlockX();
+        int cy = location.getBlockY() - 1;
+        int cz = location.getBlockZ();
+        Material base = woolStyle ? Material.RED_WOOL : Material.RED_CONCRETE;
+        platform(world, cx, cy, cz, 5, base);
+        platform(world, cx, cy + 1, cz, 3, Material.WHITE_WOOL);
+        platform(world, cx, cy + 2, cz, 1, base);
+        ring(world, cx, cy + 1, cz, 5, Material.OAK_FENCE);
+        portalArch(world, cx, cy, cz, Material.REDSTONE_BLOCK, Material.RED_STAINED_GLASS);
+        world.getBlockAt(cx, cy + 1, cz).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(cx, cy + 6, cz).setType(Material.SEA_LANTERN, false);
+        for (int x = cx - 2; x <= cx + 2; x++) {
+            world.getBlockAt(x, cy + 3, cz - 4).setType(Material.RED_WOOL, false);
+            world.getBlockAt(x, cy + 3, cz + 4).setType(Material.RED_WOOL, false);
+        }
+    }
+
+    private static void ring(World world, int cx, int cy, int cz, int radius, Material material) {
+        for (int x = cx - radius; x <= cx + radius; x++) {
+            world.getBlockAt(x, cy, cz - radius).setType(material, false);
+            world.getBlockAt(x, cy, cz + radius).setType(material, false);
+        }
+        for (int z = cz - radius; z <= cz + radius; z++) {
+            world.getBlockAt(cx - radius, cy, z).setType(material, false);
+            world.getBlockAt(cx + radius, cy, z).setType(material, false);
+        }
+    }
+
+    private static void portalArch(World world, int cx, int cy, int cz, Material pillar, Material glass) {
+        for (int y = cy + 1; y <= cy + 5; y++) {
+            world.getBlockAt(cx - 4, y, cz).setType(pillar, false);
+            world.getBlockAt(cx + 4, y, cz).setType(pillar, false);
+        }
+        for (int x = cx - 4; x <= cx + 4; x++) world.getBlockAt(x, cy + 5, cz).setType(glass, false);
+    }
+
+    private static void sideLights(World world, int cx, int cy, int cz) {
+        world.getBlockAt(cx - 4, cy + 2, cz - 3).setType(Material.SEA_LANTERN, false);
+        world.getBlockAt(cx + 4, cy + 2, cz - 3).setType(Material.SEA_LANTERN, false);
+        world.getBlockAt(cx - 4, cy + 2, cz + 3).setType(Material.SEA_LANTERN, false);
+        world.getBlockAt(cx + 4, cy + 2, cz + 3).setType(Material.SEA_LANTERN, false);
+    }
+
+    private static void linearArena(Region region, Material wall, Material base, int height) {
+        for (int x = region.minX(); x <= region.maxX(); x++) {
+            region.world().getBlockAt(x, region.minY() + 1, region.minZ()).setType(base, false);
+            region.world().getBlockAt(x, region.minY() + 1, region.maxZ()).setType(base, false);
+            for (int y = region.minY() + 2; y <= region.minY() + height; y++) {
+                region.world().getBlockAt(x, y, region.minZ()).setType(wall, false);
+                region.world().getBlockAt(x, y, region.maxZ()).setType(wall, false);
             }
-            if ((x - r.minX()) % 12 == 0) {
-                r.world().getBlockAt(x, r.minY() + height + 1, r.minZ()).setType(Material.SEA_LANTERN, false);
-                r.world().getBlockAt(x, r.minY() + height + 1, r.maxZ()).setType(Material.SEA_LANTERN, false);
+            if ((x - region.minX()) % 12 == 0) {
+                region.world().getBlockAt(x, region.minY() + height + 1, region.minZ()).setType(Material.SEA_LANTERN, false);
+                region.world().getBlockAt(x, region.minY() + height + 1, region.maxZ()).setType(Material.SEA_LANTERN, false);
             }
         }
-        for (int z = r.minZ(); z <= r.maxZ(); z++) {
-            for (int y = r.minY() + 2; y <= r.minY() + height; y++) {
-                r.world().getBlockAt(r.minX(), y, z).setType(wall, false);
-                r.world().getBlockAt(r.maxX(), y, z).setType(wall, false);
+        for (int z = region.minZ(); z <= region.maxZ(); z++) {
+            for (int y = region.minY() + 2; y <= region.minY() + height; y++) {
+                region.world().getBlockAt(region.minX(), y, z).setType(wall, false);
+                region.world().getBlockAt(region.maxX(), y, z).setType(wall, false);
             }
         }
     }
 
-    private static void boxWalls(Region r, int height, Material wall, Material pillar, Material light) {
-        for (int x = r.minX(); x <= r.maxX(); x++) {
-            for (int y = r.minY() + 1; y <= r.minY() + height; y++) {
-                r.world().getBlockAt(x, y, r.minZ()).setType(wall, false);
-                r.world().getBlockAt(x, y, r.maxZ()).setType(wall, false);
+    private static void boxWalls(Region region, int height, Material wall, Material pillar, Material light) {
+        for (int x = region.minX(); x <= region.maxX(); x++) {
+            for (int y = region.minY() + 1; y <= region.minY() + height; y++) {
+                region.world().getBlockAt(x, y, region.minZ()).setType(wall, false);
+                region.world().getBlockAt(x, y, region.maxZ()).setType(wall, false);
             }
         }
-        for (int z = r.minZ(); z <= r.maxZ(); z++) {
-            for (int y = r.minY() + 1; y <= r.minY() + height; y++) {
-                r.world().getBlockAt(r.minX(), y, z).setType(wall, false);
-                r.world().getBlockAt(r.maxX(), y, z).setType(wall, false);
+        for (int z = region.minZ(); z <= region.maxZ(); z++) {
+            for (int y = region.minY() + 1; y <= region.minY() + height; y++) {
+                region.world().getBlockAt(region.minX(), y, z).setType(wall, false);
+                region.world().getBlockAt(region.maxX(), y, z).setType(wall, false);
             }
         }
-        int[][] corners = {{r.minX(), r.minZ()}, {r.minX(), r.maxZ()}, {r.maxX(), r.minZ()}, {r.maxX(), r.maxZ()}};
+        int[][] corners = {{region.minX(), region.minZ()}, {region.minX(), region.maxZ()}, {region.maxX(), region.minZ()}, {region.maxX(), region.maxZ()}};
         for (int[] corner : corners) {
-            for (int y = r.minY() + 1; y <= r.minY() + height + 1; y++) r.world().getBlockAt(corner[0], y, corner[1]).setType(pillar, false);
-            r.world().getBlockAt(corner[0], r.minY() + height + 2, corner[1]).setType(light, false);
+            for (int y = region.minY() + 1; y <= region.minY() + height + 1; y++) region.world().getBlockAt(corner[0], y, corner[1]).setType(pillar, false);
+            region.world().getBlockAt(corner[0], region.minY() + height + 2, corner[1]).setType(light, false);
         }
     }
 
-    private static void floor(Region r, int y, Material material) {
-        for (int x = r.minX() + 1; x <= r.maxX() - 1; x++) {
-            for (int z = r.minZ() + 1; z <= r.maxZ() - 1; z++) {
-                r.world().getBlockAt(x, y, z).setType(material, false);
-            }
+    private static void floor(Region region, int y, Material material) {
+        for (int x = region.minX() + 1; x <= region.maxX() - 1; x++) {
+            for (int z = region.minZ() + 1; z <= region.maxZ() - 1; z++) region.world().getBlockAt(x, y, z).setType(material, false);
         }
     }
 
     private static void wallColumn(World world, int x, int y, int z, int height, Material wall, Material pillar, Material light) {
         for (int dy = 0; dy < height; dy++) world.getBlockAt(x, y + dy, z).setType(dy == height - 1 ? pillar : wall, false);
         if ((x + z) % 9 == 0) world.getBlockAt(x, y + Math.min(3, height - 1), z).setType(light, false);
-    }
-
-    private static void plaza(Location location, Material floor, Material pillar, Material glass) {
-        World world = location.getWorld();
-        if (world == null) return;
-        int cx = location.getBlockX();
-        int cy = location.getBlockY() - 1;
-        int cz = location.getBlockZ();
-        platform(world, cx, cy, cz, 3, floor);
-        for (int offset = -3; offset <= 3; offset += 6) {
-            for (int y = cy + 1; y <= cy + 4; y++) {
-                world.getBlockAt(cx, y, cz + offset).setType(pillar, false);
-                world.getBlockAt(cx + offset, y, cz).setType(pillar, false);
-            }
-        }
-        for (int z = cz - 3; z <= cz + 3; z++) world.getBlockAt(cx, cy + 4, z).setType(glass, false);
-        for (int x = cx - 3; x <= cx + 3; x++) world.getBlockAt(x, cy + 4, cz).setType(glass, false);
     }
 
     private static void parkourPlatform(World world, int cx, int cy, int cz, int radius, Material material, boolean checkpoint) {
@@ -398,9 +392,7 @@ public final class GeneratedArenaDesigner {
 
     private static void platform(World world, int cx, int cy, int cz, int radius, Material material) {
         for (int x = cx - radius; x <= cx + radius; x++) {
-            for (int z = cz - radius; z <= cz + radius; z++) {
-                world.getBlockAt(x, cy, z).setType(material, false);
-            }
+            for (int z = cz - radius; z <= cz + radius; z++) world.getBlockAt(x, cy, z).setType(material, false);
         }
     }
 
