@@ -18,16 +18,7 @@ public enum GeneratedGameSize {
     private final int survivalWidth;
     private final int survivalFloors;
 
-    GeneratedGameSize(
-            String displayName,
-            Material icon,
-            int mazeWidth,
-            int jumpPlatforms,
-            int raceLength,
-            int waterLength,
-            int survivalWidth,
-            int survivalFloors
-    ) {
+    GeneratedGameSize(String displayName, Material icon, int mazeWidth, int jumpPlatforms, int raceLength, int waterLength, int survivalWidth, int survivalFloors) {
         this.displayName = displayName;
         this.icon = icon;
         this.mazeWidth = mazeWidth;
@@ -38,48 +29,51 @@ public enum GeneratedGameSize {
         this.survivalFloors = survivalFloors;
     }
 
-    public String getDisplayName() {
-        return displayName;
+    public String getDisplayName() { return displayName; }
+    public Material getIcon() { return icon; }
+    public int getMazeWidth() { return mazeWidth; }
+    public int getJumpPlatforms() { return jumpPlatforms; }
+    public int getRaceLength() { return raceLength; }
+    public int getWaterLength() { return waterLength; }
+    public int getSurvivalWidth() { return survivalWidth; }
+    public int getSurvivalFloors() { return survivalFloors; }
+
+    public int getGoldRushWidth() {
+        return switch (this) {
+            case PETIT -> 15;
+            case MOYEN -> 23;
+            case GRAND -> 31;
+            case GEANT -> 41;
+        };
     }
 
-    public Material getIcon() {
-        return icon;
+    public int getGoldRushHeight() {
+        return switch (this) {
+            case PETIT -> 9;
+            case MOYEN -> 11;
+            case GRAND -> 13;
+            case GEANT -> 15;
+        };
     }
 
-    public int getMazeWidth() {
-        return mazeWidth;
-    }
-
-    public int getJumpPlatforms() {
-        return jumpPlatforms;
-    }
-
-    public int getRaceLength() {
-        return raceLength;
-    }
-
-    public int getWaterLength() {
-        return waterLength;
-    }
-
-    public int getSurvivalWidth() {
-        return survivalWidth;
-    }
-
-    public int getSurvivalFloors() {
-        return survivalFloors;
+    public int getGoldRushDurationSeconds() {
+        return switch (this) {
+            case PETIT -> 60;
+            case MOYEN -> 120;
+            case GRAND -> 180;
+            case GEANT -> 240;
+        };
     }
 
     public String describeFor(GeneratedGameType type) {
-        if (type == null) {
-            return displayName;
-        }
+        if (type == null) return displayName;
         return switch (type) {
             case LABYRINTHE -> mazeWidth + "x" + mazeWidth;
             case JUMP -> jumpPlatforms + " plateformes";
             case COURSE -> raceLength + " blocs";
             case WATER_JUMP -> waterLength + " blocs";
             case SURVIE_ETAGES -> survivalFloors + " étages";
+            case RUEE_OR -> getGoldRushWidth() + "x" + getGoldRushHeight() + " §8• §7" + getGoldRushDurationSeconds() + "s";
         };
     }
 }
