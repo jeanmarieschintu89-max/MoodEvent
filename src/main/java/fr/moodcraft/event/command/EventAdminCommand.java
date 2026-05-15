@@ -32,35 +32,35 @@ public class EventAdminCommand implements CommandExecutor {
 
         switch (cmd) {
 
-            case "eventgui", "eventmenu", "eventpanel" -> {
+            case "eventmenu", "eventgui", "eventpanel" -> {
                 EventAdminGUI.open(player);
                 return true;
             }
 
-            case "eventadmin", "eventhelp", "eventsadmin" -> {
+            case "eventadmin", "eventaide", "eventhelp", "eventsadmin" -> {
                 EventManager.adminHelp(player);
                 return true;
             }
 
-            case "eventcreate", "eventnew", "eventcreer", "eventcréer" -> {
+            case "eventcreer", "eventcréer", "eventcreate", "eventnew" -> {
                 if (args.length == 0) {
-                    MoodStyle.errorMessage(player, MoodStyle.MODULE, "Nom d'événement manquant.", MoodStyle.detail("Utilisation : §e/eventcreate <nom>"));
+                    MoodStyle.errorMessage(player, MoodStyle.MODULE, "Nom d'événement manquant.", MoodStyle.detail("Utilisation : §e/eventcreer <nom>"));
                     return true;
                 }
                 EventManager.createEvent(player, join(args, 0));
                 return true;
             }
 
-            case "eventdesc" -> {
+            case "eventdescription", "eventdesc" -> {
                 if (args.length == 0) {
-                    MoodStyle.errorMessage(player, MoodStyle.MODULE, "Description manquante.", MoodStyle.detail("Utilisation : §e/eventdesc <description>"));
+                    MoodStyle.errorMessage(player, MoodStyle.MODULE, "Description manquante.", MoodStyle.detail("Utilisation : §e/eventdescription <description>"));
                     return true;
                 }
                 EventManager.setDescription(player, join(args, 0));
                 return true;
             }
 
-            case "eventtype" -> {
+            case "eventtype", "eventmode", "eventjeu" -> {
                 if (args.length == 0) {
                     MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type manquant.", MoodStyle.detail("Types : §ecourse§7, §ejump§7, §elabyrinthe§7, §epvp§7, §equiz§7, §ebuild"));
                     return true;
@@ -69,33 +69,33 @@ public class EventAdminCommand implements CommandExecutor {
                 return true;
             }
 
-            case "eventset", "eventspawn", "eventpos", "eventdepart", "eventdépart" -> {
+            case "eventdepart", "eventdépart", "eventset", "eventspawn", "eventpos" -> {
                 EventManager.setLocation(player);
                 return true;
             }
 
-            case "eventsetfinish", "eventfinishset", "eventarrivee", "eventarrivée" -> {
+            case "eventarrivee", "eventarrivée", "eventsetfinish", "eventfinishset" -> {
                 EventManager.setFinishLocation(player);
                 return true;
             }
 
-            case "eventbuildwaiting", "eventattente", "eventgenerersalle", "eventgénérersalle" -> {
+            case "eventsalleattente", "eventsalle", "eventattente", "eventbuildwaiting", "eventgenerersalle", "eventgénérersalle" -> {
                 WaitingRoomManager.build(player, args.length == 0 ? "medium" : args[0]);
                 return true;
             }
 
-            case "eventrestorewaiting", "eventrestaurerattente", "eventclearwaiting" -> {
+            case "eventrestaurersalle", "eventrestaurerattente", "eventrestorewaiting", "eventclearwaiting" -> {
                 WaitingRoomManager.restore(player);
                 return true;
             }
 
-            case "eventwaitingtp", "eventtpattente" -> {
+            case "eventtpsalle", "eventtpattente", "eventwaitingtp" -> {
                 WaitingRoomManager.teleport(player);
                 MoodStyle.successMessage(player, MoodStyle.MODULE, "Téléportation en salle d'attente.");
                 return true;
             }
 
-            case "eventfinishplayer", "eventfinirjoueur" -> {
+            case "eventfinirjoueur", "eventfinishplayer" -> {
                 if (args.length == 0) {
                     EventManager.finishPlayer(player);
                     return true;
@@ -112,27 +112,27 @@ public class EventAdminCommand implements CommandExecutor {
                 return true;
             }
 
-            case "eventopen" -> {
+            case "eventouvrir", "eventopen" -> {
                 EventManager.openQueue(player);
                 return true;
             }
 
-            case "eventclose" -> {
+            case "eventfermer", "eventclose" -> {
                 EventManager.closeQueue(player);
                 return true;
             }
 
-            case "eventgo", "eventstart" -> {
+            case "eventlancer", "eventgo", "eventstart" -> {
                 EventManager.startEvent(player);
                 return true;
             }
 
-            case "eventstop", "eventend", "eventfinish" -> {
+            case "eventstop", "eventterminer", "eventend", "eventfinish" -> {
                 EventManager.stopEvent(player);
                 return true;
             }
 
-            case "eventcancel" -> {
+            case "eventannuler", "eventcancel" -> {
                 EventManager.cancelEvent(player);
                 return true;
             }
@@ -144,13 +144,7 @@ public class EventAdminCommand implements CommandExecutor {
         }
     }
 
-    private String join(
-            String[] args,
-            int start
-    ) {
-        return String.join(
-                " ",
-                Arrays.copyOfRange(args, start, args.length)
-        );
+    private String join(String[] args, int start) {
+        return String.join(" ", Arrays.copyOfRange(args, start, args.length));
     }
 }
