@@ -35,7 +35,7 @@ public final class MiniGameGeneratorGUI {
                 "§6✦ §fGénérateur de mini-jeux §6✦",
                 MoodStyle.detail("Petit, Moyen, Grand ou Géant."),
                 MoodStyle.detail("Personnalisé retiré."),
-                MoodStyle.detail("Géant : à utiliser hors heure de pointe."),
+                MoodStyle.detail("Survie : Géant retiré."),
                 "",
                 MoodStyle.info("Choisis un mini-jeu")
         )));
@@ -44,7 +44,7 @@ public final class MiniGameGeneratorGUI {
         addType(inv, 12, GeneratedGameType.JUMP, "Plateformes en laine colorée.");
         addType(inv, 14, GeneratedGameType.COURSE, "Piste décorée avec obstacles.");
         addType(inv, 16, GeneratedGameType.WATER_JUMP, "Laine colorée au-dessus de l'eau.");
-        addType(inv, 22, GeneratedGameType.SURVIE_ETAGES, "Étages qui disparaissent progressivement.");
+        addType(inv, 22, GeneratedGameType.SURVIE_ETAGES, "Étages progressifs, Géant retiré.");
         addType(inv, 24, GeneratedGameType.RUEE_OR, "Mine bedrock, minerais, temps limité.");
 
         inv.setItem(26, EventItem.item(
@@ -89,8 +89,8 @@ public final class MiniGameGeneratorGUI {
                 type.getIcon(),
                 "§6✦ §f" + type.getDisplayName() + " §6✦",
                 MoodStyle.detail("Choisis une taille."),
+                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Géant retiré pour éviter les bugs.") : MoodStyle.detail("Géant disponible."),
                 MoodStyle.detail("Personnalisé retiré."),
-                MoodStyle.detail("Géant peut être lourd."),
                 "",
                 MoodStyle.info("Taille de génération")
         )));
@@ -98,7 +98,19 @@ public final class MiniGameGeneratorGUI {
         addSize(inv, 10, type, GeneratedGameSize.PETIT);
         addSize(inv, 12, type, GeneratedGameSize.MOYEN);
         addSize(inv, 14, type, GeneratedGameSize.GRAND);
-        addSize(inv, 16, type, GeneratedGameSize.GEANT);
+
+        if (type == GeneratedGameType.SURVIE_ETAGES) {
+            inv.setItem(16, EventItem.item(
+                    Material.BARRIER,
+                    "§c✦ §fGéant retiré §c✦",
+                    MoodStyle.detail("Trop instable pour Survie des étages."),
+                    MoodStyle.detail("Utilise Petit, Moyen ou Grand."),
+                    "",
+                    MoodStyle.error("Sécurité")
+            ));
+        } else {
+            addSize(inv, 16, type, GeneratedGameSize.GEANT);
+        }
 
         inv.setItem(31, EventItem.item(
                 Material.GRAY_DYE,
@@ -120,7 +132,7 @@ public final class MiniGameGeneratorGUI {
     }
 
     public static void openConfirmCustom(Player player, GeneratedGameType type, int value) {
-        MoodStyle.errorMessage(player, MoodStyle.MODULE, "Taille personnalisée désactivée.", MoodStyle.detail("Utilise Petit, Moyen, Grand ou Géant."));
+        MoodStyle.errorMessage(player, MoodStyle.MODULE, "Taille personnalisée désactivée.", MoodStyle.detail("Utilise les tailles prédéfinies."));
         openSize(player, type);
     }
 
@@ -161,7 +173,7 @@ public final class MiniGameGeneratorGUI {
     }
 
     private static void addSize(Inventory inv, int slot, GeneratedGameType type, GeneratedGameSize size) {
-        inv.setItem(slot, EventItem.item(size.getIcon(), "§6✦ §f" + size.getDisplayName() + " §6✦", MoodStyle.detail("Format : §e" + size.describeFor(type)), size == GeneratedGameSize.GEANT ? MoodStyle.detail("Très lourd : prudence.") : size == GeneratedGameSize.GRAND ? MoodStyle.detail("Plus lourd : à utiliser avec prudence.") : MoodStyle.detail("Taille sûre."), "", MoodStyle.info("Préparer")));
+        inv.setItem(slot, EventItem.item(type == GeneratedGameType.SURVIE_ETAGES && size == GeneratedGameSize.GEANT ? Material.BARRIER : size.getIcon(), "§6✦ §f" + size.getDisplayName() + " §6✦", MoodStyle.detail("Format : §e" + size.describeFor(type)), size == GeneratedGameSize.GEANT ? MoodStyle.detail("Très lourd : prudence.") : size == GeneratedGameSize.GRAND ? MoodStyle.detail("Plus lourd : prudence.") : MoodStyle.detail("Taille sûre."), "", MoodStyle.info("Préparer")));
     }
 
     private static void fill(Inventory inv) {
