@@ -2,6 +2,9 @@ package fr.moodcraft.event.util;
 
 import org.bukkit.command.CommandSender;
 
+import java.text.Normalizer;
+import java.util.Locale;
+
 public final class MoodStyle {
 
     private MoodStyle() {
@@ -10,6 +13,27 @@ public final class MoodStyle {
     public static final String BRAND = "§aMood§6Craft";
     public static final String MODULE = "Événement " + BRAND;
     public static final String FRAME = "§8-----------------------------";
+
+    public static String guiTitle(String title) {
+        return "§6✦ §8§l" + title + " §6✦";
+    }
+
+    public static String cleanTitle(String title) {
+
+        if (title == null) {
+            return "";
+        }
+
+        String clean = title
+                .replaceAll("§.", "")
+                .replace("✦", "")
+                .trim();
+
+        clean = Normalizer.normalize(clean, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+
+        return clean.toLowerCase(Locale.ROOT).trim();
+    }
 
     public static String header(String module) {
         return "§8----- §6✦ " + cleanPrefix(module) + " ✦ §8-----";
