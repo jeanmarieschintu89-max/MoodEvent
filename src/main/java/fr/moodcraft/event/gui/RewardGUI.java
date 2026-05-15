@@ -16,7 +16,7 @@ public final class RewardGUI {
     }
 
     public static void open(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 45, TITLE);
+        Inventory inv = Bukkit.createInventory(null, 54, TITLE);
         fill(inv);
 
         inv.setItem(4, EventItem.glow(EventItem.item(
@@ -31,10 +31,10 @@ public final class RewardGUI {
 
         addReward(inv, 10, RewardManager.PARTICIPATION, Material.EMERALD, "Participation");
         addReward(inv, 19, 1, Material.NETHER_STAR, "1er");
-        addReward(inv, 21, 2, Material.GOLD_INGOT, "2e");
-        addReward(inv, 23, 3, Material.COPPER_INGOT, "3e");
+        addReward(inv, 28, 2, Material.GOLD_INGOT, "2e");
+        addReward(inv, 37, 3, Material.COPPER_INGOT, "3e");
 
-        inv.setItem(34, EventItem.item(
+        inv.setItem(49, EventItem.item(
                 Material.BARRIER,
                 "§c✦ §fFermer §c✦",
                 MoodStyle.detail("Retour au jeu")
