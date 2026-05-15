@@ -5,6 +5,7 @@ import fr.moodcraft.event.command.EventCommand;
 import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
 import fr.moodcraft.event.listener.EventChatListener;
+import fr.moodcraft.event.listener.EventProgressListener;
 import fr.moodcraft.event.listener.EventProtectionListener;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.manager.RewardManager;
@@ -57,6 +58,7 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new EventAdminGUIListener(), this);
         Bukkit.getPluginManager().registerEvents(new EventChatListener(), this);
         Bukkit.getPluginManager().registerEvents(new EventProtectionListener(), this);
+        Bukkit.getPluginManager().registerEvents(new EventProgressListener(), this);
 
         getLogger().info("=================================");
         getLogger().info("✦ MoodEvent activé");
@@ -64,6 +66,7 @@ public class Main extends JavaPlugin {
         getLogger().info("Salle d'attente restaurable prête");
         getLogger().info("Récompenses participation et Top 3 prêtes");
         getLogger().info("Protections événementielles actives");
+        getLogger().info("Détection d'arrivée active");
         getLogger().info("=================================");
     }
 
