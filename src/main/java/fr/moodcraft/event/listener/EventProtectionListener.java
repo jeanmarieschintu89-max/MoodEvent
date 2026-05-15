@@ -49,7 +49,9 @@ public class EventProtectionListener implements Listener {
     public void onBreak(BlockBreakEvent event) {
         if (!GeneratedGameManager.isInsideStructure(event.getBlock().getLocation())) return;
 
-        if (EventManager.getType().usesTimedMining() && GeneratedGameManager.getActiveType() == GeneratedGameType.RUEE_OR && isMineableOre(event.getBlock().getType())) {
+        if (EventManager.getType().usesTimedMining()
+                && GeneratedGameManager.getActiveType() == GeneratedGameType.RUEE_OR
+                && isGoldRushMineBlock(event.getBlock().getType())) {
             return;
         }
 
@@ -78,9 +80,14 @@ public class EventProtectionListener implements Listener {
         }
     }
 
-    private boolean isMineableOre(Material material) {
+    private boolean isGoldRushMineBlock(Material material) {
         if (material == null) return false;
-        return material == Material.COAL_ORE
+        return material == Material.STONE
+                || material == Material.DEEPSLATE
+                || material == Material.COBBLESTONE
+                || material == Material.COBBLED_DEEPSLATE
+                || material == Material.TUFF
+                || material == Material.COAL_ORE
                 || material == Material.COPPER_ORE
                 || material == Material.IRON_ORE
                 || material == Material.GOLD_ORE
