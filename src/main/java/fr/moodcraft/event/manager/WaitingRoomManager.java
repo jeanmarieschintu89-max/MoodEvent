@@ -63,7 +63,7 @@ public final class WaitingRoomManager {
 
     public static void teleport(Player player) {
         if (!hasRoom()) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucune salle d'attente générée.", MoodStyle.detail("Commande : §e/eventbuildwaiting"));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucune salle d'attente générée.", MoodStyle.detail("Commande : §e/eventsalleattente"));
             return;
         }
         player.teleport(spawn);
@@ -72,7 +72,7 @@ public final class WaitingRoomManager {
 
     public static void build(Player player, String rawSize) {
         if (hasRoom()) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Une salle d'attente existe déjà.", MoodStyle.detail("Restaurez-la avec §e/eventrestorewaiting"));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Une salle d'attente existe déjà.", MoodStyle.detail("Restaurez-la avec §e/eventrestaurersalle"));
             return;
         }
 
@@ -99,13 +99,13 @@ public final class WaitingRoomManager {
 
         player.teleport(spawn);
         player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.25f);
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Salle d'attente générée.", MoodStyle.detail("Zone sauvegardée avant construction."), MoodStyle.detail("Restauration : §e/eventrestorewaiting"));
+        MoodStyle.successMessage(player, MoodStyle.MODULE, "Salle d'attente générée.", MoodStyle.detail("Zone sauvegardée avant construction."), MoodStyle.detail("Restauration : §e/eventrestaurersalle"));
     }
 
     public static void restore(Player player) {
         ConfigurationSection blocks = config == null ? null : config.getConfigurationSection("backup.blocks");
         if (!active || blocks == null) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucune salle d'attente à restaurer.", MoodStyle.detail("Commande : §e/eventbuildwaiting"));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucune salle d'attente à restaurer.", MoodStyle.detail("Commande : §e/eventsalleattente"));
             return;
         }
 
