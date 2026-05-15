@@ -30,7 +30,10 @@ public final class MoodStyle {
                 .trim();
 
         clean = Normalizer.normalize(clean, Normalizer.Form.NFD)
-                .replaceAll("\\p{M}", "");
+                .replaceAll("\\p{M}", "")
+                .replace("'", "")
+                .replace("’", "")
+                .replace("`", "");
 
         return clean.toLowerCase(Locale.ROOT).trim();
     }
