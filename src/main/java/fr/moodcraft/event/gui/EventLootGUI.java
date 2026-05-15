@@ -26,6 +26,7 @@ public final class EventLootGUI {
                 MoodStyle.detail("Labyrinthe, Jump, Water Jump."),
                 MoodStyle.detail("Loot individuel par joueur."),
                 MoodStyle.detail("Anti double-récupération."),
+                MoodStyle.detail("Coffre : sélection aléatoire limitée."),
                 "",
                 MoodStyle.info("Commun, rare, épique")
         )));
@@ -33,6 +34,26 @@ public final class EventLootGUI {
         addTier(inv, 11, LootTier.COMMUN);
         addTier(inv, 20, LootTier.RARE);
         addTier(inv, 29, LootTier.EPIQUE);
+
+        inv.setItem(42, EventItem.item(
+                Material.LAVA_BUCKET,
+                "§c✦ §fReset coffres générés §c✦",
+                MoodStyle.detail("Supprime les anciens coffres enregistrés."),
+                MoodStyle.detail("Supprime les claims joueurs."),
+                MoodStyle.detail("Ne touche pas aux items configurés."),
+                "",
+                MoodStyle.error("Reset claims")
+        ));
+
+        inv.setItem(43, EventItem.item(
+                Material.TNT,
+                "§c✦ §fReset contenu loot §c✦",
+                MoodStyle.detail("Supprime les items des tiers."),
+                MoodStyle.detail("Supprime les montants Vault."),
+                MoodStyle.detail("Action sensible."),
+                "",
+                MoodStyle.error("Reset loot.yml")
+        ));
 
         inv.setItem(49, EventItem.item(
                 Material.ARROW,
@@ -49,14 +70,16 @@ public final class EventLootGUI {
                 "§6✦ §f" + tier.getDisplayName() + " §6✦",
                 MoodStyle.detail("Items : §e" + EventLootManager.countItems(tier)),
                 MoodStyle.detail("Argent : §a" + EventLootManager.formatMoney(EventLootManager.getMoney(tier))),
+                MoodStyle.detail(tier == LootTier.COMMUN ? "Coffre : §e2 stacks max" : "Coffre : §e1 stack max"),
                 "",
-                MoodStyle.info("Résumé")
+                MoodStyle.info("Modifier les items")
         )));
 
         inv.setItem(slot + 1, EventItem.item(
                 Material.BARREL,
                 "§6✦ §fItems " + tier.getDisplayName() + " §6✦",
-                MoodStyle.detail("Dépose les objets à donner."),
+                MoodStyle.detail("Dépose les objets possibles."),
+                MoodStyle.detail("Le coffre tirera au hasard."),
                 MoodStyle.detail("Fermeture = sauvegarde."),
                 "",
                 MoodStyle.info("Modifier")
