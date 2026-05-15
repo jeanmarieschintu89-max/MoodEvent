@@ -164,6 +164,7 @@ public class GoldRushTask implements Listener {
             clearCollection("finishedPlayers");
             clearCollection("ranking");
             clearCollection("survivalEliminated");
+            clearCollection("returnLocations");
         } catch (ReflectiveOperationException exception) {
             Main.getInstance().getLogger().warning("Impossible de nettoyer la Ruée vers l'or: " + exception.getMessage());
         }
