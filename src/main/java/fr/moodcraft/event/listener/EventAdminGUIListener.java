@@ -164,11 +164,11 @@ public class EventAdminGUIListener implements Listener {
         int slot = event.getRawSlot();
         if (!top(event, slot)) return;
         switch (slot) {
-            case 12 -> { click(player); EventLootManager.openItemEditor(player, LootTier.COMMUN); }
+            case 11, 12 -> { click(player); EventLootManager.openItemEditor(player, LootTier.COMMUN); }
             case 13 -> { click(player); EventLootManager.startMoneyInput(player, LootTier.COMMUN); }
-            case 21 -> { click(player); EventLootManager.openItemEditor(player, LootTier.RARE); }
+            case 20, 21 -> { click(player); EventLootManager.openItemEditor(player, LootTier.RARE); }
             case 22 -> { click(player); EventLootManager.startMoneyInput(player, LootTier.RARE); }
-            case 30 -> { click(player); EventLootManager.openItemEditor(player, LootTier.EPIQUE); }
+            case 29, 30 -> { click(player); EventLootManager.openItemEditor(player, LootTier.EPIQUE); }
             case 31 -> { click(player); EventLootManager.startMoneyInput(player, LootTier.EPIQUE); }
             case 49 -> { click(player); MiniGameGeneratorGUI.openMain(player); }
             default -> { }
