@@ -2,6 +2,7 @@ package fr.moodcraft.event;
 
 import fr.moodcraft.event.command.EventAdminCommand;
 import fr.moodcraft.event.command.EventCommand;
+import fr.moodcraft.event.generator.EventGiveStructureManager;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
@@ -40,6 +41,7 @@ public class Main extends JavaPlugin {
         WaitingRoomManager.load();
         RewardManager.load();
         GeneratedGameManager.load();
+        EventGiveStructureManager.load();
         EventLootManager.load();
         EventLogManager.load();
         EventSecurityManager.load();
@@ -84,6 +86,7 @@ public class Main extends JavaPlugin {
         WaitingRoomManager.save();
         RewardManager.save();
         GeneratedGameManager.save();
+        EventGiveStructureManager.save();
         EventLootManager.save();
         EventLogManager.save();
         EventSecurityManager.save();
