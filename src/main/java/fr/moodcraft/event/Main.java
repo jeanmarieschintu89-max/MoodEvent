@@ -4,6 +4,7 @@ import fr.moodcraft.event.command.EventAdminCommand;
 import fr.moodcraft.event.command.EventCommand;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
 import fr.moodcraft.event.listener.EventChatListener;
+import fr.moodcraft.event.listener.EventProtectionListener;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.manager.WaitingRoomManager;
 
@@ -51,11 +52,13 @@ public class Main extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(new EventAdminGUIListener(), this);
         Bukkit.getPluginManager().registerEvents(new EventChatListener(), this);
+        Bukkit.getPluginManager().registerEvents(new EventProtectionListener(), this);
 
         getLogger().info("=================================");
         getLogger().info("✦ MoodEvent activé");
         getLogger().info("Centre événementiel chargé");
         getLogger().info("Salle d'attente restaurable prête");
+        getLogger().info("Protections événementielles actives");
         getLogger().info("=================================");
     }
 
