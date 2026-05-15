@@ -1,6 +1,7 @@
 package fr.moodcraft.event.listener;
 
 import fr.moodcraft.event.generator.EventGiveStructureManager;
+import fr.moodcraft.event.generator.EventPackManager;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameSize;
 import fr.moodcraft.event.generator.GeneratedGameStyleManager;
@@ -147,8 +148,8 @@ public class EventAdminGUIListener implements Listener {
                 click(player);
                 player.closeInventory();
                 if (pending.isCustom()) GeneratedGameManager.generateCustom(player, pending.type(), pending.customValue());
-                else GeneratedGameManager.generate(player, pending.type(), pending.size());
-                EventLogManager.log(player, "Génération", pending.type().getDisplayName() + " - " + pending.describe() + " - style " + GeneratedGameStyleManager.get(player).getDisplayName());
+                else EventPackManager.generatePack(player, pending.type(), pending.size());
+                EventLogManager.log(player, "Pack généré", pending.type().getDisplayName() + " - " + pending.describe() + " - style " + GeneratedGameStyleManager.get(player).getDisplayName());
                 MiniGameGeneratorGUI.clearPending(player);
             }
             case 15 -> { no(player); MiniGameGeneratorGUI.clearPending(player); MiniGameGeneratorGUI.openMain(player); }
