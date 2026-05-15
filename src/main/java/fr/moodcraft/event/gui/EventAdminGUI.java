@@ -22,132 +22,140 @@ public final class EventAdminGUI {
 
         inv.setItem(4, EventItem.glow(EventItem.item(
                 Material.NETHER_STAR,
-                "§6✦ §fCentre Événementiel §6✦",
+                "§6✦ §fTableau de bord §6✦",
                 MoodStyle.detail("Nom : §e" + EventManager.getName()),
                 MoodStyle.detail("Type : " + EventManager.getType().getDisplayName()),
-                MoodStyle.detail("Départ : " + (EventManager.hasLocation() ? "§adéfini" : "§cnon défini")),
-                MoodStyle.detail("Arrivée : " + (EventManager.hasFinishLocation() ? "§adéfinie" : "§cnon définie")),
-                MoodStyle.detail("Salle d'attente : " + (WaitingRoomManager.hasRoom() ? "§agénérée" : "§cnon générée")),
+                MoodStyle.detail("Départ : " + state(EventManager.hasLocation())),
+                MoodStyle.detail("Arrivée : " + state(EventManager.hasFinishLocation())),
+                MoodStyle.detail("Salle : " + state(WaitingRoomManager.hasRoom())),
                 MoodStyle.detail("File : " + (EventManager.isQueueOpen() ? "§aouverte" : "§cfermée")),
-                MoodStyle.detail("Participants : §e" + EventManager.getParticipantSize()),
+                MoodStyle.detail("En file : §e" + EventManager.getQueueSize() + " §8• §7En jeu : §e" + EventManager.getParticipantSize()),
                 "",
-                MoodStyle.info("Création et lancement depuis ce menu")
+                MoodStyle.info("Préparer, lancer, récompenser")
         )));
 
         inv.setItem(10, EventItem.item(
                 Material.WRITABLE_BOOK,
-                "§6✦ §fNom de l'événement §6✦",
-                MoodStyle.detail("Nom actuel : §e" + EventManager.getName()),
+                "§6✦ §fNom §6✦",
+                MoodStyle.detail("Actuel : §e" + EventManager.getName()),
                 MoodStyle.detail("Saisie dans le chat"),
                 "",
-                MoodStyle.info("Définir le nom")
+                MoodStyle.info("Modifier le nom")
+        ));
+
+        inv.setItem(11, EventItem.item(
+                Material.NAME_TAG,
+                "§6✦ §fType §6✦",
+                MoodStyle.detail("Actuel : " + EventManager.getType().getDisplayName()),
+                MoodStyle.detail("Course, Jump, Labyrinthe..."),
+                "",
+                MoodStyle.info("Changer le type")
         ));
 
         inv.setItem(12, EventItem.item(
                 Material.BOOK,
                 "§6✦ §fDescription §6✦",
+                MoodStyle.detail(shortText(EventManager.getDescription(), 36)),
                 MoodStyle.detail("Visible avec §e/event"),
-                MoodStyle.detail(shortText(EventManager.getDescription(), 32)),
                 "",
                 MoodStyle.info("Modifier la description")
         ));
 
         inv.setItem(14, EventItem.item(
-                Material.NAME_TAG,
-                "§6✦ §fType de mini-jeu §6✦",
-                MoodStyle.detail("Type actuel : " + EventManager.getType().getDisplayName()),
-                MoodStyle.detail("Course, Jump, Labyrinthe, PvP..."),
+                Material.LIME_WOOL,
+                "§6✦ §fDépart §6✦",
+                MoodStyle.detail("État : " + state(EventManager.hasLocation())),
+                MoodStyle.detail("Position actuelle du staff"),
                 "",
-                MoodStyle.info("Changer le type")
+                MoodStyle.success("Définir ici")
+        ));
+
+        inv.setItem(15, EventItem.item(
+                Material.RED_WOOL,
+                "§6✦ §fArrivée §6✦",
+                MoodStyle.detail("État : " + state(EventManager.hasFinishLocation())),
+                MoodStyle.detail("Course, Jump, Labyrinthe"),
+                "",
+                MoodStyle.success("Définir ici")
         ));
 
         inv.setItem(16, EventItem.item(
-                Material.LIME_WOOL,
-                "§6✦ §fPoint de départ §6✦",
-                MoodStyle.detail("Position actuelle du staff"),
-                MoodStyle.detail("Départ : " + (EventManager.hasLocation() ? "§aoui" : "§cnon")),
-                "",
-                MoodStyle.info("Définir ici")
-        ));
-
-        inv.setItem(18, EventItem.item(
-                Material.RED_WOOL,
-                "§6✦ §fPoint d'arrivée §6✦",
-                MoodStyle.detail("Utilisé par Course, Jump, Labyrinthe"),
-                MoodStyle.detail("Arrivée : " + (EventManager.hasFinishLocation() ? "§aoui" : "§cnon")),
-                "",
-                MoodStyle.info("Définir ici")
-        ));
-
-        inv.setItem(20, EventItem.item(
                 WaitingRoomManager.hasRoom() ? Material.ENDER_EYE : Material.DARK_OAK_PLANKS,
                 "§6✦ §fSalle d'attente §6✦",
-                MoodStyle.detail("Salle auto-générée restaurable"),
-                MoodStyle.detail("État : " + (WaitingRoomManager.hasRoom() ? "§agénérée" : "§cnon générée")),
+                MoodStyle.detail("État : " + state(WaitingRoomManager.hasRoom())),
+                MoodStyle.detail("Générée et restaurable"),
                 "",
                 WaitingRoomManager.hasRoom() ? MoodStyle.info("Téléporter à la salle") : MoodStyle.success("Générer ici")
         ));
 
-        inv.setItem(29, EventItem.item(
+        inv.setItem(20, EventItem.item(
                 Material.CHEST,
                 "§6✦ §fRécompenses §6✦",
                 MoodStyle.detail("Participation + Top 3"),
                 MoodStyle.detail("Items + argent"),
                 "",
-                MoodStyle.info("Ouvrir le menu")
+                MoodStyle.info("Configurer")
         ));
 
-        inv.setItem(31, EventItem.item(
+        inv.setItem(22, EventItem.item(
                 EventManager.isQueueOpen() ? Material.REDSTONE_BLOCK : Material.EMERALD_BLOCK,
                 EventManager.isQueueOpen() ? "§c✦ §fFermer la file §c✦" : "§6✦ §fOuvrir la file §6✦",
-                MoodStyle.detail("Joueurs en file : §e" + EventManager.getQueueSize()),
+                MoodStyle.detail("En file : §e" + EventManager.getQueueSize()),
+                EventManager.isQueueOpen()
+                        ? MoodStyle.detail("Envoie les joueurs en salle d'attente")
+                        : MoodStyle.detail("Les joueurs pourront faire §e/event"),
                 "",
-                EventManager.isQueueOpen() ? MoodStyle.error("Fermer la file") : MoodStyle.success("Ouvrir la file")
+                EventManager.isQueueOpen() ? MoodStyle.error("Fermer") : MoodStyle.success("Ouvrir")
         ));
 
-        inv.setItem(33, EventItem.glow(EventItem.item(
+        inv.setItem(24, EventItem.glow(EventItem.item(
                 Material.LIME_CONCRETE,
-                "§6✦ §fLancer l'événement §6✦",
-                MoodStyle.detail("Téléporte les joueurs au départ"),
-                MoodStyle.detail("Participants : §e" + EventManager.getQueueSize()),
+                "§6✦ §fLancer §6✦",
+                MoodStyle.detail("Salle d'attente → départ"),
+                MoodStyle.detail("Compte à rebours automatique"),
                 "",
-                MoodStyle.success("Démarrer maintenant")
+                MoodStyle.success("Démarrer")
         )));
 
-        inv.setItem(35, EventItem.item(
+        inv.setItem(31, EventItem.item(
                 Material.ORANGE_CONCRETE,
                 "§6✦ §fTerminer §6✦",
                 MoodStyle.detail("Annonce le classement"),
                 MoodStyle.detail("Donne les récompenses"),
-                MoodStyle.detail("Retour des participants"),
+                MoodStyle.detail("Retour à la position d'avant event"),
                 "",
-                MoodStyle.info("Terminer proprement")
+                MoodStyle.info("Clôturer")
         ));
 
-        inv.setItem(38, EventItem.item(
+        inv.setItem(37, EventItem.item(
                 Material.MAGMA_BLOCK,
                 "§c✦ §fRestaurer la salle §c✦",
                 MoodStyle.detail("Supprime la salle d'attente"),
-                MoodStyle.detail("Restaure les anciens blocs"),
+                MoodStyle.detail("Remet les anciens blocs"),
                 "",
                 MoodStyle.error("Action sensible")
         ));
 
-        inv.setItem(42, EventItem.item(
+        inv.setItem(40, EventItem.item(
                 Material.BARRIER,
                 "§c✦ §fAnnuler l'événement §c✦",
-                MoodStyle.detail("Vide la file et arrête l'event"),
+                MoodStyle.detail("Arrête sans récompense"),
+                MoodStyle.detail("Retour des joueurs déjà inscrits"),
                 "",
-                MoodStyle.error("Action sensible")
+                MoodStyle.error("Annuler")
         ));
 
-        inv.setItem(44, EventItem.item(
+        inv.setItem(43, EventItem.item(
                 Material.BARRIER,
                 "§c✦ §fFermer §c✦",
                 MoodStyle.detail("Fermer ce menu")
         ));
 
         player.openInventory(inv);
+    }
+
+    private static String state(boolean value) {
+        return value ? "§aoui" : "§cnon";
     }
 
     private static void fill(Inventory inv) {
