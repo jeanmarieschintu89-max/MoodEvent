@@ -227,11 +227,11 @@ public final class GeneratedGameManager {
 
         configureEvent(player, type, points);
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.15f);
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Mini-jeu généré.", MoodStyle.detail("Type : §e" + type.getDisplayName()), MoodStyle.detail("Taille : §e" + spec.describe(type)), MoodStyle.detail("Départ automatique défini."), type.getEventType().usesFinishLine() ? MoodStyle.detail("Arrivée automatique définie.") : MoodStyle.detail("Classement par survie activé."));
+        MoodStyle.successMessage(player, MoodStyle.MODULE, "Mini-jeu généré.", MoodStyle.detail("Type : §e" + type.getDisplayName()), MoodStyle.detail("Taille : §e" + spec.describe(type)), MoodStyle.detail("Départ vert clairement marqué."), type.getEventType().usesFinishLine() ? MoodStyle.detail("Arrivée rouge clairement marquée.") : MoodStyle.detail("Arène fermée de survie activée."));
     }
 
     private static void configureEvent(Player player, GeneratedGameType type, Points points) {
-        Location back = player.getLocation().clone();
+        Location back = player.getLocation().clone().add(0, 3, 0);
         EventManager.createEvent(player, type.getDisplayName());
         EventManager.setDescription(player, description(type));
         EventManager.setType(player, type.getEventType().name());
@@ -246,11 +246,11 @@ public final class GeneratedGameManager {
 
     private static String description(GeneratedGameType type) {
         return switch (type) {
-            case LABYRINTHE -> "Trouvez la sortie avant les autres.";
-            case JUMP -> "Sautez de laine en laine jusqu'à l'arrivée.";
-            case COURSE -> "Atteignez la ligne rouge avant les autres.";
-            case WATER_JUMP -> "Franchissez les blocs de laine au-dessus de l'eau.";
-            case SURVIE_ETAGES -> "Restez le plus longtemps possible pendant que les étages disparaissent.";
+            case LABYRINTHE -> "Trouvez la sortie rouge avant les autres.";
+            case JUMP -> "Sautez de laine en laine dans le couloir sécurisé jusqu'à l'arrivée rouge.";
+            case COURSE -> "Restez dans la piste et atteignez la ligne rouge avant les autres.";
+            case WATER_JUMP -> "Franchissez les blocs de laine au-dessus de l'eau jusqu'à l'arrivée rouge.";
+            case SURVIE_ETAGES -> "Restez le plus longtemps possible dans l'arène fermée pendant que les étages disparaissent.";
         };
     }
 
@@ -258,6 +258,7 @@ public final class GeneratedGameManager {
         World world = center.getWorld();
         int cx = center.getBlockX(), cy = center.getBlockY(), cz = center.getBlockZ();
         int half = spec.width / 2;
+        buildBoundary(world, cx - half - 1, cx + half + 1, cz - half - 1, cz + half + 1, cy, cy + 4, Material.CRACKED_STONE_BRICKS, Material.CHISELED_STONE_BRICKS);
         for (int x = cx - half; x <= cx + half; x++) {
             for (int z = cz - half; z <= cz + half; z++) {
                 boolean border = x == cx - half || x == cx + half || z == cz - half || z == cz + half;
@@ -268,10 +269,14 @@ public final class GeneratedGameManager {
                 world.getBlockAt(x, cy + 3, z).setType(Material.AIR, false);
             }
         }
-        Location start = new Location(world, cx - half + 1.5, cy + 1, cz - half + 1.5);
-        Location finish = new Location(world, cx + half - 1.5, cy + 1, cz + half - 1.5);
-        platform(world, start.getBlockX(), cy, start.getBlockZ(), 1, Material.LIME_CONCRETE);
-        platform(world, finish.getBlockX(), cy, finish.getBlockZ(), 1, Material.RED_CONCRETE);
+        Location start = new Location(world, cx - half + 1.5, cy + 1, cz - half + 1.5, -45f, 0f);
+        Location finish = new Location(world, cx + half - 1.5, cy + 1, cz + half - 1.5, 135f, 0f);
+        platform(world, start.getBlockX(), cy, start.getBlockZ(), 2, Material.LIME_CONCRETE);
+        platform(world, finish.getBlockX(), cy, finish.getBlockZ(), 2, Material.RED_CONCRETE);
+        clearColumn(world, start.getBlockX(), cy, start.getBlockZ());
+        clearColumn(world, finish.getBlockX(), cy, finish.getBlockZ());
+        startGate(world, start.getBlockX(), cy, start.getBlockZ(), false);
+        finishGate(world, finish.getBlockX(), cy, finish.getBlockZ(), false);
         addLoot(world, GeneratedGameType.LABYRINTHE, cx, cy + 1, cz, Math.max(8, spec.width - 4));
         return new Points(start, finish);
     }
@@ -279,22 +284,31 @@ public final class GeneratedGameManager {
     private static Points generateJump(Location center, Spec spec) {
         World world = center.getWorld();
         int cx = center.getBlockX(), cy = center.getBlockY(), cz = center.getBlockZ();
-        platform(world, cx, cy, cz, 2, Material.LIME_WOOL);
+        int endX = cx + spec.length + 10;
+        buildLinearArena(world, cx - 5, endX + 6, cz - 8, cz + 8, cy, cy + 7, Material.LIGHT_BLUE_STAINED_GLASS, Material.SMOOTH_STONE);
+        safeFloor(world, cx - 5, endX + 6, cz - 8, cz + 8, cy - 1, Material.BLUE_CONCRETE);
+        platform(world, cx, cy, cz, 3, Material.LIME_WOOL);
+        startGate(world, cx, cy, cz, true);
         int x = cx, z = cz, y = cy;
         for (int i = 1; i <= spec.platforms; i++) {
             x += 4 + RANDOM.nextInt(2);
             z += RANDOM.nextInt(5) - 2;
+            z = clamp(z, cz - 5, cz + 5);
             y = cy + 1 + RANDOM.nextInt(3);
             platform(world, x, y, z, i % 5 == 0 ? 2 : 1, WOOL[i % WOOL.length]);
-            if (i % 9 == 0) placeLoot(world, GeneratedGameType.JUMP, LootTier.COMMUN, x, y + 1, z + 2);
+            world.getBlockAt(x, y - 1, z).setType(Material.SEA_LANTERN, false);
+            if (i % 9 == 0) placeLoot(world, GeneratedGameType.JUMP, LootTier.COMMUN, x, y + 1, clamp(z + 2, cz - 5, cz + 5));
         }
-        platform(world, x + 5, cy + 1, z, 2, Material.RED_WOOL);
-        return new Points(new Location(world, cx + 0.5, cy + 1, cz + 0.5), new Location(world, x + 5.5, cy + 2, z + 0.5));
+        int finishX = x + 5;
+        platform(world, finishX, cy + 1, z, 3, Material.RED_WOOL);
+        finishGate(world, finishX, cy + 1, z, true);
+        return new Points(new Location(world, cx + 0.5, cy + 1, cz + 0.5, 90f, 0f), new Location(world, finishX + 0.5, cy + 2, z + 0.5, 90f, 0f));
     }
 
     private static Points generateRace(Location center, Spec spec) {
         World world = center.getWorld();
         int cx = center.getBlockX(), cy = center.getBlockY(), cz = center.getBlockZ();
+        buildLinearArena(world, cx - 6, cx + spec.length + 8, cz - 4, cz + 4, cy, cy + 4, Material.IRON_BARS, Material.SMOOTH_STONE);
         for (int x = cx; x <= cx + spec.length; x++) {
             for (int z = cz - 2; z <= cz + 2; z++) {
                 world.getBlockAt(x, cy, z).setType((x + z) % 2 == 0 ? Material.SMOOTH_STONE : Material.POLISHED_ANDESITE, false);
@@ -307,12 +321,15 @@ public final class GeneratedGameManager {
         }
         platform(world, cx, cy, cz, 3, Material.LIME_CONCRETE);
         platform(world, cx + spec.length, cy, cz, 3, Material.RED_CONCRETE);
-        return new Points(new Location(world, cx + 0.5, cy + 1, cz + 0.5), new Location(world, cx + spec.length + 0.5, cy + 1, cz + 0.5));
+        startGate(world, cx, cy, cz, true);
+        finishGate(world, cx + spec.length, cy, cz, true);
+        return new Points(new Location(world, cx + 0.5, cy + 1, cz + 0.5, 90f, 0f), new Location(world, cx + spec.length + 0.5, cy + 1, cz + 0.5, 90f, 0f));
     }
 
     private static Points generateWaterJump(Location center, Spec spec) {
         World world = center.getWorld();
         int cx = center.getBlockX(), cy = center.getBlockY(), cz = center.getBlockZ();
+        buildLinearArena(world, cx - 6, cx + spec.length + 8, cz - 6, cz + 6, cy - 1, cy + 5, Material.CYAN_STAINED_GLASS, Material.PRISMARINE_BRICKS);
         for (int x = cx; x <= cx + spec.length; x++) {
             for (int z = cz - 4; z <= cz + 4; z++) {
                 world.getBlockAt(x, cy - 1, z).setType(Material.PRISMARINE_BRICKS, false);
@@ -321,19 +338,24 @@ public final class GeneratedGameManager {
             }
         }
         platform(world, cx, cy + 1, cz, 3, Material.LIME_WOOL);
+        startGate(world, cx, cy + 1, cz, true);
         for (int x = cx + 5, i = 0; x < cx + spec.length; x += 5, i++) {
-            int z = cz + RANDOM.nextInt(7) - 3;
+            int z = clamp(cz + RANDOM.nextInt(7) - 3, cz - 3, cz + 3);
             platform(world, x, cy + 1, z, 1, WOOL[i % WOOL.length]);
-            if (i % 7 == 0) placeLoot(world, GeneratedGameType.WATER_JUMP, LootTier.COMMUN, x, cy + 2, z + 2);
+            if (i % 7 == 0) placeLoot(world, GeneratedGameType.WATER_JUMP, LootTier.COMMUN, x, cy + 2, clamp(z + 2, cz - 3, cz + 3));
         }
         platform(world, cx + spec.length, cy + 1, cz, 3, Material.RED_WOOL);
-        return new Points(new Location(world, cx + 0.5, cy + 2, cz + 0.5), new Location(world, cx + spec.length + 0.5, cy + 2, cz + 0.5));
+        finishGate(world, cx + spec.length, cy + 1, cz, true);
+        return new Points(new Location(world, cx + 0.5, cy + 2, cz + 0.5, 90f, 0f), new Location(world, cx + spec.length + 0.5, cy + 2, cz + 0.5, 90f, 0f));
     }
 
     private static Points generateSurvival(Location center, Spec spec) {
         World world = center.getWorld();
         int cx = center.getBlockX(), cy = center.getBlockY(), cz = center.getBlockZ();
         int half = spec.width / 2;
+        int topY = cy + 4 + ((spec.floors - 1) * 5);
+        buildBoundary(world, cx - half - 2, cx + half + 2, cz - half - 2, cz + half + 2, cy, topY + 5, Material.PURPLE_STAINED_GLASS, Material.AMETHYST_BLOCK);
+        safeFloor(world, cx - half - 2, cx + half + 2, cz - half - 2, cz + half + 2, cy - 1, Material.BLACK_CONCRETE);
         for (int floor = 0; floor < spec.floors; floor++) {
             int y = cy + 4 + (floor * 5);
             Material material = WOOL[floor % WOOL.length];
@@ -345,10 +367,10 @@ public final class GeneratedGameManager {
                     survivalBlocks.add(new Location(world, x, y, z));
                 }
             }
-            platform(world, cx, y, cz, 1, Material.SEA_LANTERN);
+            platform(world, cx, y, cz, 2, floor == spec.floors - 1 ? Material.LIME_CONCRETE : Material.SEA_LANTERN);
         }
-        int topY = cy + 4 + ((spec.floors - 1) * 5);
-        return new Points(new Location(world, cx + 0.5, topY + 1, cz + 0.5), null);
+        startGate(world, cx, topY, cz, false);
+        return new Points(new Location(world, cx + 0.5, topY + 1, cz + 0.5, 0f, 0f), null);
     }
 
     private static void addLoot(World world, GeneratedGameType type, int cx, int cy, int cz, int spread) {
@@ -367,11 +389,11 @@ public final class GeneratedGameManager {
         String world = center.getWorld().getName();
         int cx = center.getBlockX(), cy = center.getBlockY(), cz = center.getBlockZ();
         return switch (type) {
-            case LABYRINTHE -> new Region(world, cx - spec.width / 2 - 3, cy - 1, cz - spec.width / 2 - 3, cx + spec.width / 2 + 3, cy + 6, cz + spec.width / 2 + 3);
-            case JUMP -> new Region(world, cx - 6, cy - 1, cz - 14, cx + spec.length + 15, cy + 10, cz + 14);
-            case COURSE -> new Region(world, cx - 6, cy - 1, cz - 8, cx + spec.length + 8, cy + 5, cz + 8);
-            case WATER_JUMP -> new Region(world, cx - 6, cy - 2, cz - 9, cx + spec.length + 8, cy + 6, cz + 9);
-            case SURVIE_ETAGES -> new Region(world, cx - spec.width / 2 - 3, cy - 2, cz - spec.width / 2 - 3, cx + spec.width / 2 + 3, cy + 8 + spec.floors * 5, cz + spec.width / 2 + 3);
+            case LABYRINTHE -> new Region(world, cx - spec.width / 2 - 4, cy - 1, cz - spec.width / 2 - 4, cx + spec.width / 2 + 4, cy + 7, cz + spec.width / 2 + 4);
+            case JUMP -> new Region(world, cx - 8, cy - 2, cz - 10, cx + spec.length + 20, cy + 11, cz + 10);
+            case COURSE -> new Region(world, cx - 8, cy - 1, cz - 6, cx + spec.length + 10, cy + 6, cz + 6);
+            case WATER_JUMP -> new Region(world, cx - 8, cy - 2, cz - 8, cx + spec.length + 10, cy + 7, cz + 8);
+            case SURVIE_ETAGES -> new Region(world, cx - spec.width / 2 - 4, cy - 2, cz - spec.width / 2 - 4, cx + spec.width / 2 + 4, cy + 10 + spec.floors * 5, cz + spec.width / 2 + 4);
         };
     }
 
@@ -397,8 +419,82 @@ public final class GeneratedGameManager {
         }
     }
 
+    private static void buildLinearArena(World world, int minX, int maxX, int minZ, int maxZ, int minY, int maxY, Material wallMaterial, Material baseMaterial) {
+        for (int x = minX; x <= maxX; x++) {
+            world.getBlockAt(x, minY, minZ).setType(baseMaterial, false);
+            world.getBlockAt(x, minY, maxZ).setType(baseMaterial, false);
+            for (int y = minY + 1; y <= maxY; y++) {
+                world.getBlockAt(x, y, minZ).setType(wallMaterial, false);
+                world.getBlockAt(x, y, maxZ).setType(wallMaterial, false);
+            }
+            if ((x - minX) % 12 == 0) {
+                world.getBlockAt(x, maxY + 1, minZ).setType(Material.SEA_LANTERN, false);
+                world.getBlockAt(x, maxY + 1, maxZ).setType(Material.SEA_LANTERN, false);
+            }
+        }
+        for (int z = minZ; z <= maxZ; z++) {
+            world.getBlockAt(minX, minY, z).setType(baseMaterial, false);
+            world.getBlockAt(maxX, minY, z).setType(baseMaterial, false);
+            for (int y = minY + 1; y <= maxY; y++) {
+                world.getBlockAt(minX, y, z).setType(wallMaterial, false);
+                world.getBlockAt(maxX, y, z).setType(wallMaterial, false);
+            }
+        }
+    }
+
+    private static void buildBoundary(World world, int minX, int maxX, int minZ, int maxZ, int minY, int maxY, Material wallMaterial, Material pillarMaterial) {
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                world.getBlockAt(x, y, minZ).setType(wallMaterial, false);
+                world.getBlockAt(x, y, maxZ).setType(wallMaterial, false);
+            }
+        }
+        for (int z = minZ; z <= maxZ; z++) {
+            for (int y = minY; y <= maxY; y++) {
+                world.getBlockAt(minX, y, z).setType(wallMaterial, false);
+                world.getBlockAt(maxX, y, z).setType(wallMaterial, false);
+            }
+        }
+        int[][] corners = {{minX, minZ}, {minX, maxZ}, {maxX, minZ}, {maxX, maxZ}};
+        for (int[] corner : corners) for (int y = minY; y <= maxY + 1; y++) world.getBlockAt(corner[0], y, corner[1]).setType(pillarMaterial, false);
+    }
+
+    private static void safeFloor(World world, int minX, int maxX, int minZ, int maxZ, int y, Material material) {
+        for (int x = minX; x <= maxX; x++) for (int z = minZ; z <= maxZ; z++) world.getBlockAt(x, y, z).setType(material, false);
+    }
+
+    private static void startGate(World world, int cx, int cy, int cz, boolean alongX) {
+        gate(world, cx, cy, cz, alongX, Material.LIME_CONCRETE, Material.LIME_STAINED_GLASS, Material.EMERALD_BLOCK);
+    }
+
+    private static void finishGate(World world, int cx, int cy, int cz, boolean alongX) {
+        gate(world, cx, cy, cz, alongX, Material.RED_CONCRETE, Material.RED_STAINED_GLASS, Material.REDSTONE_BLOCK);
+    }
+
+    private static void gate(World world, int cx, int cy, int cz, boolean alongX, Material floor, Material glass, Material pillar) {
+        platform(world, cx, cy, cz, 2, floor);
+        for (int offset = -2; offset <= 2; offset += 4) {
+            int x = alongX ? cx : cx + offset;
+            int z = alongX ? cz + offset : cz;
+            for (int y = cy + 1; y <= cy + 4; y++) world.getBlockAt(x, y, z).setType(pillar, false);
+        }
+        for (int offset = -2; offset <= 2; offset++) {
+            int x = alongX ? cx : cx + offset;
+            int z = alongX ? cz + offset : cz;
+            world.getBlockAt(x, cy + 4, z).setType(glass, false);
+        }
+    }
+
+    private static void clearColumn(World world, int x, int y, int z) {
+        for (int dy = 1; dy <= 4; dy++) world.getBlockAt(x, y + dy, z).setType(Material.AIR, false);
+    }
+
     private static void platform(World world, int cx, int cy, int cz, int radius, Material material) {
         for (int x = cx - radius; x <= cx + radius; x++) for (int z = cz - radius; z <= cz + radius; z++) world.getBlockAt(x, cy, z).setType(material, false);
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private static void loadSurvivalBlocks() {
