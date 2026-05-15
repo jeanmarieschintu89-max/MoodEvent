@@ -57,12 +57,30 @@ public class EventAdminGUIListener implements Listener {
         }
 
         switch (slot) {
-            case 10 -> { click(player); EventChatListener.startName(player); }
-            case 12 -> { click(player); EventChatListener.startDescription(player); }
-            case 14 -> { click(player); EventManager.cycleType(player); EventAdminGUI.open(player); }
-            case 16 -> { click(player); EventManager.setLocation(player); EventAdminGUI.open(player); }
-            case 18 -> { click(player); EventManager.setFinishLocation(player); EventAdminGUI.open(player); }
-            case 20 -> {
+            case 10 -> {
+                click(player);
+                EventChatListener.startName(player);
+            }
+            case 11 -> {
+                click(player);
+                EventManager.cycleType(player);
+                EventAdminGUI.open(player);
+            }
+            case 12 -> {
+                click(player);
+                EventChatListener.startDescription(player);
+            }
+            case 14 -> {
+                click(player);
+                EventManager.setLocation(player);
+                EventAdminGUI.open(player);
+            }
+            case 15 -> {
+                click(player);
+                EventManager.setFinishLocation(player);
+                EventAdminGUI.open(player);
+            }
+            case 16 -> {
                 click(player);
                 if (WaitingRoomManager.hasRoom()) {
                     WaitingRoomManager.teleport(player);
@@ -71,8 +89,11 @@ public class EventAdminGUIListener implements Listener {
                 }
                 EventAdminGUI.open(player);
             }
-            case 29 -> { click(player); RewardGUI.open(player); }
-            case 31 -> {
+            case 20 -> {
+                click(player);
+                RewardGUI.open(player);
+            }
+            case 22 -> {
                 click(player);
                 if (EventManager.isQueueOpen()) {
                     EventManager.closeQueue(player);
@@ -81,19 +102,27 @@ public class EventAdminGUIListener implements Listener {
                 }
                 EventAdminGUI.open(player);
             }
-            case 33 -> { click(player); player.closeInventory(); EventManager.startEvent(player); }
-            case 35 -> { click(player); player.closeInventory(); EventManager.stopEvent(player); }
-            case 38 -> {
+            case 24 -> {
+                click(player);
+                player.closeInventory();
+                EventManager.startEvent(player);
+            }
+            case 31 -> {
+                click(player);
+                player.closeInventory();
+                EventManager.stopEvent(player);
+            }
+            case 37 -> {
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 0.85f);
                 WaitingRoomManager.restore(player);
                 EventAdminGUI.open(player);
             }
-            case 42 -> {
+            case 40 -> {
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 0.85f);
                 player.closeInventory();
                 EventManager.cancelEvent(player);
             }
-            case 44 -> {
+            case 43 -> {
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.8f, 1.2f);
                 player.closeInventory();
             }
