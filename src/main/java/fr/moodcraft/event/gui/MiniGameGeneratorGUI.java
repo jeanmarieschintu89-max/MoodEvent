@@ -48,6 +48,16 @@ public final class MiniGameGeneratorGUI {
         addType(inv, 22, GeneratedGameType.SURVIE_ETAGES, "Étages progressifs.");
         addType(inv, 24, GeneratedGameType.RUEE_OR, "Mine bedrock, minerais, temps limité.");
 
+        inv.setItem(25, EventItem.glow(EventItem.item(
+                Material.REDSTONE_TORCH,
+                "§6✦ §fPack Survie des Jeux §6✦",
+                MoodStyle.detail("Feu rouge / Feu vert."),
+                MoodStyle.detail("Pont de verre."),
+                MoodStyle.detail("Éliminations + salle liée."),
+                "",
+                MoodStyle.success("Créer le pack")
+        )));
+
         inv.setItem(26, EventItem.item(
                 Material.DROPPER,
                 "§6✦ §fEvent Give §6✦",
