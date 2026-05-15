@@ -29,7 +29,7 @@ public class SurvivalFloorTask implements Listener {
             public void run() {
                 runSurvivalTick();
             }
-        }.runTaskTimer(Main.getInstance(), 10L, 10L);
+        }.runTaskTimer(Main.getInstance(), 20L, 20L);
     }
 
     private void runSurvivalTick() {
@@ -51,32 +51,32 @@ public class SurvivalFloorTask implements Listener {
 
         forEachSurvivor(EventManager::checkSurvivalFloorElimination);
 
-        if (tick < 12) {
-            int countdown = Math.max(1, 7 - (tick / 2));
+        if (tick < 8) {
+            int countdown = Math.max(1, 8 - tick);
             forEachSurvivor(player -> player.sendActionBar("§d▣ §fSurvie des étages §8• §e" + countdown + "s §7avant effondrement"));
             return;
         }
 
         wave++;
         int players = Math.max(1, countSurvivors());
-        int acceleration = Math.min(70, wave * 2);
-        int amount = Math.max(14, 10 + players * 5 + acceleration);
+        int acceleration = Math.min(45, wave);
+        int amount = Math.max(8, 7 + players * 3 + acceleration);
         int destroyed = GeneratedGameManager.destroySurvivalBlocks(amount);
 
-        if (wave >= 4) {
-            destroyed += breakCenterIslands(Math.min(6, 1 + (wave / 4)));
+        if (wave >= 5 && wave % 2 == 0) {
+            destroyed += breakCenterIslands(Math.min(3, 1 + (wave / 8)));
         }
 
         int finalDestroyed = destroyed;
         forEachSurvivor(player -> {
-            player.playSound(player.getLocation(), Sound.BLOCK_GRAVEL_BREAK, 0.75f, 0.8f + Math.min(0.55f, wave * 0.02f));
+            player.playSound(player.getLocation(), Sound.BLOCK_GRAVEL_BREAK, 0.55f, 0.85f + Math.min(0.45f, wave * 0.015f));
             player.sendActionBar("§d▣ §fSol instable §8• §e" + finalDestroyed + " §7blocs retirés");
-            if (wave % 8 == 0) {
+            if (wave % 10 == 0) {
                 player.sendTitle("§d▣", "§fLes étages s'effondrent", 0, 18, 6);
             }
         });
 
-        if (wave % 10 == 0) {
+        if (wave % 12 == 0) {
             broadcastWave("Vague §e" + wave + " §7• §e" + destroyed + " §7blocs retirés.");
         }
 
