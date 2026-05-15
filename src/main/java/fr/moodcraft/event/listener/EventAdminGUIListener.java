@@ -7,6 +7,7 @@ import fr.moodcraft.event.generator.GeneratedGameSize;
 import fr.moodcraft.event.generator.GeneratedGameStyleManager;
 import fr.moodcraft.event.generator.GeneratedGameType;
 import fr.moodcraft.event.gui.EventAdminGUI;
+import fr.moodcraft.event.gui.EventAdvancedGUI;
 import fr.moodcraft.event.gui.EventLootGUI;
 import fr.moodcraft.event.gui.MiniGameGeneratorGUI;
 import fr.moodcraft.event.gui.RewardGUI;
@@ -33,6 +34,7 @@ public class EventAdminGUIListener implements Listener {
         String title = MoodStyle.cleanTitle(event.getView().getTitle());
 
         if (title.equals("centre evenementiel")) { handleAdminClick(event, player); return; }
+        if (title.equals("mode avance")) { handleAdvancedClick(event, player); return; }
         if (title.equals("recompenses event")) { handleRewardClick(event, player); return; }
         if (title.equals("salle dattente")) { handleWaitingRoomClick(event, player); return; }
         if (title.equals("generateur de mini jeux")) { handleGeneratorMainClick(event, player); return; }
@@ -60,24 +62,36 @@ public class EventAdminGUIListener implements Listener {
         if (!top(event, slot)) return;
 
         switch (slot) {
-            case 10 -> { click(player); EventChatListener.startName(player); }
-            case 11 -> { click(player); EventManager.cycleType(player); EventAdminGUI.open(player); }
-            case 12 -> { click(player); EventChatListener.startDescription(player); }
-            case 14 -> { click(player); EventManager.setLocation(player); EventAdminGUI.open(player); }
-            case 15 -> { click(player); EventManager.setFinishLocation(player); EventAdminGUI.open(player); }
-            case 16 -> { click(player); WaitingRoomGUI.open(player); }
-            case 20 -> { click(player); RewardGUI.open(player); }
-            case 21 -> { click(player); MiniGameGeneratorGUI.openMain(player); }
-            case 23 -> {
+            case 20 -> { click(player); MiniGameGeneratorGUI.openMain(player); }
+            case 22 -> {
                 click(player);
                 if (EventManager.isQueueOpen()) EventManager.closeQueue(player); else EventManager.openQueue(player);
                 EventAdminGUI.open(player);
             }
-            case 25 -> { click(player); player.closeInventory(); EventManager.startEvent(player); }
+            case 24 -> { click(player); player.closeInventory(); EventManager.startEvent(player); }
+            case 29 -> { click(player); RewardGUI.open(player); }
             case 31 -> { click(player); player.closeInventory(); EventManager.stopEvent(player); }
-            case 37 -> { no(player); WaitingRoomManager.restore(player); EventAdminGUI.open(player); }
-            case 40 -> { no(player); player.closeInventory(); EventManager.cancelEvent(player); }
-            case 43 -> { click(player); player.closeInventory(); }
+            case 33 -> { click(player); EventAdvancedGUI.open(player); }
+            case 40 -> { click(player); player.closeInventory(); }
+            default -> { }
+        }
+    }
+
+    private void handleAdvancedClick(InventoryClickEvent event, Player player) {
+        event.setCancelled(true);
+        int slot = event.getRawSlot();
+        if (!top(event, slot)) return;
+
+        switch (slot) {
+            case 10 -> { click(player); EventChatListener.startName(player); }
+            case 11 -> { click(player); EventManager.cycleType(player); EventAdvancedGUI.open(player); }
+            case 12 -> { click(player); EventChatListener.startDescription(player); }
+            case 14 -> { click(player); EventManager.setLocation(player); EventAdvancedGUI.open(player); }
+            case 15 -> { click(player); EventManager.setFinishLocation(player); EventAdvancedGUI.open(player); }
+            case 16 -> { click(player); WaitingRoomGUI.open(player); }
+            case 22 -> { no(player); WaitingRoomManager.restore(player); EventAdvancedGUI.open(player); }
+            case 31 -> { no(player); player.closeInventory(); EventManager.cancelEvent(player); }
+            case 49 -> { click(player); EventAdminGUI.open(player); }
             default -> { }
         }
     }
@@ -177,7 +191,7 @@ public class EventAdminGUIListener implements Listener {
             case 25 -> selectStyle(player, "neige");
             case 33 -> { click(player); WaitingRoomManager.teleport(player); WaitingRoomGUI.open(player); }
             case 35 -> { no(player); WaitingRoomManager.restore(player); WaitingRoomGUI.open(player); }
-            case 49 -> { click(player); EventAdminGUI.open(player); }
+            case 49 -> { click(player); EventAdvancedGUI.open(player); }
             default -> { }
         }
     }
