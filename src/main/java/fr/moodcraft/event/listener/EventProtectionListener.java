@@ -16,7 +16,7 @@ public class EventProtectionListener implements Listener {
     public void onEnderPearlUse(PlayerInteractEvent event) {
         Player player = event.getPlayer();
 
-        if (!EventManager.isParticipant(player)) {
+        if (!EventManager.isEventPlayer(player)) {
             return;
         }
 
@@ -30,7 +30,7 @@ public class EventProtectionListener implements Listener {
                 player,
                 MoodStyle.MODULE,
                 "Ender Pearl interdite pendant l'événement.",
-                MoodStyle.detail("Les parcours doivent rester équitables.")
+                MoodStyle.detail("Les parcours et la salle d'attente doivent rester équitables.")
         );
     }
 
@@ -45,7 +45,7 @@ public class EventProtectionListener implements Listener {
             return;
         }
 
-        if (!EventManager.isParticipant(victim) && !EventManager.isParticipant(damager)) {
+        if (!EventManager.isEventPlayer(victim) && !EventManager.isEventPlayer(damager)) {
             return;
         }
 
