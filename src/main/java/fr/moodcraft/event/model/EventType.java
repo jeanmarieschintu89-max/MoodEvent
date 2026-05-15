@@ -12,6 +12,11 @@ public enum EventType {
             "§e⬆"
     ),
 
+    WATER_JUMP(
+            "§bWater Jump",
+            "§b≈"
+    ),
+
     LABYRINTHE(
             "§5Labyrinthe",
             "§5✦"
@@ -72,7 +77,7 @@ public enum EventType {
     }
 
     public boolean usesFinishLine() {
-        return this == COURSE || this == JUMP || this == LABYRINTHE;
+        return this == COURSE || this == JUMP || this == WATER_JUMP || this == LABYRINTHE;
     }
 
     public static EventType fromText(String text) {
@@ -96,6 +101,7 @@ public enum EventType {
         return switch (clean) {
             case "course", "race", "running" -> COURSE;
             case "jump", "parcours", "parkour", "parcours_jump", "saut" -> JUMP;
+            case "waterjump", "water_jump", "water", "eau", "jump_eau", "saut_eau", "water_jumps" -> WATER_JUMP;
             case "labyrinthe", "maze", "labyrinth" -> LABYRINTHE;
             case "spleef" -> SPLEEF;
             case "koth", "roi_colline", "roi_de_la_colline", "king_of_the_hill" -> KOTH;
