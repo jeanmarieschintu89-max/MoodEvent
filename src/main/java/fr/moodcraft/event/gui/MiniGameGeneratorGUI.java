@@ -45,6 +45,7 @@ public final class MiniGameGeneratorGUI {
         addType(inv, 14, GeneratedGameType.COURSE, "Piste décorée avec obstacles.");
         addType(inv, 16, GeneratedGameType.WATER_JUMP, "Laine colorée au-dessus de l'eau.");
         addType(inv, 22, GeneratedGameType.SURVIE_ETAGES, "Étages qui disparaissent progressivement.");
+        addType(inv, 24, GeneratedGameType.RUEE_OR, "Mine bedrock, minerais, temps limité.");
 
         inv.setItem(29, EventItem.item(
                 Material.CHEST,
@@ -78,7 +79,7 @@ public final class MiniGameGeneratorGUI {
                 type.getIcon(),
                 "§6✦ §f" + type.getDisplayName() + " §6✦",
                 MoodStyle.detail("Choisis une taille."),
-                MoodStyle.detail("Une confirmation sera demandée."),
+                type == GeneratedGameType.RUEE_OR ? MoodStyle.detail("La taille définit aussi le temps.") : MoodStyle.detail("Une confirmation sera demandée."),
                 MoodStyle.detail("La zone sera sauvegardée avant génération."),
                 "",
                 MoodStyle.info("Tailles prédéfinies + personnalisé")
@@ -122,9 +123,7 @@ public final class MiniGameGeneratorGUI {
     }
 
     public static void clearPending(Player player) {
-        if (player != null) {
-            PENDING.remove(player.getUniqueId());
-        }
+        if (player != null) PENDING.remove(player.getUniqueId());
     }
 
     private static void openConfirmInventory(Player player, PendingGeneration pending) {
@@ -137,7 +136,7 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Type : §e" + pending.type().getDisplayName()),
                 MoodStyle.detail("Taille : §e" + pending.describe()),
                 MoodStyle.detail("Monde : §e" + player.getWorld().getName()),
-                MoodStyle.detail("Zone sauvegardée avant construction."),
+                pending.type() == GeneratedGameType.RUEE_OR ? MoodStyle.detail("Mine bedrock + minerais + timer.") : MoodStyle.detail("Zone sauvegardée avant construction."),
                 MoodStyle.detail("Restauration possible avec /eventstop ou le menu."),
                 "",
                 MoodStyle.info("Confirmer la génération")
@@ -163,30 +162,18 @@ public final class MiniGameGeneratorGUI {
             case COURSE -> MoodStyle.detail("Longueur : §e50 à 1000 §7blocs.");
             case WATER_JUMP -> MoodStyle.detail("Longueur : §e30 à 250 §7blocs.");
             case SURVIE_ETAGES -> MoodStyle.detail("Largeur : §e15 à 61§7, étages auto.");
+            case RUEE_OR -> MoodStyle.detail("Largeur mine : §e15 à 51§7, temps auto.");
         };
     }
 
     private static void fill(Inventory inv) {
-        for (int i = 0; i < inv.getSize(); i++) {
-            inv.setItem(i, EventItem.item(Material.BLACK_STAINED_GLASS_PANE, " "));
-        }
+        for (int i = 0; i < inv.getSize(); i++) inv.setItem(i, EventItem.item(Material.BLACK_STAINED_GLASS_PANE, " "));
     }
 
     public record PendingGeneration(GeneratedGameType type, GeneratedGameSize size, Integer customValue) {
-        public static PendingGeneration preset(GeneratedGameType type, GeneratedGameSize size) {
-            return new PendingGeneration(type, size, null);
-        }
-
-        public static PendingGeneration custom(GeneratedGameType type, int value) {
-            return new PendingGeneration(type, null, value);
-        }
-
-        public boolean isCustom() {
-            return customValue != null;
-        }
-
-        public String describe() {
-            return isCustom() ? GeneratedGameManager.describeCustom(type, customValue) : size.describeFor(type);
-        }
+        public static PendingGeneration preset(GeneratedGameType type, GeneratedGameSize size) { return new PendingGeneration(type, size, null); }
+        public static PendingGeneration custom(GeneratedGameType type, int value) { return new PendingGeneration(type, null, value); }
+        public boolean isCustom() { return customValue != null; }
+        public String describe() { return isCustom() ? GeneratedGameManager.describeCustom(type, customValue) : size.describeFor(type); }
     }
 }
