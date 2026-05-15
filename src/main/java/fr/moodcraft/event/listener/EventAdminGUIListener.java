@@ -89,6 +89,7 @@ public class EventAdminGUIListener implements Listener {
             case 14 -> openSize(player, GeneratedGameType.COURSE);
             case 16 -> openSize(player, GeneratedGameType.WATER_JUMP);
             case 22 -> openSize(player, GeneratedGameType.SURVIE_ETAGES);
+            case 24 -> openSize(player, GeneratedGameType.RUEE_OR);
             case 29 -> { click(player); EventLootGUI.open(player); }
             case 33 -> { no(player); GeneratedGameManager.restore(player); MiniGameGeneratorGUI.openMain(player); }
             case 49 -> { click(player); EventAdminGUI.open(player); }
