@@ -1,6 +1,7 @@
 package fr.moodcraft.event.manager;
 
 import fr.moodcraft.event.Main;
+import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -18,8 +19,10 @@ import java.util.UUID;
 
 public final class RewardManager {
 
+    public static final int PARTICIPATION = 0;
     private static final int SIZE = 27;
-    private static final Map<UUID, Integer> EDITING = new HashMap<>();
+    private static final Map<UUID, Integer> EDITING_ITEMS = new HashMap<>();
+    private static final Map<UUID, Integer> EDITING_MONEY = new HashMap<>();
     private static File file;
     private static FileConfiguration config;
 
@@ -50,50 +53,109 @@ public final class RewardManager {
         }
     }
 
-    public static void openEditor(Player player, int place) {
-        if (!isValidPlace(place)) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Place invalide.", MoodStyle.detail("Utilise §e/eventrecompense <1|2|3>"));
+    public static void openItemEditor(Player player, int place) {
+        if (!isValidReward(place)) {
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Récompense invalide.");
             return;
         }
 
         Inventory inventory = Bukkit.createInventory(null, SIZE, title(place));
         for (int slot = 0; slot < SIZE; slot++) {
-            ItemStack item = config.getItemStack(path(place, slot));
+            ItemStack item = config.getItemStack(itemPath(place, slot));
             if (item != null) {
                 inventory.setItem(slot, item.clone());
             }
         }
 
-        EDITING.put(player.getUniqueId(), place);
+        EDITING_ITEMS.put(player.getUniqueId(), place);
         player.openInventory(inventory);
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 0.8f, 1.2f);
 
         MoodStyle.infoMessage(
                 player,
                 MoodStyle.MODULE,
-                "Dépose les récompenses dans le coffre.",
-                MoodStyle.detail("Place : §e" + formatPlace(place)),
+                "Dépose les items de récompense.",
+                MoodStyle.detail("Récompense : §e" + formatReward(place)),
                 MoodStyle.detail("Ferme le menu pour sauvegarder.")
         );
     }
 
-    public static boolean isEditing(Player player) {
-        return player != null && EDITING.containsKey(player.getUniqueId());
+    public static void startMoneyInput(Player player, int place) {
+        if (!isValidReward(place)) {
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Récompense invalide.");
+            return;
+        }
+
+        EDITING_MONEY.put(player.getUniqueId(), place);
+        player.closeInventory();
+        MoodStyle.infoMessage(
+                player,
+                MoodStyle.MODULE,
+                "Écris le montant en argent dans le chat.",
+                MoodStyle.detail("Récompense : §e" + formatReward(place)),
+                MoodStyle.detail("Montant actuel : §a" + formatMoney(getMoney(place))),
+                MoodStyle.detail("Tape §cannuler §7pour quitter")
+        );
     }
 
-    public static void saveEditor(Player player, Inventory inventory) {
+    public static boolean isEditingItems(Player player) {
+        return player != null && EDITING_ITEMS.containsKey(player.getUniqueId());
+    }
+
+    public static boolean isEditingMoney(Player player) {
+        return player != null && EDITING_MONEY.containsKey(player.getUniqueId());
+    }
+
+    public static boolean handleMoneyChat(Player player, String message) {
+        if (player == null || !isEditingMoney(player)) {
+            return false;
+        }
+
+        int place = EDITING_MONEY.remove(player.getUniqueId());
+
+        if (message == null || message.equalsIgnoreCase("annuler") || message.equalsIgnoreCase("cancel")) {
+            MoodStyle.infoMessage(player, MoodStyle.MODULE, "Saisie annulée.");
+            return true;
+        }
+
+        String clean = message.trim().replace("€", "").replace(",", ".");
+        double amount;
+        try {
+            amount = Double.parseDouble(clean);
+        } catch (NumberFormatException exception) {
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Montant invalide.", MoodStyle.detail("Exemple : §e15000"));
+            return true;
+        }
+
+        if (amount < 0) {
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Le montant ne peut pas être négatif.");
+            return true;
+        }
+
+        setMoney(place, amount);
+        MoodStyle.successMessage(
+                player,
+                MoodStyle.MODULE,
+                "Montant sauvegardé.",
+                MoodStyle.detail("Récompense : §e" + formatReward(place)),
+                MoodStyle.detail("Argent : §a" + formatMoney(amount))
+        );
+        return true;
+    }
+
+    public static void saveItemEditor(Player player, Inventory inventory) {
         if (player == null || inventory == null) {
             return;
         }
 
-        Integer place = EDITING.remove(player.getUniqueId());
+        Integer place = EDITING_ITEMS.remove(player.getUniqueId());
         if (place == null) {
             return;
         }
 
         for (int slot = 0; slot < SIZE; slot++) {
             ItemStack item = inventory.getItem(slot);
-            config.set(path(place, slot), item == null ? null : item.clone());
+            config.set(itemPath(place, slot), item == null ? null : item.clone());
         }
         save();
 
@@ -101,20 +163,58 @@ public final class RewardManager {
         MoodStyle.successMessage(
                 player,
                 MoodStyle.MODULE,
-                "Récompense sauvegardée.",
-                MoodStyle.detail("Place : §e" + formatPlace(place)),
+                "Items sauvegardés.",
+                MoodStyle.detail("Récompense : §e" + formatReward(place)),
                 MoodStyle.detail("Items déposés : §e" + countRewardItems(place))
         );
     }
 
-    public static void giveReward(Player player, int place) {
-        if (player == null || !isValidPlace(place)) {
+    public static void giveParticipationReward(Player player) {
+        giveReward(player, PARTICIPATION, true);
+    }
+
+    public static void giveTopReward(Player player, int place) {
+        if (place < 1 || place > 3) {
+            return;
+        }
+        giveReward(player, place, false);
+    }
+
+    private static void giveReward(Player player, int place, boolean participation) {
+        if (player == null || !isValidReward(place)) {
             return;
         }
 
+        int items = giveItems(player, place);
+        double money = getMoney(place);
+        boolean moneyGiven = false;
+
+        if (money > 0) {
+            moneyGiven = VaultHook.deposit(player, money);
+        }
+
+        if (items <= 0 && money <= 0) {
+            if (!participation) {
+                MoodStyle.infoMessage(player, MoodStyle.MODULE, "Aucune récompense définie pour cette place.", MoodStyle.detail("Récompense : §e" + formatReward(place)));
+            }
+            return;
+        }
+
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.25f);
+        MoodStyle.successMessage(
+                player,
+                MoodStyle.MODULE,
+                participation ? "Récompense de participation reçue." : "Récompense de classement reçue.",
+                MoodStyle.detail("Récompense : §e" + formatReward(place)),
+                items > 0 ? MoodStyle.detail("Items : §e" + items) : MoodStyle.detail("Items : §7aucun"),
+                money > 0 && moneyGiven ? MoodStyle.detail("Argent : §a" + formatMoney(money)) : money > 0 ? MoodStyle.detail("Argent : §cVault indisponible") : MoodStyle.detail("Argent : §7aucun")
+        );
+    }
+
+    private static int giveItems(Player player, int place) {
         int given = 0;
         for (int slot = 0; slot < SIZE; slot++) {
-            ItemStack item = config.getItemStack(path(place, slot));
+            ItemStack item = config.getItemStack(itemPath(place, slot));
             if (item == null || item.getType().isAir()) {
                 continue;
             }
@@ -125,36 +225,17 @@ public final class RewardManager {
             }
             given += item.getAmount();
         }
-
-        if (given <= 0) {
-            MoodStyle.infoMessage(
-                    player,
-                    MoodStyle.MODULE,
-                    "Aucune récompense item définie pour votre place.",
-                    MoodStyle.detail("Place : §e" + formatPlace(place))
-            );
-            return;
-        }
-
-        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.25f);
-        MoodStyle.successMessage(
-                player,
-                MoodStyle.MODULE,
-                "Récompense reçue.",
-                MoodStyle.detail("Place : §e" + formatPlace(place)),
-                MoodStyle.detail("Items donnés : §e" + given),
-                MoodStyle.detail("Si votre inventaire est plein, le surplus tombe au sol.")
-        );
+        return given;
     }
 
     public static int countRewardItems(int place) {
-        if (!isValidPlace(place)) {
+        if (!isValidReward(place)) {
             return 0;
         }
 
         int amount = 0;
         for (int slot = 0; slot < SIZE; slot++) {
-            ItemStack item = config.getItemStack(path(place, slot));
+            ItemStack item = config.getItemStack(itemPath(place, slot));
             if (item != null && !item.getType().isAir()) {
                 amount += item.getAmount();
             }
@@ -162,19 +243,48 @@ public final class RewardManager {
         return amount;
     }
 
-    public static String formatPlace(int place) {
-        return place == 1 ? "1er" : place + "e";
+    public static double getMoney(int place) {
+        if (!isValidReward(place)) {
+            return 0;
+        }
+        return config.getDouble(basePath(place) + ".money", 0.0);
     }
 
-    private static boolean isValidPlace(int place) {
-        return place >= 1 && place <= 3;
+    private static void setMoney(int place, double amount) {
+        config.set(basePath(place) + ".money", amount);
+        save();
+    }
+
+    public static String formatReward(int place) {
+        return switch (place) {
+            case PARTICIPATION -> "Participation";
+            case 1 -> "1er";
+            case 2 -> "2e";
+            case 3 -> "3e";
+            default -> "Inconnue";
+        };
+    }
+
+    public static String formatMoney(double amount) {
+        if (amount == Math.rint(amount)) {
+            return String.format("%.0f€", amount);
+        }
+        return String.format("%.2f€", amount);
+    }
+
+    private static boolean isValidReward(int place) {
+        return place >= 0 && place <= 3;
     }
 
     private static String title(int place) {
-        return MoodStyle.guiTitle("Récompense " + formatPlace(place));
+        return MoodStyle.guiTitle("Récompense " + formatReward(place));
     }
 
-    private static String path(int place, int slot) {
-        return "recompenses." + place + ".slots." + slot;
+    private static String basePath(int place) {
+        return place == PARTICIPATION ? "participation" : "top." + place;
+    }
+
+    private static String itemPath(int place, int slot) {
+        return basePath(place) + ".slots." + slot;
     }
 }
