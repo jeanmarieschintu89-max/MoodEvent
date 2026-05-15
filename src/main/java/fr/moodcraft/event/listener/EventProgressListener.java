@@ -24,13 +24,11 @@ public class EventProgressListener implements Listener {
 
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
-        if (!hasChangedBlock(event.getFrom(), event.getTo())) {
-            return;
-        }
+        if (!hasChangedBlock(event.getFrom(), event.getTo())) return;
 
         Player player = event.getPlayer();
 
-        if (EventManager.isAtFinish(player)) {
+        if (EventManager.isAtFinish(player) || isOnFinishZone(player)) {
             EventManager.finishPlayer(player);
             return;
         }
@@ -41,6 +39,31 @@ public class EventProgressListener implements Listener {
         }
 
         EventManager.checkSurvivalFloorElimination(player);
+    }
+
+    private boolean isOnFinishZone(Player player) {
+        if (player == null || !EventManager.isRunning() || !EventManager.isParticipant(player)) return false;
+        EventType type = EventManager.getType();
+        if (type != EventType.WATER_JUMP && type != EventType.JUMP && type != EventType.COURSE && type != EventType.LABYRINTHE) return false;
+
+        Location finish = getFinishLocation();
+        if (finish == null || finish.getWorld() == null || player.getWorld() == null || !player.getWorld().equals(finish.getWorld())) return false;
+
+        Location location = player.getLocation();
+        if (Math.abs(location.getX() - finish.getX()) > 6.0 || Math.abs(location.getZ() - finish.getZ()) > 6.0 || Math.abs(location.getY() - finish.getY()) > 5.0) return false;
+
+        Material below = location.clone().subtract(0, 1, 0).getBlock().getType();
+        Material feet = location.getBlock().getType();
+        return isFinishMaterial(below) || isFinishMaterial(feet);
+    }
+
+    private boolean isFinishMaterial(Material material) {
+        return material == Material.RED_WOOL
+                || material == Material.RED_CONCRETE
+                || material == Material.REDSTONE_BLOCK
+                || material == Material.RED_STAINED_GLASS
+                || material == Material.HEAVY_WEIGHTED_PRESSURE_PLATE
+                || material == Material.LIGHT_WEIGHTED_PRESSURE_PLATE;
     }
 
     private boolean shouldResetFall(Player player) {
@@ -76,20 +99,18 @@ public class EventProgressListener implements Listener {
         FileConfiguration config = Main.getInstance().getConfig();
         World world = Bukkit.getWorld(config.getString("event.location.world", ""));
         if (world == null) return null;
-        return new Location(
-                world,
-                config.getDouble("event.location.x"),
-                config.getDouble("event.location.y"),
-                config.getDouble("event.location.z"),
-                (float) config.getDouble("event.location.yaw"),
-                (float) config.getDouble("event.location.pitch")
-        );
+        return new Location(world, config.getDouble("event.location.x"), config.getDouble("event.location.y"), config.getDouble("event.location.z"), (float) config.getDouble("event.location.yaw"), (float) config.getDouble("event.location.pitch"));
+    }
+
+    private Location getFinishLocation() {
+        FileConfiguration config = Main.getInstance().getConfig();
+        World world = Bukkit.getWorld(config.getString("event.finish-location.world", ""));
+        if (world == null) return null;
+        return new Location(world, config.getDouble("event.finish-location.x"), config.getDouble("event.finish-location.y"), config.getDouble("event.finish-location.z"), (float) config.getDouble("event.finish-location.yaw"), (float) config.getDouble("event.finish-location.pitch"));
     }
 
     private boolean hasChangedBlock(Location from, Location to) {
-        if (to == null || from.getWorld() == null || to.getWorld() == null) {
-            return false;
-        }
+        if (to == null || from.getWorld() == null || to.getWorld() == null) return false;
         return from.getBlockX() != to.getBlockX()
                 || from.getBlockY() != to.getBlockY()
                 || from.getBlockZ() != to.getBlockZ()
