@@ -33,9 +33,9 @@ public final class MiniGameGeneratorGUI {
         inv.setItem(4, EventItem.glow(EventItem.item(
                 Material.COMPASS,
                 "§6✦ §fGénérateur de mini-jeux §6✦",
-                MoodStyle.detail("Crée une structure temporaire."),
-                MoodStyle.detail("Départ et arrivée automatiques."),
-                MoodStyle.detail("Restauration possible."),
+                MoodStyle.detail("Mode sécurité TPS actif."),
+                MoodStyle.detail("Tailles lourdes désactivées."),
+                MoodStyle.detail("Utilise Petit ou Moyen en live."),
                 "",
                 MoodStyle.info("Choisis un mini-jeu")
         )));
@@ -78,24 +78,41 @@ public final class MiniGameGeneratorGUI {
         inv.setItem(4, EventItem.glow(EventItem.item(
                 type.getIcon(),
                 "§6✦ §f" + type.getDisplayName() + " §6✦",
-                MoodStyle.detail("Choisis une taille."),
-                type == GeneratedGameType.RUEE_OR ? MoodStyle.detail("La taille définit aussi le temps.") : MoodStyle.detail("Une confirmation sera demandée."),
-                MoodStyle.detail("La zone sera sauvegardée avant génération."),
+                MoodStyle.detail("Mode sécurité TPS."),
+                MoodStyle.detail("Petit et Moyen seulement."),
+                MoodStyle.detail("Grand/Géant/personnalisé désactivés."),
                 "",
-                MoodStyle.info("Tailles prédéfinies + personnalisé")
+                MoodStyle.info("Choisis une taille sûre")
         )));
 
-        addSize(inv, 10, type, GeneratedGameSize.PETIT);
-        addSize(inv, 12, type, GeneratedGameSize.MOYEN);
-        addSize(inv, 14, type, GeneratedGameSize.GRAND);
-        addSize(inv, 16, type, GeneratedGameSize.GEANT);
+        addSize(inv, 11, type, GeneratedGameSize.PETIT);
+        addSize(inv, 15, type, GeneratedGameSize.MOYEN);
+
+        inv.setItem(29, EventItem.item(
+                Material.BARRIER,
+                "§c✦ §fGrand désactivé §c✦",
+                MoodStyle.detail("Trop lourd pour un event live."),
+                MoodStyle.detail("Utilise Petit ou Moyen."),
+                "",
+                MoodStyle.error("Sécurité TPS")
+        ));
+
+        inv.setItem(33, EventItem.item(
+                Material.BARRIER,
+                "§c✦ §fGéant désactivé §c✦",
+                MoodStyle.detail("Risque de freeze génération/restauration."),
+                MoodStyle.detail("Réactivation possible plus tard en config."),
+                "",
+                MoodStyle.error("Sécurité TPS")
+        ));
 
         inv.setItem(31, EventItem.item(
-                Material.WRITABLE_BOOK,
-                "§6✦ §fPersonnalisé §6✦",
-                customLore(type),
+                Material.GRAY_DYE,
+                "§6✦ §fPersonnalisé fermé §6✦",
+                MoodStyle.detail("Désactivé pour éviter les tailles extrêmes."),
+                MoodStyle.detail("Petit/Moyen sont recommandés."),
                 "",
-                MoodStyle.info("Saisir dans le chat")
+                MoodStyle.detail("Indisponible")
         ));
 
         inv.setItem(49, EventItem.item(Material.ARROW, "§6✦ §fRetour §6✦", MoodStyle.detail("Revenir au générateur")));
@@ -109,9 +126,8 @@ public final class MiniGameGeneratorGUI {
     }
 
     public static void openConfirmCustom(Player player, GeneratedGameType type, int value) {
-        PendingGeneration pending = PendingGeneration.custom(type, value);
-        PENDING.put(player.getUniqueId(), pending);
-        openConfirmInventory(player, pending);
+        MoodStyle.errorMessage(player, MoodStyle.MODULE, "Taille personnalisée désactivée.", MoodStyle.detail("Mode sécurité TPS actif."));
+        openSize(player, type);
     }
 
     public static GeneratedGameType getSelectedType(Player player) {
@@ -136,7 +152,7 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Type : §e" + pending.type().getDisplayName()),
                 MoodStyle.detail("Taille : §e" + pending.describe()),
                 MoodStyle.detail("Monde : §e" + player.getWorld().getName()),
-                pending.type() == GeneratedGameType.RUEE_OR ? MoodStyle.detail("Mine bedrock + minerais + timer.") : MoodStyle.detail("Zone sauvegardée avant construction."),
+                MoodStyle.detail("Mode sécurité TPS actif."),
                 MoodStyle.detail("Restauration possible avec /eventstop ou le menu."),
                 "",
                 MoodStyle.info("Confirmer la génération")
@@ -152,18 +168,11 @@ public final class MiniGameGeneratorGUI {
     }
 
     private static void addSize(Inventory inv, int slot, GeneratedGameType type, GeneratedGameSize size) {
-        inv.setItem(slot, EventItem.item(size.getIcon(), "§6✦ §f" + size.getDisplayName() + " §6✦", MoodStyle.detail("Format : §e" + size.describeFor(type)), MoodStyle.detail("Confirmation avant génération."), "", MoodStyle.info("Préparer")));
+        inv.setItem(slot, EventItem.item(size.getIcon(), "§6✦ §f" + size.getDisplayName() + " §6✦", MoodStyle.detail("Format : §e" + size.describeFor(type)), MoodStyle.detail("Taille sûre pour live."), "", MoodStyle.info("Préparer")));
     }
 
     private static String customLore(GeneratedGameType type) {
-        return switch (type) {
-            case LABYRINTHE -> MoodStyle.detail("Largeur impaire : §e15 à 101§7.");
-            case JUMP -> MoodStyle.detail("Longueur : §e30 à 250 §7blocs.");
-            case COURSE -> MoodStyle.detail("Longueur : §e50 à 1000 §7blocs.");
-            case WATER_JUMP -> MoodStyle.detail("Longueur : §e30 à 250 §7blocs.");
-            case SURVIE_ETAGES -> MoodStyle.detail("Largeur : §e15 à 61§7, étages auto.");
-            case RUEE_OR -> MoodStyle.detail("Largeur mine : §e15 à 51§7, temps auto.");
-        };
+        return MoodStyle.detail("Désactivé en mode sécurité TPS.");
     }
 
     private static void fill(Inventory inv) {
