@@ -1,6 +1,7 @@
 package fr.moodcraft.event.listener;
 
 import fr.moodcraft.event.generator.GeneratedGameManager;
+import fr.moodcraft.event.generator.GeneratedGameType;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Material;
@@ -47,6 +48,11 @@ public class EventProtectionListener implements Listener {
     @EventHandler
     public void onBreak(BlockBreakEvent event) {
         if (!GeneratedGameManager.isInsideStructure(event.getBlock().getLocation())) return;
+
+        if (EventManager.getType().usesTimedMining() && GeneratedGameManager.getActiveType() == GeneratedGameType.RUEE_OR && isMineableOre(event.getBlock().getType())) {
+            return;
+        }
+
         event.setCancelled(true);
         MoodStyle.errorMessage(event.getPlayer(), MoodStyle.MODULE, "Modification interdite dans la structure générée.", MoodStyle.detail("La zone sera restaurée automatiquement à la fin."));
     }
@@ -70,6 +76,26 @@ public class EventProtectionListener implements Listener {
                 return;
             }
         }
+    }
+
+    private boolean isMineableOre(Material material) {
+        if (material == null) return false;
+        return material == Material.COAL_ORE
+                || material == Material.COPPER_ORE
+                || material == Material.IRON_ORE
+                || material == Material.GOLD_ORE
+                || material == Material.REDSTONE_ORE
+                || material == Material.LAPIS_ORE
+                || material == Material.DIAMOND_ORE
+                || material == Material.EMERALD_ORE
+                || material == Material.DEEPSLATE_COAL_ORE
+                || material == Material.DEEPSLATE_COPPER_ORE
+                || material == Material.DEEPSLATE_IRON_ORE
+                || material == Material.DEEPSLATE_GOLD_ORE
+                || material == Material.DEEPSLATE_REDSTONE_ORE
+                || material == Material.DEEPSLATE_LAPIS_ORE
+                || material == Material.DEEPSLATE_DIAMOND_ORE
+                || material == Material.DEEPSLATE_EMERALD_ORE;
     }
 
     private Player findDamager(org.bukkit.entity.Entity entity) {
