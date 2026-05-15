@@ -20,7 +20,7 @@ import java.util.Set;
 public class EventProtectionListener implements Listener {
 
     private static final Set<String> BLOCKED_COMMANDS = Set.of(
-            "/spawn", "/home", "/homes", "/tpa", "/tpahere", "/warp", "/warps", "/rtp"
+            "/spawn", "/home", "/homes", "/tpa", "/tpahere", "/warp", "/warps", "/rtp", "/tpr"
     );
 
     @EventHandler
