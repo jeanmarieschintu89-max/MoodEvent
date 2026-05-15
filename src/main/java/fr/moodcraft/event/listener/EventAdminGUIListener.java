@@ -2,6 +2,7 @@ package fr.moodcraft.event.listener;
 
 import fr.moodcraft.event.gui.EventAdminGUI;
 import fr.moodcraft.event.gui.RewardGUI;
+import fr.moodcraft.event.gui.WaitingRoomGUI;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.manager.RewardManager;
 import fr.moodcraft.event.manager.WaitingRoomManager;
@@ -30,6 +31,11 @@ public class EventAdminGUIListener implements Listener {
 
         if (title.equals("recompenses event")) {
             handleRewardClick(event, player);
+            return;
+        }
+
+        if (title.equals("salle dattente")) {
+            handleWaitingRoomClick(event, player);
         }
     }
 
@@ -57,42 +63,13 @@ public class EventAdminGUIListener implements Listener {
         }
 
         switch (slot) {
-            case 10 -> {
-                click(player);
-                EventChatListener.startName(player);
-            }
-            case 11 -> {
-                click(player);
-                EventManager.cycleType(player);
-                EventAdminGUI.open(player);
-            }
-            case 12 -> {
-                click(player);
-                EventChatListener.startDescription(player);
-            }
-            case 14 -> {
-                click(player);
-                EventManager.setLocation(player);
-                EventAdminGUI.open(player);
-            }
-            case 15 -> {
-                click(player);
-                EventManager.setFinishLocation(player);
-                EventAdminGUI.open(player);
-            }
-            case 16 -> {
-                click(player);
-                if (WaitingRoomManager.hasRoom()) {
-                    WaitingRoomManager.teleport(player);
-                } else {
-                    WaitingRoomManager.build(player, "medium");
-                }
-                EventAdminGUI.open(player);
-            }
-            case 20 -> {
-                click(player);
-                RewardGUI.open(player);
-            }
+            case 10 -> { click(player); EventChatListener.startName(player); }
+            case 11 -> { click(player); EventManager.cycleType(player); EventAdminGUI.open(player); }
+            case 12 -> { click(player); EventChatListener.startDescription(player); }
+            case 14 -> { click(player); EventManager.setLocation(player); EventAdminGUI.open(player); }
+            case 15 -> { click(player); EventManager.setFinishLocation(player); EventAdminGUI.open(player); }
+            case 16 -> { click(player); WaitingRoomGUI.open(player); }
+            case 20 -> { click(player); RewardGUI.open(player); }
             case 22 -> {
                 click(player);
                 if (EventManager.isQueueOpen()) {
@@ -102,16 +79,8 @@ public class EventAdminGUIListener implements Listener {
                 }
                 EventAdminGUI.open(player);
             }
-            case 24 -> {
-                click(player);
-                player.closeInventory();
-                EventManager.startEvent(player);
-            }
-            case 31 -> {
-                click(player);
-                player.closeInventory();
-                EventManager.stopEvent(player);
-            }
+            case 24 -> { click(player); player.closeInventory(); EventManager.startEvent(player); }
+            case 31 -> { click(player); player.closeInventory(); EventManager.stopEvent(player); }
             case 37 -> {
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 0.85f);
                 WaitingRoomManager.restore(player);
@@ -129,6 +98,45 @@ public class EventAdminGUIListener implements Listener {
             default -> {
             }
         }
+    }
+
+    private void handleWaitingRoomClick(InventoryClickEvent event, Player player) {
+        event.setCancelled(true);
+        int slot = event.getRawSlot();
+        if (slot < 0 || slot >= event.getView().getTopInventory().getSize()) {
+            return;
+        }
+
+        switch (slot) {
+            case 10 -> buildRoom(player, "mini");
+            case 12 -> buildRoom(player, "petite");
+            case 14 -> buildRoom(player, "moyenne");
+            case 16 -> buildRoom(player, "grande");
+            case 28 -> buildRoom(player, "tresgrande");
+            case 30 -> buildRoom(player, "festival");
+            case 33 -> {
+                click(player);
+                WaitingRoomManager.teleport(player);
+                WaitingRoomGUI.open(player);
+            }
+            case 35 -> {
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 0.85f);
+                WaitingRoomManager.restore(player);
+                WaitingRoomGUI.open(player);
+            }
+            case 49 -> {
+                click(player);
+                EventAdminGUI.open(player);
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void buildRoom(Player player, String size) {
+        click(player);
+        WaitingRoomManager.build(player, size);
+        WaitingRoomGUI.open(player);
     }
 
     private void handleRewardClick(InventoryClickEvent event, Player player) {
