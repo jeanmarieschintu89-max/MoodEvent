@@ -22,6 +22,11 @@ public enum EventType {
             "§5✦"
     ),
 
+    SURVIE_ETAGES(
+            "§dSurvie des étages",
+            "§d▣"
+    ),
+
     SPLEEF(
             "§bSpleef",
             "§b❄"
@@ -80,6 +85,10 @@ public enum EventType {
         return this == COURSE || this == JUMP || this == WATER_JUMP || this == LABYRINTHE;
     }
 
+    public boolean usesSurvivalRanking() {
+        return this == SURVIE_ETAGES;
+    }
+
     public static EventType fromText(String text) {
 
         if (text == null) {
@@ -103,6 +112,7 @@ public enum EventType {
             case "jump", "parcours", "parkour", "parcours_jump", "saut" -> JUMP;
             case "waterjump", "water_jump", "water", "eau", "jump_eau", "saut_eau", "water_jumps" -> WATER_JUMP;
             case "labyrinthe", "maze", "labyrinth" -> LABYRINTHE;
+            case "survie_etages", "survie_des_etages", "etages", "etage", "floor", "floors", "floor_survival" -> SURVIE_ETAGES;
             case "spleef" -> SPLEEF;
             case "koth", "roi_colline", "roi_de_la_colline", "king_of_the_hill" -> KOTH;
             case "pvp", "combat", "duel" -> PVP;
