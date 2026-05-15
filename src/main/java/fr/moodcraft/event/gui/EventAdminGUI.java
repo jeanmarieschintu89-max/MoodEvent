@@ -13,7 +13,7 @@ import org.bukkit.inventory.Inventory;
 
 public final class EventAdminGUI {
 
-    public static final String TITLE = "§6✦ §8Centre Événementiel §6✦";
+    public static final String TITLE = MoodStyle.guiTitle("Centre Événementiel");
 
     private EventAdminGUI() {
     }
