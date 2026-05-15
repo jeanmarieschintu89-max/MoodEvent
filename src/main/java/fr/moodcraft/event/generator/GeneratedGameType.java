@@ -1,0 +1,34 @@
+package fr.moodcraft.event.generator;
+
+import fr.moodcraft.event.model.EventType;
+import org.bukkit.Material;
+
+public enum GeneratedGameType {
+
+    LABYRINTHE("Labyrinthe", Material.MOSSY_STONE_BRICKS, EventType.LABYRINTHE),
+    JUMP("Parcours Jump", Material.SLIME_BLOCK, EventType.JUMP),
+    COURSE("Course", Material.RAIL, EventType.COURSE),
+    WATER_JUMP("Water Jump", Material.WATER_BUCKET, EventType.WATER_JUMP);
+
+    private final String displayName;
+    private final Material icon;
+    private final EventType eventType;
+
+    GeneratedGameType(String displayName, Material icon, EventType eventType) {
+        this.displayName = displayName;
+        this.icon = icon;
+        this.eventType = eventType;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public Material getIcon() {
+        return icon;
+    }
+
+    public EventType getEventType() {
+        return eventType;
+    }
+}
