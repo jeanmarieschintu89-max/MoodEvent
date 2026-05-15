@@ -1,0 +1,38 @@
+package fr.moodcraft.event.listener;
+
+import fr.moodcraft.event.manager.EventManager;
+import fr.moodcraft.event.model.EventType;
+import fr.moodcraft.event.util.MoodStyle;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+public class GoldRushStopGuard implements Listener {
+
+    private static final String PICKAXE_NAME = "§6✦ §fPioche Ruée vers l'or §6✦";
+
+    @EventHandler
+    public void onCommand(PlayerCommandPreprocessEvent event) {
+        String message = event.getMessage().toLowerCase().trim();
+        if (!message.equals("/eventstop") && !message.startsWith("/eventstop ")) return;
+        if (EventManager.getType() != EventType.RUEE_OR || !EventManager.isRunning()) return;
+
+        event.setCancelled(true);
+        for (Player online : Bukkit.getOnlinePlayers()) removePickaxes(online);
+        MoodStyle.infoMessage(event.getPlayer(), MoodStyle.MODULE, "Clôture Ruée vers l'or sans récompense automatique.", MoodStyle.detail("Les minerais récoltés restent aux joueurs."), MoodStyle.detail("La pioche événement est reprise."));
+        EventManager.cancelEvent(event.getPlayer());
+    }
+
+    private void removePickaxes(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item == null) continue;
+            ItemMeta meta = item.getItemMeta();
+            if (meta == null || !PICKAXE_NAME.equals(meta.getDisplayName())) continue;
+            item.setAmount(0);
+        }
+    }
+}
