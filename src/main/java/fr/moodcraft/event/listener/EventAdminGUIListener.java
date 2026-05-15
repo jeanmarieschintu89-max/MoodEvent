@@ -1,5 +1,6 @@
 package fr.moodcraft.event.listener;
 
+import fr.moodcraft.event.generator.EventGiveStructureManager;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameSize;
 import fr.moodcraft.event.generator.GeneratedGameType;
@@ -90,8 +91,9 @@ public class EventAdminGUIListener implements Listener {
             case 16 -> openSize(player, GeneratedGameType.WATER_JUMP);
             case 22 -> openSize(player, GeneratedGameType.SURVIE_ETAGES);
             case 24 -> openSize(player, GeneratedGameType.RUEE_OR);
+            case 26 -> { click(player); EventGiveStructureManager.generate(player); MiniGameGeneratorGUI.openMain(player); }
             case 29 -> { click(player); EventLootGUI.open(player); }
-            case 33 -> { no(player); GeneratedGameManager.restore(player); MiniGameGeneratorGUI.openMain(player); }
+            case 33 -> { no(player); GeneratedGameManager.restore(player); EventGiveStructureManager.restore(player); MiniGameGeneratorGUI.openMain(player); }
             case 49 -> { click(player); EventAdminGUI.open(player); }
             default -> { }
         }
@@ -109,7 +111,7 @@ public class EventAdminGUIListener implements Listener {
             case 12 -> openConfirm(player, type, GeneratedGameSize.MOYEN);
             case 14 -> openConfirm(player, type, GeneratedGameSize.GRAND);
             case 16 -> openConfirm(player, type, GeneratedGameSize.GEANT);
-            case 31 -> { click(player); GeneratorInputManager.startCustom(player, type); }
+            case 31 -> MoodStyle.errorMessage(player, MoodStyle.MODULE, "Taille personnalisée retirée.", MoodStyle.detail("Utilise Petit, Moyen, Grand ou Géant."));
             case 49 -> { click(player); MiniGameGeneratorGUI.openMain(player); }
             default -> { }
         }
