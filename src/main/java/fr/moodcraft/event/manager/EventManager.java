@@ -65,56 +65,32 @@ public final class EventManager {
         Main.getInstance().saveConfig();
     }
 
-    public static String getName() {
-        return name == null || name.isBlank() ? "Aucun événement" : name;
-    }
-
-    public static String getDescription() {
-        return description == null || description.isBlank() ? "Aucune description définie." : description;
-    }
-
-    public static EventType getType() {
-        return type == null ? EventType.CUSTOM : type;
-    }
-
-    public static int getQueueSize() {
-        return queue.size();
-    }
-
-    public static int getParticipantSize() {
-        return participants.size();
-    }
-
-    public static int getFinishedSize() {
-        return finishedPlayers.size();
-    }
-
-    public static boolean isQueueOpen() {
-        return queueOpen;
-    }
-
-    public static boolean isRunning() {
-        return running;
-    }
-
-    public static boolean hasLocation() {
-        return startLocation != null && startLocation.getWorld() != null;
-    }
-
-    public static boolean hasFinishLocation() {
-        return finishLocation != null && finishLocation.getWorld() != null;
-    }
-
-    public static boolean isCreated() {
-        return hasEvent();
-    }
+    public static String getName() { return name == null || name.isBlank() ? "Aucun événement" : name; }
+    public static String getDescription() { return description == null || description.isBlank() ? "Aucune description définie." : description; }
+    public static EventType getType() { return type == null ? EventType.CUSTOM : type; }
+    public static int getQueueSize() { return queue.size(); }
+    public static int getParticipantSize() { return participants.size(); }
+    public static int getFinishedSize() { return finishedPlayers.size(); }
+    public static boolean isQueueOpen() { return queueOpen; }
+    public static boolean isRunning() { return running; }
+    public static boolean hasLocation() { return startLocation != null && startLocation.getWorld() != null; }
+    public static boolean hasFinishLocation() { return finishLocation != null && finishLocation.getWorld() != null; }
+    public static boolean isCreated() { return hasEvent(); }
 
     public static boolean isParticipant(Player player) {
         return player != null && participants.contains(player.getUniqueId());
     }
 
+    public static boolean isEventPlayer(Player player) {
+        if (player == null) {
+            return false;
+        }
+        UUID uuid = player.getUniqueId();
+        return queue.contains(uuid) || participants.contains(uuid) || returnLocations.containsKey(uuid);
+    }
+
     public static boolean isNonPvpEventRunning() {
-        return running && getType() != EventType.PVP;
+        return getType() != EventType.PVP && (!queue.isEmpty() || !participants.isEmpty() || !returnLocations.isEmpty());
     }
 
     public static boolean isAtFinish(Player player) {
@@ -330,10 +306,7 @@ public final class EventManager {
         int sent = 0;
         for (UUID uuid : queue) {
             Player player = Bukkit.getPlayer(uuid);
-            if (player == null || !player.isOnline()) {
-                continue;
-            }
-
+            if (player == null || !player.isOnline()) continue;
             returnLocations.putIfAbsent(player.getUniqueId(), player.getLocation().clone());
             WaitingRoomManager.teleport(player);
             player.sendTitle("§6Salle d'attente", "§fL'événement va bientôt commencer", 0, 45, 10);
@@ -376,7 +349,7 @@ public final class EventManager {
     }
 
     public static void adminHelp(Player player) {
-        MoodStyle.send(player, MoodStyle.MODULE, MoodStyle.info("Commandes événement."), MoodStyle.detail("/eventcreer <nom>"), MoodStyle.detail("/eventtype <course|jump|labyrinthe|pvp|quiz>"), MoodStyle.detail("/eventdepart"), MoodStyle.detail("/eventarrivee"), MoodStyle.detail("/eventsalleattente [petit|medium|grand]"), MoodStyle.detail("/eventrestaurersalle"), MoodStyle.detail("/eventfinirjoueur <joueur>"), MoodStyle.detail("/eventouvrir"), MoodStyle.detail("/eventfermer"), MoodStyle.detail("/eventlancer"), MoodStyle.detail("/eventstop"), MoodStyle.detail("/eventmenu"));
+        MoodStyle.send(player, MoodStyle.MODULE, MoodStyle.info("Commandes événement."), MoodStyle.detail("/eventcreer <nom>"), MoodStyle.detail("/eventtype <course|jump|labyrinthe|pvp|quiz>"), MoodStyle.detail("/eventdepart"), MoodStyle.detail("/eventarrivee"), MoodStyle.detail("/eventsalleattente <mini|petite|moyenne|grande|tresgrande|festival>"), MoodStyle.detail("/eventrestaurersalle"), MoodStyle.detail("/eventfinirjoueur <joueur>"), MoodStyle.detail("/eventouvrir"), MoodStyle.detail("/eventfermer"), MoodStyle.detail("/eventlancer"), MoodStyle.detail("/eventstop"), MoodStyle.detail("/eventmenu"));
     }
 
     private static int returnParticipants(boolean giveParticipation) {
@@ -385,18 +358,15 @@ public final class EventManager {
             Player player = Bukkit.getPlayer(entry.getKey());
             Location returnLocation = entry.getValue();
             if (player == null || !player.isOnline() || returnLocation == null || returnLocation.getWorld() == null) continue;
-
             int place = getRankingPlace(player.getUniqueId());
             if (place > 0) {
                 MoodStyle.successMessage(player, MoodStyle.MODULE, "Classement final confirmé.", MoodStyle.detail("Votre place : §e" + formatPlace(place)), place <= 3 ? MoodStyle.detail("Récompense Top 3 distribuée.") : MoodStyle.detail("Récompense de participation distribuée."));
             } else if (giveParticipation) {
                 MoodStyle.infoMessage(player, MoodStyle.MODULE, "Événement terminé.", MoodStyle.detail("Vous recevez la récompense de participation."));
             }
-
             if (giveParticipation) {
                 RewardManager.giveParticipationReward(player);
             }
-
             player.teleport(returnLocation);
             player.sendTitle("§aRetour", "§fMerci d'avoir participé", 0, 35, 10);
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.2f);
@@ -412,9 +382,7 @@ public final class EventManager {
     private static void announceAndRewardTopPlayers() {
         for (int index = 0; index < Math.min(3, ranking.size()); index++) {
             Player player = Bukkit.getPlayer(ranking.get(index));
-            if (player == null || !player.isOnline()) {
-                continue;
-            }
+            if (player == null || !player.isOnline()) continue;
             int place = index + 1;
             player.sendTitle("§6Classement final", "§fVous êtes §e" + formatPlace(place), 0, 50, 10);
             MoodStyle.successMessage(player, MoodStyle.MODULE, "Vous êtes dans le Top 3.", MoodStyle.detail("Place : §e" + formatPlace(place)), MoodStyle.detail("Récompense de classement distribuée."));
