@@ -225,7 +225,17 @@ public final class EventManager {
         broadcastRanking();
         announceAndRewardTopPlayers();
         int returned = returnParticipants(true);
-        broadcastEvent(MoodStyle.success("Événement terminé."), MoodStyle.detail("Événement : §e" + name), MoodStyle.detail("Participants renvoyés : §e" + returned), MoodStyle.detail("Récompenses distribuées."));
+        boolean restoredRoom = WaitingRoomManager.hasRoom();
+        if (restoredRoom) {
+            WaitingRoomManager.restore(player);
+        }
+        broadcastEvent(
+                MoodStyle.success("Événement terminé."),
+                MoodStyle.detail("Événement : §e" + name),
+                MoodStyle.detail("Participants renvoyés : §e" + returned),
+                MoodStyle.detail("Récompenses distribuées."),
+                restoredRoom ? MoodStyle.detail("Salle d'attente restaurée automatiquement.") : MoodStyle.detail("Aucune salle d'attente à restaurer.")
+        );
         clearEvent();
         save();
     }
