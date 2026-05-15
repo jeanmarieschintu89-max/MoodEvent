@@ -6,6 +6,7 @@ import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameSize;
 import fr.moodcraft.event.generator.GeneratedGameStyleManager;
 import fr.moodcraft.event.generator.GeneratedGameType;
+import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.gui.EventAdminGUI;
 import fr.moodcraft.event.gui.EventAdvancedGUI;
 import fr.moodcraft.event.gui.EventLootGUI;
@@ -108,6 +109,12 @@ public class EventAdminGUIListener implements Listener {
             case 16 -> openSize(player, GeneratedGameType.WATER_JUMP);
             case 22 -> openSize(player, GeneratedGameType.SURVIE_ETAGES);
             case 24 -> openSize(player, GeneratedGameType.RUEE_OR);
+            case 25 -> {
+                click(player);
+                SquidPackManager.generate(player);
+                EventLogManager.log(player, "Pack Survie des Jeux", "Pack spécial généré depuis le menu");
+                MiniGameGeneratorGUI.openMain(player);
+            }
             case 26 -> {
                 click(player);
                 EventGiveStructureManager.generate(player);
@@ -124,6 +131,7 @@ public class EventAdminGUIListener implements Listener {
                 no(player);
                 GeneratedGameManager.restore(player);
                 EventGiveStructureManager.restore(player);
+                SquidPackManager.restore(player);
                 EventLogManager.log(player, "Restauration", "Structures générées restaurées depuis le menu");
                 MiniGameGeneratorGUI.openMain(player);
             }
