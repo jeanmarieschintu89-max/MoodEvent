@@ -43,42 +43,47 @@ public class SurvivalFloorTask implements Listener {
 
         if (tick == 1) {
             forEachSurvivor(player -> {
-                player.sendTitle("§dSurvie", "§fLes étages vont céder", 0, 35, 10);
+                player.sendTitle("§dSurvie", "§fPréparez-vous", 0, 35, 10);
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.9f, 0.8f);
             });
-            broadcastWave("Les étages vont disparaître très vite.");
+            broadcastWave("Départ dans quelques secondes. Les étages vont céder progressivement.");
         }
 
         forEachSurvivor(EventManager::checkSurvivalFloorElimination);
 
-        if (tick < 3) {
+        if (tick < 12) {
+            int countdown = Math.max(1, 7 - (tick / 2));
+            forEachSurvivor(player -> player.sendActionBar("§d▣ §fSurvie des étages §8• §e" + countdown + "s §7avant effondrement"));
             return;
         }
 
         wave++;
         int players = Math.max(1, countSurvivors());
-        int acceleration = Math.min(90, wave * 2);
-        int amount = Math.max(35, 28 + players * 10 + acceleration);
+        int acceleration = Math.min(70, wave * 2);
+        int amount = Math.max(14, 10 + players * 5 + acceleration);
         int destroyed = GeneratedGameManager.destroySurvivalBlocks(amount);
-        destroyed += breakCenterIslands();
+
+        if (wave >= 4) {
+            destroyed += breakCenterIslands(Math.min(6, 1 + (wave / 4)));
+        }
 
         int finalDestroyed = destroyed;
         forEachSurvivor(player -> {
-            player.playSound(player.getLocation(), Sound.BLOCK_GRAVEL_BREAK, 0.85f, 0.75f + Math.min(0.7f, wave * 0.025f));
+            player.playSound(player.getLocation(), Sound.BLOCK_GRAVEL_BREAK, 0.75f, 0.8f + Math.min(0.55f, wave * 0.02f));
             player.sendActionBar("§d▣ §fSol instable §8• §e" + finalDestroyed + " §7blocs retirés");
-            if (wave % 6 == 0) {
+            if (wave % 8 == 0) {
                 player.sendTitle("§d▣", "§fLes étages s'effondrent", 0, 18, 6);
             }
         });
 
-        if (wave % 8 == 0) {
+        if (wave % 10 == 0) {
             broadcastWave("Vague §e" + wave + " §7• §e" + destroyed + " §7blocs retirés.");
         }
 
         forEachSurvivor(EventManager::checkSurvivalFloorElimination);
     }
 
-    private int breakCenterIslands() {
+    private int breakCenterIslands(int maxRemoved) {
         File file = new File(Main.getInstance().getDataFolder(), "generated-game.yml");
         if (!file.exists()) return 0;
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
@@ -93,9 +98,10 @@ public class SurvivalFloorTask implements Listener {
         int maxY = config.getInt("region.max-y");
         int removed = 0;
 
-        for (int y = minY + 1; y <= maxY; y++) {
+        for (int y = maxY; y >= minY + 1; y--) {
             for (int x = centerX - 2; x <= centerX + 2; x++) {
                 for (int z = centerZ - 2; z <= centerZ + 2; z++) {
+                    if (removed >= maxRemoved) return removed;
                     Block block = world.getBlockAt(x, y, z);
                     if (!isCenterFloorBlock(block.getType())) continue;
                     block.setType(Material.AIR, false);
