@@ -90,7 +90,8 @@ public class SquidPackTask implements Listener {
                 MoodStyle.infoMessage(
                         player,
                         MoodStyle.MODULE,
-                        "Première épreuve lancée.",
+                        SquidPackManager.GAME_NAME + " lancé.",
+                        MoodStyle.detail("Épreuve : §eFeu Rouge / Feu Vert"),
                         MoodStyle.detail("Feu vert : avancez."),
                         MoodStyle.detail("Feu rouge : ne bougez plus."),
                         MoodStyle.detail("Objectif : atteindre la ligne rouge.")
@@ -98,7 +99,7 @@ public class SquidPackTask implements Listener {
             }
         }
 
-        broadcast("Feu Rouge / Feu Vert", "Avancez quand c'est vert. Ne bougez pas quand c'est rouge.");
+        broadcast(SquidPackManager.GAME_NAME, "Feu Rouge / Feu Vert : avancez quand c'est vert, ne bougez pas quand c'est rouge.");
     }
 
     private void redGreenTick() {
@@ -154,6 +155,7 @@ public class SquidPackTask implements Listener {
                 player,
                 MoodStyle.MODULE,
                 "Vous êtes qualifié.",
+                MoodStyle.detail("Jeu : §e" + SquidPackManager.GAME_NAME),
                 MoodStyle.detail("Prochaine épreuve : §ePont de verre"),
                 MoodStyle.detail("Patientez sur la plateforme verte.")
         );
@@ -177,7 +179,7 @@ public class SquidPackTask implements Listener {
                 player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 1.2f);
             }
         }
-        broadcast("Pont de verre", "Choisissez la bonne vitre. La mauvaise casse et élimine.");
+        broadcast(SquidPackManager.GAME_NAME, "Pont de verre : choisissez la bonne vitre. La mauvaise casse et élimine.");
     }
 
     private void glassBridgeTick() {
@@ -242,8 +244,8 @@ public class SquidPackTask implements Listener {
         if (finished || winner == null) return;
         finished = true;
         SquidPackManager.setStage("FINISHED");
-        broadcast("Survie des Jeux terminée", "Gagnant : §a" + winner.getName());
-        winner.sendTitle("§6Victoire", "§fSurvie des Jeux", 0, 60, 15);
+        broadcast(SquidPackManager.GAME_NAME + " terminé", "Gagnant : §a" + winner.getName());
+        winner.sendTitle("§6Victoire", "§f" + SquidPackManager.GAME_NAME, 0, 60, 15);
         winner.playSound(winner.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.9f, 1.1f);
         EventManager.stopEvent(winner);
     }
@@ -252,7 +254,7 @@ public class SquidPackTask implements Listener {
         if (finished) return;
         finished = true;
         SquidPackManager.setStage("FINISHED");
-        broadcast("Survie des Jeux terminée", reason);
+        broadcast(SquidPackManager.GAME_NAME + " terminé", reason);
 
         Player anchor = findOnlineEventPlayer();
         if (anchor != null) {
@@ -265,7 +267,7 @@ public class SquidPackTask implements Listener {
         WaitingRoomManager.teleport(player);
         player.sendTitle("§cÉliminé", "§f" + reason, 0, 45, 10);
         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 0.7f);
-        MoodStyle.errorMessage(player, MoodStyle.MODULE, "Vous êtes éliminé.", MoodStyle.detail(reason), MoodStyle.detail("Vous êtes envoyé en salle d'attente."));
+        MoodStyle.errorMessage(player, MoodStyle.MODULE, "Vous êtes éliminé.", MoodStyle.detail("Jeu : §e" + SquidPackManager.GAME_NAME), MoodStyle.detail(reason), MoodStyle.detail("Vous êtes envoyé en salle d'attente."));
     }
 
     private void forEachAlive(PlayerAction action) {
