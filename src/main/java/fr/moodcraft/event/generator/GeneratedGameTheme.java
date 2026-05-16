@@ -10,8 +10,12 @@ public record GeneratedGameTheme(
 ) {
 
     public static GeneratedGameTheme from(GeneratedGameStyle style) {
-        GeneratedGameStyle safe = style == null ? GeneratedGameStyle.CLASSIQUE : style;
-        return new GeneratedGameTheme(safe.getPrimary(), safe.getAccent(), safe.getLight(), safe.getGlass());
+        return new GeneratedGameTheme(
+                GeneratedGameStyle.MOODCRAFT.getPrimary(),
+                GeneratedGameStyle.MOODCRAFT.getAccent(),
+                GeneratedGameStyle.MOODCRAFT.getLight(),
+                GeneratedGameStyle.MOODCRAFT.getGlass()
+        );
     }
 
     public Material floorA() {
