@@ -10,6 +10,7 @@ import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
 import fr.moodcraft.event.listener.EventChatListener;
 import fr.moodcraft.event.listener.EventLootListener;
+import fr.moodcraft.event.listener.EventMobGuard;
 import fr.moodcraft.event.listener.EventProgressListener;
 import fr.moodcraft.event.listener.EventProtectionListener;
 import fr.moodcraft.event.listener.GeneratorInputManager;
@@ -79,6 +80,7 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new EventChatListener(), this);
         Bukkit.getPluginManager().registerEvents(new GeneratorInputManager(), this);
         Bukkit.getPluginManager().registerEvents(new EventLootListener(), this);
+        Bukkit.getPluginManager().registerEvents(new EventMobGuard(), this);
         Bukkit.getPluginManager().registerEvents(new EventProtectionListener(), this);
         Bukkit.getPluginManager().registerEvents(new EventProgressListener(), this);
         Bukkit.getPluginManager().registerEvents(new SurvivalFloorTask(), this);
