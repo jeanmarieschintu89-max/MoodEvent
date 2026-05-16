@@ -36,7 +36,7 @@ public final class EventPackManager {
         }
 
         GeneratedGameStyle style = GeneratedGameStyleManager.get(player);
-        String waitingStyle = waitingStyleFor(style);
+        String waitingStyle = style.getWaitingRoomStyle();
         String waitingSize = waitingSizeFor(size);
 
         Location original = player.getLocation().clone();
@@ -64,7 +64,7 @@ public final class EventPackManager {
                 "Pack événement créé.",
                 MoodStyle.detail("Mini-jeu : §e" + type.getDisplayName()),
                 MoodStyle.detail("Taille : §e" + size.getDisplayName()),
-                MoodStyle.detail("Thème : §e" + style.getDisplayName()),
+                MoodStyle.detail("Style unique : §e" + style.getDisplayName()),
                 MoodStyle.detail("Salle : §e" + waitingSize + " §8• §7" + WaitingRoomManager.formatStyle(waitingStyle)),
                 MoodStyle.detail("Salle à gauche §8• §7Mini-jeu à droite"),
                 MoodStyle.info("Ouvre la file avec §e/eventouvrir")
@@ -80,10 +80,5 @@ public final class EventPackManager {
             case GRAND -> "grande";
             case GEANT -> "tresgrande";
         };
-    }
-
-    private static String waitingStyleFor(GeneratedGameStyle style) {
-        if (style == null) return "classique";
-        return style.getWaitingRoomStyle();
     }
 }
