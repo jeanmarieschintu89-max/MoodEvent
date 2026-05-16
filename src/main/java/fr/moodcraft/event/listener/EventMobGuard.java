@@ -2,12 +2,10 @@ package fr.moodcraft.event.listener;
 
 import fr.moodcraft.event.Main;
 import fr.moodcraft.event.generator.GeneratedGameManager;
-import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.manager.WaitingRoomManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
@@ -100,22 +98,7 @@ public class EventMobGuard implements Listener {
 
     private boolean isEventArea(Location location) {
         if (location == null || location.getWorld() == null) return false;
-        if (GeneratedGameManager.isInsideStructure(location)) return true;
-        if (isInsideSquidRegion(location)) return true;
-        return isNearWaitingRoom(location);
-    }
-
-    private boolean isInsideSquidRegion(Location location) {
-        if (!SquidPackManager.hasPack()) return false;
-        FileConfiguration config = SquidPackManager.config();
-        String worldName = config.getString("region.world", "");
-        if (worldName.isBlank() || !location.getWorld().getName().equals(worldName)) return false;
-        int x = location.getBlockX();
-        int y = location.getBlockY();
-        int z = location.getBlockZ();
-        return x >= config.getInt("region.min-x") && x <= config.getInt("region.max-x")
-                && y >= config.getInt("region.min-y") && y <= config.getInt("region.max-y")
-                && z >= config.getInt("region.min-z") && z <= config.getInt("region.max-z");
+        return GeneratedGameManager.isInsideStructure(location) || isNearWaitingRoom(location);
     }
 
     private boolean isNearWaitingRoom(Location location) {
