@@ -9,7 +9,7 @@ public enum GeneratedGameType {
     JUMP("Parcours Jump", Material.WHITE_WOOL, EventType.JUMP),
     COURSE("Course", Material.RAIL, EventType.COURSE),
     WATER_JUMP("Water Jump", Material.WATER_BUCKET, EventType.WATER_JUMP),
-    SURVIE_ETAGES("Dernier Étage", Material.MAGENTA_WOOL, EventType.SURVIE_ETAGES),
+    SURVIE_ETAGES("Effondrement", Material.MAGENTA_WOOL, EventType.SURVIE_ETAGES),
     RUEE_OR("Ruée vers l'or", Material.GOLDEN_PICKAXE, EventType.RUEE_OR);
 
     private final String displayName;
