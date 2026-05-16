@@ -30,13 +30,8 @@ public final class GeneratedGameThemePainter {
             case STONE_BRICKS, MOSSY_STONE_BRICKS, CRACKED_STONE_BRICKS, CHISELED_STONE_BRICKS,
                  SMOOTH_STONE, POLISHED_ANDESITE, COBBLESTONE, POLISHED_DEEPSLATE,
                  DEEPSLATE_TILES, POLISHED_BLACKSTONE, POLISHED_BLACKSTONE_BRICKS -> checker(theme.floorA(), theme.floorB(), x, z);
-            case LIGHT_BLUE_STAINED_GLASS, CYAN_STAINED_GLASS, WHITE_STAINED_GLASS, GRAY_STAINED_GLASS,
-                 TINTED_GLASS, GLASS -> theme.glass();
+            case GRAY_STAINED_GLASS, TINTED_GLASS, GLASS -> theme.glass();
             case SEA_LANTERN, GLOWSTONE, SHROOMLIGHT, SOUL_LANTERN, REDSTONE_LAMP -> theme.light();
-            case WHITE_WOOL, YELLOW_WOOL, ORANGE_WOOL, LIGHT_BLUE_WOOL, CYAN_WOOL,
-                 MAGENTA_WOOL, PINK_WOOL -> woolAccent(theme, x, z);
-            case LIME_WOOL, LIME_CONCRETE -> theme.start();
-            case RED_WOOL, RED_CONCRETE -> theme.finish();
             case IRON_BARS -> Material.IRON_BARS;
             case BEDROCK -> Material.BEDROCK;
             case WATER -> Material.WATER;
@@ -47,9 +42,5 @@ public final class GeneratedGameThemePainter {
 
     private static Material checker(Material a, Material b, int x, int z) {
         return (x + z) % 2 == 0 ? a : b;
-    }
-
-    private static Material woolAccent(GeneratedGameTheme theme, int x, int z) {
-        return (x + z) % 3 == 0 ? theme.primary() : theme.accent();
     }
 }
