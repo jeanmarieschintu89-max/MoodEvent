@@ -60,7 +60,7 @@ public final class SquidGameCinematic {
     public static void announcePrize(String title, String detail, int eliminated, int prizeEach) {
         int survivors = Math.max(0, Bukkit.getOnlinePlayers().size() - eliminated);
         Bukkit.broadcastMessage("");
-        Bukkit.broadcastMessage("§8----- §d§l✦ DORTOIR SQUID ✦ §8-----");
+        Bukkit.broadcastMessage("§8----- §d§l✦ DORTOIR SQUIDCRAFT ✦ §8-----");
         Bukkit.broadcastMessage("§e★ §f" + title);
         Bukkit.broadcastMessage("§d➜ §f" + detail);
         Bukkit.broadcastMessage("§c■ §fÉliminés : §c" + eliminated + " §8• §aSurvivants en piste : §a" + survivors);
@@ -73,7 +73,7 @@ public final class SquidGameCinematic {
 
     public static void flashyBroadcast(String title, String detail) {
         Bukkit.broadcastMessage("");
-        Bukkit.broadcastMessage("§8----- §c§l✦ SQUID MOOD GAME ✦ §8-----");
+        Bukkit.broadcastMessage("§8----- §c§l✦ SQUIDCRAFT ✦ §8-----");
         Bukkit.broadcastMessage("§e★ §f" + title);
         Bukkit.broadcastMessage("§d➜ §f" + detail);
         Bukkit.broadcastMessage("§a▶ §fTape §e/event §fpour tenter le prochain jeu !");
