@@ -21,12 +21,12 @@ import java.util.UUID;
 
 public class SquidPackTask implements Listener {
 
-    private static final int RED_GRACE_SECONDS = 2;
+    private static final int RED_REACTION_SECONDS = 1;
     private static final int DORMITORY_DELAY_SECONDS = 10;
     private static final int PRIZE_PER_ELIMINATION = 2500;
 
     private int tick;
-    private int redGrace;
+    private int redReaction;
     private boolean green = true;
     private boolean runtimeStarted;
     private boolean finished;
@@ -69,7 +69,7 @@ public class SquidPackTask implements Listener {
 
     private void startRedGreen() {
         tick = 0;
-        redGrace = 0;
+        redReaction = 0;
         green = true;
         runtimeStarted = true;
         finished = false;
@@ -89,7 +89,7 @@ public class SquidPackTask implements Listener {
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.6f);
                 player.sendMessage("§8----- §c§l✦ SQUID MOOD GAME ✦ §8-----");
                 player.sendMessage("§a▶ §fFEU VERT : §acours !");
-                player.sendMessage("§c■ §fFEU ROUGE : §cstop après le délai de grâce.");
+                player.sendMessage("§c■ §fFEU ROUGE : §cstop net quand la poupée se retourne.");
                 player.sendMessage("§e★ §fObjectif : §eatteindre la ligne rouge.");
                 player.sendMessage("§8-----------------------------");
             }
@@ -106,7 +106,7 @@ public class SquidPackTask implements Listener {
             green = !green;
             SquidGameCinematic.updateDollAndLights(green);
             if (!green) {
-                redGrace = RED_GRACE_SECONDS;
+                redReaction = RED_REACTION_SECONDS;
                 lastRedPositions.clear();
             }
             forEachAlive(player -> {
@@ -115,10 +115,9 @@ public class SquidPackTask implements Listener {
             });
         }
 
-        if (!green && redGrace > 0) {
-            redGrace--;
-            forEachAlive(player -> player.sendTitle("§c§lFEU ROUGE", "§eGrace : " + redGrace + "s", 0, 20, 5));
-            if (redGrace == 0) {
+        if (!green && redReaction > 0) {
+            redReaction--;
+            if (redReaction == 0) {
                 lastRedPositions.clear();
                 forEachAlive(player -> lastRedPositions.put(player.getUniqueId(), player.getLocation().clone()));
                 forEachAlive(player -> player.sendTitle("§c§lSTOP !", "§fPlus un mouvement", 0, 20, 5));
@@ -370,7 +369,7 @@ public class SquidPackTask implements Listener {
 
     private void resetRuntime() {
         tick = 0;
-        redGrace = 0;
+        redReaction = 0;
         green = true;
         runtimeStarted = false;
         finished = false;
