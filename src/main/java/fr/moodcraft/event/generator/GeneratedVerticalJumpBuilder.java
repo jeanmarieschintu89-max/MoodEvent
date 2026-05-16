@@ -27,7 +27,7 @@ public final class GeneratedVerticalJumpBuilder {
         int safePlatforms = Math.max(12, Math.min(44, platforms));
         int topY = cy + safePlatforms + 8;
 
-        clearTowerArea(world, cx, cy, cz, topY);
+        clearOldTowerArea(world, cx, cy, cz);
         buildGlassCage(world, cx, cy, cz, topY);
         buildCleanStart(world, cx, cy, cz);
 
@@ -103,10 +103,12 @@ public final class GeneratedVerticalJumpBuilder {
         platform(world, x, y, z, 1, WOOL[index % WOOL.length]);
     }
 
-    private static void clearTowerArea(World world, int cx, int cy, int cz, int topY) {
-        for (int x = cx - 9; x <= cx + 9; x++) {
-            for (int y = cy; y <= topY + 4; y++) {
-                for (int z = cz - 9; z <= cz + 9; z++) {
+    private static void clearOldTowerArea(World world, int cx, int cy, int cz) {
+        int minY = Math.max(world.getMinHeight(), cy - 3);
+        int maxY = Math.min(world.getMaxHeight() - 1, cy + 90);
+        for (int x = cx - 12; x <= cx + 12; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = cz - 12; z <= cz + 12; z++) {
                     world.getBlockAt(x, y, z).setType(Material.AIR, false);
                 }
             }
