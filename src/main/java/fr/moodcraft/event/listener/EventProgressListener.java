@@ -76,23 +76,36 @@ public class EventProgressListener implements Listener {
 
         long now = System.currentTimeMillis();
         long last = FALL_RESET_COOLDOWN.getOrDefault(player.getUniqueId(), 0L);
-        if (now - last < 1500L) return false;
+        if (now - last < 1200L) return false;
 
         Location location = player.getLocation();
         Material feet = location.getBlock().getType();
         Material below = location.clone().subtract(0, 1, 0).getBlock().getType();
-        boolean inWater = feet == Material.WATER || below == Material.WATER;
-        boolean tooLow = location.getY() <= start.getY() - 3.5;
-        return inWater || tooLow;
+
+        if (type == EventType.WATER_JUMP) {
+            boolean inWater = feet == Material.WATER || below == Material.WATER;
+            boolean tooLow = location.getY() <= start.getY() - 2.0;
+            return inWater || tooLow;
+        }
+
+        boolean landedBelowCourse = location.getY() <= start.getY() - 1.25;
+        boolean onSafetyFloor = below == Material.BLUE_CONCRETE
+                || below == Material.LIGHT_BLUE_CONCRETE
+                || below == Material.SMOOTH_STONE
+                || below == Material.STONE
+                || below == Material.BLACK_CONCRETE;
+
+        return landedBelowCourse || onSafetyFloor;
     }
 
     private void resetToStart(Player player) {
         Location start = getStartLocation();
         if (start == null || start.getWorld() == null) return;
         FALL_RESET_COOLDOWN.put(player.getUniqueId(), System.currentTimeMillis());
+        player.setFallDistance(0f);
         player.teleport(start.clone().add(0, 0.25, 0));
         player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.75f, 1.25f);
-        player.sendActionBar("§e➜ §fChute détectée §8• §7Retour au départ du parcours");
+        player.sendActionBar("§e➜ §fChute détectée §8• §7Retour au départ de l'épreuve");
     }
 
     private Location getStartLocation() {
