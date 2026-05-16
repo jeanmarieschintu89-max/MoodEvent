@@ -3,7 +3,6 @@ package fr.moodcraft.event.generator;
 import fr.moodcraft.event.Main;
 import fr.moodcraft.event.manager.EventLogManager;
 import fr.moodcraft.event.manager.EventManager;
-import fr.moodcraft.event.manager.WaitingRoomManager;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -81,30 +80,16 @@ public final class SquidPackManager {
             MoodStyle.errorMessage(player, MoodStyle.MODULE, "Un pack " + GAME_NAME + " existe déjà.", MoodStyle.detail("Restaure-le avant d'en créer un autre."));
             return;
         }
-        if (WaitingRoomManager.hasRoom()) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Une salle d'attente existe déjà.", MoodStyle.detail("Restaure-la avant de créer ce pack."));
-            return;
-        }
         if (GeneratedGameManager.hasStructure()) {
             MoodStyle.errorMessage(player, MoodStyle.MODULE, "Une structure générée existe déjà.", MoodStyle.detail("Restaure-la avant de créer ce pack."));
             return;
         }
 
         Location origin = player.getLocation().clone();
-        Location wait = origin.clone().add(-35, 0, 0);
         Location game = origin.clone().add(35, 0, 0);
         World world = game.getWorld();
         if (world == null) {
             MoodStyle.errorMessage(player, MoodStyle.MODULE, "Monde introuvable.");
-            return;
-        }
-
-        player.teleport(wait);
-        WaitingRoomManager.setSelectedStyle(player, "sombre");
-        WaitingRoomManager.build(player, "grande");
-        if (!WaitingRoomManager.hasRoom()) {
-            player.teleport(origin);
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Pack annulé.", MoodStyle.detail("Salle d'attente impossible à générer."));
             return;
         }
 
@@ -126,6 +111,8 @@ public final class SquidPackManager {
         Location preSas = new Location(world, cx - 52 + 0.5, cy + 1, cz + 0.5, 90f, 0f);
         Location returnSas = new Location(world, cx - 8 + 0.5, cy + 1, cz + 11.5, 90f, 0f);
         Location finish = new Location(world, cx + 27 + 0.5, cy + 2, cz + 11.5, 90f, 0f);
+
+        SquidWaitingRoomBridge.registerDormitory(dormitory);
 
         config.set("active", true);
         config.set("stage", "WAITING");
@@ -156,15 +143,15 @@ public final class SquidPackManager {
         save();
 
         EventManager.createEvent(player, GAME_NAME);
-        EventManager.setDescription(player, "Une suite d'épreuves Minecraft : sas, feu rouge, dortoir et pont de verre.");
+        EventManager.setDescription(player, "Une suite d'épreuves Minecraft : dortoir, sas, feu rouge et pont de verre.");
         EventManager.setType(player, "custom");
         player.teleport(start);
         EventManager.setLocation(player);
         player.teleport(origin);
 
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack " + GAME_NAME + " généré.", MoodStyle.detail("Salle d'attente + sas + dortoir + arènes."), MoodStyle.detail("Épreuves : Feu Rouge puis Pont de Verre."), MoodStyle.detail("Dortoir à lits ajouté au pack."), MoodStyle.info("Ouvre la file avec §e/eventouvrir"));
-        EventLogManager.log(player, "Pack " + GAME_NAME, "Pack spécial généré avec sas et dortoir");
+        MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack " + GAME_NAME + " généré.", MoodStyle.detail("Dortoir utilisé comme zone d'attente."), MoodStyle.detail("Aucune salle d'attente classique générée."), MoodStyle.detail("Épreuves : Feu Rouge puis Pont de Verre."), MoodStyle.info("Ouvre la file avec §e/eventouvrir"));
+        EventLogManager.log(player, "Pack " + GAME_NAME, "Pack spécial généré avec dortoir comme attente");
     }
 
     public static void restore(Player player) {
