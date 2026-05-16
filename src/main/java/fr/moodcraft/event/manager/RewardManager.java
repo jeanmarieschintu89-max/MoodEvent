@@ -40,14 +40,10 @@ public final class RewardManager {
             }
         }
         config = YamlConfiguration.loadConfiguration(file);
-        config.set("top", null);
-        save();
     }
 
     public static void save() {
-        if (config == null || file == null) {
-            return;
-        }
+        if (config == null || file == null) return;
         try {
             config.save(file);
         } catch (IOException exception) {
@@ -57,16 +53,14 @@ public final class RewardManager {
 
     public static void openItemEditor(Player player, int place) {
         if (!isValidReward(place)) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Récompense invalide.", MoodStyle.detail("Seule la participation est utilisée."));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Récompense invalide.");
             return;
         }
 
         Inventory inventory = Bukkit.createInventory(null, SIZE, title(place));
         for (int slot = 0; slot < SIZE; slot++) {
             ItemStack item = config.getItemStack(itemPath(place, slot));
-            if (item != null) {
-                inventory.setItem(slot, item.clone());
-            }
+            if (item != null) inventory.setItem(slot, item.clone());
         }
 
         EDITING_ITEMS.put(player.getUniqueId(), place);
@@ -76,15 +70,15 @@ public final class RewardManager {
         MoodStyle.infoMessage(
                 player,
                 MoodStyle.MODULE,
-                "Dépose les items de participation.",
-                MoodStyle.detail("Ferme le menu pour sauvegarder."),
-                MoodStyle.detail("Les podiums et Top 3 sont désactivés.")
+                "Dépose les items de récompense.",
+                MoodStyle.detail("Récompense : §e" + formatReward(place)),
+                MoodStyle.detail("Ferme le menu pour sauvegarder.")
         );
     }
 
     public static void startMoneyInput(Player player, int place) {
         if (!isValidReward(place)) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Récompense invalide.", MoodStyle.detail("Seule la participation est utilisée."));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Récompense invalide.");
             return;
         }
 
@@ -93,7 +87,8 @@ public final class RewardManager {
         MoodStyle.infoMessage(
                 player,
                 MoodStyle.MODULE,
-                "Écris le montant de participation dans le chat.",
+                "Écris le montant en argent dans le chat.",
+                MoodStyle.detail("Récompense : §e" + formatReward(place)),
                 MoodStyle.detail("Montant actuel : §a" + formatMoney(getMoney(place))),
                 MoodStyle.detail("Tape §cannuler §7pour quitter")
         );
@@ -108,9 +103,7 @@ public final class RewardManager {
     }
 
     public static boolean handleMoneyChat(Player player, String message) {
-        if (player == null || !isEditingMoney(player)) {
-            return false;
-        }
+        if (player == null || !isEditingMoney(player)) return false;
 
         int place = EDITING_MONEY.remove(player.getUniqueId());
 
@@ -138,21 +131,17 @@ public final class RewardManager {
                 player,
                 MoodStyle.MODULE,
                 "Montant sauvegardé.",
-                MoodStyle.detail("Récompense : §eParticipation"),
+                MoodStyle.detail("Récompense : §e" + formatReward(place)),
                 MoodStyle.detail("Argent : §a" + formatMoney(amount))
         );
         return true;
     }
 
     public static void saveItemEditor(Player player, Inventory inventory) {
-        if (player == null || inventory == null) {
-            return;
-        }
+        if (player == null || inventory == null) return;
 
         Integer place = EDITING_ITEMS.remove(player.getUniqueId());
-        if (place == null || !isValidReward(place)) {
-            return;
-        }
+        if (place == null || !isValidReward(place)) return;
 
         for (int slot = 0; slot < SIZE; slot++) {
             ItemStack item = inventory.getItem(slot);
@@ -165,33 +154,33 @@ public final class RewardManager {
                 player,
                 MoodStyle.MODULE,
                 "Items sauvegardés.",
-                MoodStyle.detail("Récompense : §eParticipation"),
+                MoodStyle.detail("Récompense : §e" + formatReward(place)),
                 MoodStyle.detail("Items déposés : §e" + countRewardItems(place))
         );
     }
 
     public static void giveParticipationReward(Player player) {
-        giveReward(player, PARTICIPATION);
+        giveReward(player, PARTICIPATION, true);
     }
 
     public static void giveTopReward(Player player, int place) {
-        // Les podiums et récompenses Top 3 sont volontairement désactivés.
+        if (place < 1 || place > 3) return;
+        giveReward(player, place, false);
     }
 
-    private static void giveReward(Player player, int place) {
-        if (player == null || !isValidReward(place)) {
-            return;
-        }
+    private static void giveReward(Player player, int place, boolean participation) {
+        if (player == null || !isValidReward(place)) return;
 
         int items = giveItems(player, place);
         double money = getMoney(place);
         boolean moneyGiven = false;
 
-        if (money > 0) {
-            moneyGiven = VaultHook.deposit(player, money);
-        }
+        if (money > 0) moneyGiven = VaultHook.deposit(player, money);
 
         if (items <= 0 && money <= 0) {
+            if (!participation) {
+                MoodStyle.infoMessage(player, MoodStyle.MODULE, "Aucune récompense définie pour cette place.", MoodStyle.detail("Récompense : §e" + formatReward(place)));
+            }
             return;
         }
 
@@ -199,7 +188,8 @@ public final class RewardManager {
         MoodStyle.successMessage(
                 player,
                 MoodStyle.MODULE,
-                "Récompense de participation reçue.",
+                participation ? "Récompense de participation reçue." : "Récompense Top 3 reçue.",
+                MoodStyle.detail("Récompense : §e" + formatReward(place)),
                 items > 0 ? MoodStyle.detail("Items : §e" + items) : MoodStyle.detail("Items : §7aucun"),
                 money > 0 && moneyGiven ? MoodStyle.detail("Argent : §a" + formatMoney(money)) : money > 0 ? MoodStyle.detail("Argent : §cVault indisponible") : MoodStyle.detail("Argent : §7aucun")
         );
@@ -209,38 +199,28 @@ public final class RewardManager {
         int given = 0;
         for (int slot = 0; slot < SIZE; slot++) {
             ItemStack item = config.getItemStack(itemPath(place, slot));
-            if (item == null || item.getType().isAir()) {
-                continue;
-            }
+            if (item == null || item.getType().isAir()) continue;
 
             HashMap<Integer, ItemStack> leftovers = player.getInventory().addItem(item.clone());
-            for (ItemStack leftover : leftovers.values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), leftover);
-            }
+            for (ItemStack leftover : leftovers.values()) player.getWorld().dropItemNaturally(player.getLocation(), leftover);
             given += item.getAmount();
         }
         return given;
     }
 
     public static int countRewardItems(int place) {
-        if (!isValidReward(place)) {
-            return 0;
-        }
+        if (!isValidReward(place)) return 0;
 
         int amount = 0;
         for (int slot = 0; slot < SIZE; slot++) {
             ItemStack item = config.getItemStack(itemPath(place, slot));
-            if (item != null && !item.getType().isAir()) {
-                amount += item.getAmount();
-            }
+            if (item != null && !item.getType().isAir()) amount += item.getAmount();
         }
         return amount;
     }
 
     public static double getMoney(int place) {
-        if (!isValidReward(place)) {
-            return 0;
-        }
+        if (!isValidReward(place)) return 0;
         return config.getDouble(basePath(place) + ".money", 0.0);
     }
 
@@ -250,26 +230,30 @@ public final class RewardManager {
     }
 
     public static String formatReward(int place) {
-        return "Participation";
+        return switch (place) {
+            case PARTICIPATION -> "Participation";
+            case 1 -> "Top 1";
+            case 2 -> "Top 2";
+            case 3 -> "Top 3";
+            default -> "Inconnue";
+        };
     }
 
     public static String formatMoney(double amount) {
-        if (amount == Math.rint(amount)) {
-            return String.format("%.0f€", amount);
-        }
+        if (amount == Math.rint(amount)) return String.format("%.0f€", amount);
         return String.format("%.2f€", amount);
     }
 
     private static boolean isValidReward(int place) {
-        return place == PARTICIPATION;
+        return place >= 0 && place <= 3;
     }
 
     private static String title(int place) {
-        return MoodStyle.guiTitle("Récompense Participation");
+        return MoodStyle.guiTitle("Récompense " + formatReward(place));
     }
 
     private static String basePath(int place) {
-        return "participation";
+        return place == PARTICIPATION ? "participation" : "top." + place;
     }
 
     private static String itemPath(int place, int slot) {
