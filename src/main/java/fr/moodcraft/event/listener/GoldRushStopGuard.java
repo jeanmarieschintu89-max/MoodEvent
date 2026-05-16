@@ -1,8 +1,8 @@
 package fr.moodcraft.event.listener;
 
 import fr.moodcraft.event.manager.EventManager;
+import fr.moodcraft.event.manager.GoldRushClosure;
 import fr.moodcraft.event.model.EventType;
-import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -23,8 +23,7 @@ public class GoldRushStopGuard implements Listener {
 
         event.setCancelled(true);
         for (Player online : Bukkit.getOnlinePlayers()) removePickaxes(online);
-        MoodStyle.infoMessage(event.getPlayer(), MoodStyle.MODULE, "Clôture Ruée vers l'or sans récompense automatique.", MoodStyle.detail("Les minerais récoltés restent aux joueurs."), MoodStyle.detail("La pioche événement est reprise."));
-        EventManager.cancelEvent(event.getPlayer());
+        GoldRushClosure.close(event.getPlayer());
     }
 
     private void removePickaxes(Player player) {
