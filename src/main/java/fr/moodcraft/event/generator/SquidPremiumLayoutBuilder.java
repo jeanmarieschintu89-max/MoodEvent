@@ -67,9 +67,14 @@ public final class SquidPremiumLayoutBuilder {
             wallLine(w, x, cy, cz + 12, Material.WHITE_CONCRETE);
         }
         for (int z = cz - 11; z <= cz + 11; z++) {
-            w.getBlockAt(cx - 33, cy + 1, z).setType(Material.PINK_CONCRETE, false);
-            w.getBlockAt(cx + 38, cy + 1, z).setType(Material.RED_CONCRETE, false);
-            w.getBlockAt(cx + 39, cy + 1, z).setType(Material.RED_CONCRETE, false);
+            w.getBlockAt(cx - 33, cy, z).setType(Material.LIME_CONCRETE, false);
+            w.getBlockAt(cx - 32, cy, z).setType(Material.LIME_CONCRETE, false);
+            w.getBlockAt(cx - 33, cy + 1, z).setType(Material.AIR, false);
+            w.getBlockAt(cx - 32, cy + 1, z).setType(Material.AIR, false);
+            w.getBlockAt(cx + 38, cy, z).setType(Material.RED_CONCRETE, false);
+            w.getBlockAt(cx + 39, cy, z).setType(Material.RED_CONCRETE, false);
+            w.getBlockAt(cx + 38, cy + 1, z).setType(Material.AIR, false);
+            w.getBlockAt(cx + 39, cy + 1, z).setType(Material.AIR, false);
         }
         for (int x = cx - 33; x <= cx + 45; x += 6) {
             w.getBlockAt(x, cy + 2, cz - 12).setType(Material.SEA_LANTERN, false);
