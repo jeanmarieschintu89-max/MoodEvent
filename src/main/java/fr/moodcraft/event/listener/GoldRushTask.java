@@ -15,6 +15,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashSet;
@@ -32,6 +34,7 @@ public class GoldRushTask implements Listener {
     private boolean autoCloseScheduled;
     private int remaining;
     private final Set<UUID> equipped = new HashSet<>();
+    private final Set<UUID> nightVisionPlayers = new HashSet<>();
 
     public GoldRushTask() {
         new BukkitRunnable() {
@@ -65,12 +68,16 @@ public class GoldRushTask implements Listener {
             remaining = 0;
             equipped.clear();
             cleanupAllOnlinePickaxes();
+            clearNightVision();
             return;
         }
+
+        applyNightVision();
 
         if (finishedAwaitingStop) {
             roundActive = false;
             cleanupAllOnlinePickaxes();
+            clearNightVision();
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!EventManager.isEventPlayer(player)) continue;
                 player.sendActionBar("§6⛏ §fRuée vers l'or terminée §8• §7Retour imminent");
@@ -102,6 +109,7 @@ public class GoldRushTask implements Listener {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!EventManager.isParticipant(player)) continue;
             givePickaxe(player);
+            giveNightVision(player);
             equipped.add(player.getUniqueId());
             player.sendTitle("§6§lRUÉE VERS L'OR", "§fMine vite, garde tout !", 0, 45, 10);
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.2f);
@@ -110,7 +118,7 @@ public class GoldRushTask implements Listener {
                     MoodStyle.MODULE,
                     MoodStyle.hype("Ruée vers l'or lancée !"),
                     MoodStyle.detail("Objectif : mine un maximum de minerais avant la fin."),
-                    MoodStyle.detail("Tout ce que tu récoltes reste à toi."),
+                    MoodStyle.detail("Vision nocturne activée."),
                     MoodStyle.detail("La pioche événement disparaît à la fin.")
             );
         }
@@ -118,13 +126,13 @@ public class GoldRushTask implements Listener {
         Bukkit.broadcastMessage(MoodStyle.header(MoodStyle.MODULE));
         Bukkit.broadcastMessage(MoodStyle.hype("Ruée vers l'or lancée !"));
         Bukkit.broadcastMessage(MoodStyle.detail("Mine le plus possible avant la fin du chrono."));
-        Bukkit.broadcastMessage(MoodStyle.detail("Tape §e/event §fpour le prochain show."));
         Bukkit.broadcastMessage(MoodStyle.FRAME);
     }
 
     private void broadcastTime() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!EventManager.isParticipant(player)) continue;
+            giveNightVision(player);
             player.sendActionBar("§6⛏ §fRuée vers l'or §8• §e" + remaining + "s");
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.55f, 1.15f);
         }
@@ -137,6 +145,7 @@ public class GoldRushTask implements Listener {
             if (!EventManager.isParticipant(player)) continue;
             if (closer == null) closer = player;
             removeEventPickaxes(player);
+            removeNightVision(player);
             player.sendTitle("§6§lFIN DE MANCHE", "§fMinerais conservés", 0, 45, 10);
             player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
             MoodStyle.send(
@@ -144,8 +153,7 @@ public class GoldRushTask implements Listener {
                     MoodStyle.MODULE,
                     MoodStyle.hype("Ruée vers l'or terminée !"),
                     MoodStyle.detail("Tu gardes les minerais récoltés."),
-                    MoodStyle.detail("Retour à ta position d'avant événement."),
-                    MoodStyle.detail("La mine se restaure automatiquement.")
+                    MoodStyle.detail("Retour à ta position d'avant événement.")
             );
         }
 
@@ -154,6 +162,7 @@ public class GoldRushTask implements Listener {
         remaining = 0;
         equipped.clear();
         cleanupAllOnlinePickaxes();
+        clearNightVision();
         scheduleAutoClose(closer);
     }
 
@@ -162,10 +171,12 @@ public class GoldRushTask implements Listener {
         autoCloseScheduled = true;
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
             cleanupAllOnlinePickaxes();
+            clearNightVision();
             if (!EventManager.isRunning() || EventManager.getType() != EventType.RUEE_OR) return;
             Player actor = closer != null && closer.isOnline() ? closer : findEventPlayer();
             if (actor != null) GoldRushClosure.close(actor);
             cleanupAllOnlinePickaxes();
+            clearNightVision();
         }, 60L);
     }
 
@@ -181,6 +192,33 @@ public class GoldRushTask implements Listener {
         for (Player player : Bukkit.getOnlinePlayers()) {
             removeEventPickaxes(player);
         }
+    }
+
+    private void applyNightVision() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!EventManager.isParticipant(player)) continue;
+            giveNightVision(player);
+        }
+    }
+
+    private void giveNightVision(Player player) {
+        if (player == null) return;
+        player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 20 * 18, 0, true, false, true));
+        nightVisionPlayers.add(player.getUniqueId());
+    }
+
+    private void removeNightVision(Player player) {
+        if (player == null) return;
+        player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+        nightVisionPlayers.remove(player.getUniqueId());
+    }
+
+    private void clearNightVision() {
+        for (UUID uuid : new HashSet<>(nightVisionPlayers)) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null && player.isOnline()) player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+        }
+        nightVisionPlayers.clear();
     }
 
     private void givePickaxe(Player player) {
