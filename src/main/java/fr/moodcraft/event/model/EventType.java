@@ -4,6 +4,7 @@ public enum EventType {
 
     SURVIE_ETAGES("§dTour Infernale", "§d▣"),
     RUEE_OR("§6Mine en folie", "§6⛏"),
+    WATER_JUMP("§bWater Jump", "§b≈"),
     CUSTOM("§fÉvénement libre", "§f✦");
 
     private final String displayName;
@@ -23,7 +24,7 @@ public enum EventType {
     }
 
     public boolean usesFinishLine() {
-        return false;
+        return this == WATER_JUMP;
     }
 
     public boolean usesSurvivalRanking() {
@@ -49,6 +50,7 @@ public enum EventType {
         return switch (clean) {
             case "tour_infernale", "effondrement", "survie_etages", "survie_des_etages", "etages", "etage", "floor", "floors", "floor_survival" -> SURVIE_ETAGES;
             case "mine_en_folie", "mine_folie", "ruee_or", "ruee_vers_lor", "ruee_vers_or", "or", "gold", "gold_rush", "mine", "minage", "mining" -> RUEE_OR;
+            case "waterjump", "water_jump", "water", "eau", "jump_eau", "saut_eau", "water_jumps" -> WATER_JUMP;
             default -> CUSTOM;
         };
     }
