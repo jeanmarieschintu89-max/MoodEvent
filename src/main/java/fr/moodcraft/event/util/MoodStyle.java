@@ -115,7 +115,7 @@ public final class MoodStyle {
     private static String normalize(String line) {
         if (line == null || line.isBlank()) return "";
 
-        String trimmed = line.trim().replace("§c✘", "§c✖");
+        String trimmed = rewriteOldNames(line.trim().replace("§c✘", "§c✖"));
         if (isEndSpam(trimmed)) return "";
 
         String rewritten = rewriteLaunchObjective(trimmed);
@@ -147,6 +147,21 @@ public final class MoodStyle {
         return info(trimmed);
     }
 
+    private static String rewriteOldNames(String line) {
+        if (line == null) return "";
+        return line
+                .replace("Parcours Jump", "Mur d'escalade")
+                .replace("parcours Jump", "Mur d'escalade")
+                .replace("Survie des étages", "Tour Infernale")
+                .replace("survie des étages", "Tour Infernale")
+                .replace("Effondrement", "Tour Infernale")
+                .replace("effondrement", "Tour Infernale")
+                .replace("Ruée vers l'or", "Mine en folie")
+                .replace("Ruée vers l’or", "Mine en folie")
+                .replace("ruée vers l'or", "Mine en folie")
+                .replace("ruée vers l’or", "Mine en folie");
+    }
+
     private static String rewriteOldMoodLine(String line) {
         String clean = stripDecorations(line);
         if (line.startsWith("§a✔")) return success(clean);
@@ -159,10 +174,10 @@ public final class MoodStyle {
         String clean = stripDecorations(line).toLowerCase(Locale.ROOT);
 
         if (clean.equals("objectif : atteignez la ligne rouge avant les autres.")) return hype("Objectif : fonce jusqu'à la zone rouge avant les autres.");
-        if (clean.equals("objectif : sautez de laine en laine jusqu'à l'arrivée.")) return hype("Objectif : termine le parcours sans tomber.");
+        if (clean.equals("objectif : sautez de laine en laine jusqu'à l'arrivée.")) return hype("Objectif : gravis le Mur d'escalade jusqu'à la plateforme rouge.");
         if (clean.equals("objectif : trouvez la sortie avant les autres.")) return hype("Objectif : trouve la sortie, vite et proprement.");
         if (clean.equals("objectif : franchissez les blocs de laine au-dessus de l'eau.")) return hype("Objectif : traverse au-dessus de l'eau sans plonger.");
-        if (clean.equals("objectif : restez le plus longtemps possible.")) return hype("Objectif : reste debout, deviens le dernier survivant.");
+        if (clean.equals("objectif : restez le plus longtemps possible.")) return hype("Objectif : survis à la Tour Infernale, reste debout.");
 
         return null;
     }
