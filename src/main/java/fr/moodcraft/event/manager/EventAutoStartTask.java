@@ -59,19 +59,17 @@ public final class EventAutoStartTask {
 
     private static void announceCountdown() {
         int remaining = AUTO_START_SECONDS - closedSeconds;
-        if (remaining != 45 && remaining != 30 && remaining != 15 && remaining != 10 && remaining != 5 && remaining != 4 && remaining != 3 && remaining != 2 && remaining != 1) {
+        if (remaining != 30 && remaining != 10) {
             return;
         }
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!EventManager.isEventPlayer(player)) continue;
-            player.sendTitle("§6" + remaining, "§fL'événement commence bientôt", 0, 25, 5);
-            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.8f, 1.2f);
-            if (remaining == 30 || remaining == 10 || remaining <= 5) {
-                MoodStyle.infoMessage(player, MoodStyle.MODULE,
-                        "Lancement automatique dans §e" + remaining + "s§f.",
-                        MoodStyle.detail("Reste dans la salle d'attente."));
-            }
+            player.sendTitle("§6" + remaining + "s", "§fL'événement commence bientôt", 0, 30, 8);
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.7f, 1.1f);
+            MoodStyle.infoMessage(player, MoodStyle.MODULE,
+                    "Lancement automatique dans §e" + remaining + "s§f.",
+                    MoodStyle.detail("Le vrai départ arrive avec le compteur final."));
         }
     }
 
