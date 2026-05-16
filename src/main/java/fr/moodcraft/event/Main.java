@@ -23,6 +23,7 @@ import fr.moodcraft.event.listener.GoldRushTask;
 import fr.moodcraft.event.listener.SquidPackTask;
 import fr.moodcraft.event.listener.SurvivalFloorTask;
 import fr.moodcraft.event.loot.EventLootManager;
+import fr.moodcraft.event.manager.EventAutoStartTask;
 import fr.moodcraft.event.manager.EventLogManager;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.manager.EventReturnSafety;
@@ -59,6 +60,7 @@ public class Main extends JavaPlugin {
         GeneratedMazeSealTask.start();
         GeneratedArenaShellTask.start();
         EventReturnSafety.start();
+        EventAutoStartTask.start();
         SurvivalFloorLagGuard.start();
 
         EventCommand eventCommand = new EventCommand();
