@@ -1,6 +1,7 @@
 package fr.moodcraft.event.listener;
 
 import fr.moodcraft.event.Main;
+import fr.moodcraft.event.manager.EventLaunchBufferManager;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.model.EventType;
 import org.bukkit.Bukkit;
@@ -27,6 +28,15 @@ public class EventProgressListener implements Listener {
         if (!hasChangedBlock(event.getFrom(), event.getTo())) return;
 
         Player player = event.getPlayer();
+
+        if (EventLaunchBufferManager.isLocked(player)) {
+            Location locked = EventLaunchBufferManager.getLockLocation(player);
+            if (locked != null && locked.getWorld() != null) {
+                event.setTo(locked.clone());
+                player.sendActionBar("§6✦ §fDépart imminent");
+            }
+            return;
+        }
 
         if (EventManager.isAtFinish(player) || isOnFinishZone(player)) {
             EventManager.finishPlayer(player);
