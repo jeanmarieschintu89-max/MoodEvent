@@ -31,14 +31,14 @@ public final class EventAdminGUI {
                 MoodStyle.detail("File : " + (EventManager.isQueueOpen() ? "§aouverte" : "§cfermée")),
                 MoodStyle.detail("En file : §e" + EventManager.getQueueSize() + " §8• §7En jeu : §e" + EventManager.getParticipantSize()),
                 "",
-                MoodStyle.info("Modes actifs : Mine en folie / Tour Infernale")
+                MoodStyle.info("Modes actifs : Mine en folie / Tour Infernale / Water Jump")
         )));
 
         inv.setItem(20, EventItem.glow(EventItem.item(
                 Material.COMPASS,
                 "§d✦ §fCréer un Pack Événement §d✦",
                 MoodStyle.detail("Génère la zone d'attente."),
-                MoodStyle.detail("Génère Mine en folie ou Tour Infernale."),
+                MoodStyle.detail("Génère le mini-jeu sélectionné."),
                 MoodStyle.detail("Départ automatique."),
                 MoodStyle.detail("Restauration liée à /eventstop."),
                 "",
@@ -68,8 +68,8 @@ public final class EventAdminGUI {
         inv.setItem(29, EventItem.item(
                 Material.CHEST,
                 "§d✦ §fRécompenses §d✦",
-                MoodStyle.detail("Participation uniquement"),
-                MoodStyle.detail("Podiums et Top 3 désactivés"),
+                MoodStyle.detail("Participation + Top 3"),
+                MoodStyle.detail("Top 3 : Tour Infernale / Water Jump"),
                 MoodStyle.detail("Items + argent"),
                 "",
                 MoodStyle.info("Configurer")
@@ -89,8 +89,8 @@ public final class EventAdminGUI {
                 Material.COMMAND_BLOCK,
                 "§d✦ §fMode avancé §d✦",
                 MoodStyle.detail("Réglages manuels."),
-                MoodStyle.detail("Nom, type, départ."),
-                MoodStyle.detail("Arrivée classique désactivée."),
+                MoodStyle.detail("Nom, type, départ, arrivée Water Jump."),
+                MoodStyle.detail("Le générateur reste recommandé."),
                 "",
                 MoodStyle.info("Ouvrir")
         ));
@@ -99,7 +99,7 @@ public final class EventAdminGUI {
                 Material.FIREWORK_ROCKET,
                 "§d✦ §fRejoindre l'événement §d✦",
                 MoodStyle.detail("Raccourci test : §e/event"),
-                MoodStyle.detail("Sauvegarde ta position actuelle."),
+                MoodStyle.detail("La position finale est mémorisée à la fermeture de file."),
                 EventManager.isQueueOpen()
                         ? MoodStyle.detail("File ouverte : tu rejoins directement.")
                         : MoodStyle.detail("File fermée : affiche les infos du jeu."),
