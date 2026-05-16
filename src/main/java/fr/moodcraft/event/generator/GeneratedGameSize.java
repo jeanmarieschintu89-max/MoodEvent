@@ -4,10 +4,10 @@ import org.bukkit.Material;
 
 public enum GeneratedGameSize {
 
-    PETIT("Petit", Material.LIME_CONCRETE, 17, 12, 50, 30, 15, 3),
-    MOYEN("Moyen", Material.GOLD_BLOCK, 29, 24, 100, 60, 25, 4),
-    GRAND("Grand", Material.ORANGE_CONCRETE, 41, 36, 200, 100, 37, 5),
-    GEANT("Géant", Material.REDSTONE_BLOCK, 57, 52, 400, 150, 51, 7);
+    PETIT("Petit", Material.LIME_CONCRETE, 17, 12, 50, 30, 13, 4),
+    MOYEN("Moyen", Material.GOLD_BLOCK, 29, 24, 100, 60, 15, 6),
+    GRAND("Grand", Material.ORANGE_CONCRETE, 41, 36, 200, 100, 17, 8),
+    GEANT("Géant", Material.REDSTONE_BLOCK, 57, 52, 400, 150, 19, 10);
 
     private final String displayName;
     private final Material icon;
@@ -72,7 +72,7 @@ public enum GeneratedGameSize {
             case JUMP -> jumpPlatforms + " plateformes";
             case COURSE -> raceLength + " blocs";
             case WATER_JUMP -> waterLength + " blocs";
-            case SURVIE_ETAGES -> survivalFloors + " étages";
+            case SURVIE_ETAGES -> survivalWidth + "x" + survivalWidth + " §8• §7" + survivalFloors + " étages";
             case RUEE_OR -> getGoldRushWidth() + "x" + getGoldRushHeight() + " §8• §7" + getGoldRushDurationSeconds() + "s";
         };
     }
