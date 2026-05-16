@@ -121,12 +121,8 @@ public class EventAdminGUIListener implements Listener {
         if (!top(event, slot)) return;
 
         switch (slot) {
-            case 10 -> openSize(player, GeneratedGameType.LABYRINTHE);
-            case 12 -> openSize(player, GeneratedGameType.JUMP);
-            case 14 -> openSize(player, GeneratedGameType.COURSE);
-            case 16 -> openSize(player, GeneratedGameType.WATER_JUMP);
-            case 22 -> openSize(player, GeneratedGameType.SURVIE_ETAGES);
-            case 24 -> openSize(player, GeneratedGameType.RUEE_OR);
+            case 10 -> openSize(player, GeneratedGameType.SURVIE_ETAGES);
+            case 12 -> openSize(player, GeneratedGameType.RUEE_OR);
             case 25 -> {
                 click(player);
                 SquidPackManager.generate(player);
@@ -230,12 +226,6 @@ public class EventAdminGUIListener implements Listener {
         switch (slot) {
             case 11 -> openItems(player, RewardManager.PARTICIPATION);
             case 12 -> editMoney(player, RewardManager.PARTICIPATION);
-            case 20 -> openItems(player, 1);
-            case 21 -> editMoney(player, 1);
-            case 29 -> openItems(player, 2);
-            case 30 -> editMoney(player, 2);
-            case 38 -> openItems(player, 3);
-            case 39 -> editMoney(player, 3);
             case 49 -> EventAdminGUI.open(player);
             default -> { }
         }
