@@ -19,35 +19,34 @@ public final class WaitingRoomGUI {
         Inventory inv = Bukkit.createInventory(null, 54, TITLE);
         fill(inv);
 
-        String selectedStyle = WaitingRoomManager.formatStyle(WaitingRoomManager.getSelectedStyle(player));
+        String selectedStyle = WaitingRoomManager.getSelectedTheme(player).displayName();
 
         inv.setItem(4, EventItem.glow(EventItem.item(
                 Material.ENDER_EYE,
                 "§6✦ §fSalle d'attente §6✦",
                 MoodStyle.detail("État : " + (WaitingRoomManager.hasRoom() ? "§agénérée" : "§cnon générée")),
-                MoodStyle.detail("Style unique : §e" + selectedStyle),
+                MoodStyle.detail("Style choisi : §e" + selectedStyle),
                 MoodStyle.detail("Zone temporaire restaurable"),
-                MoodStyle.detail("File fermée → salle"),
-                MoodStyle.detail("Arrivée → salle"),
+                MoodStyle.detail("Style appliqué uniquement à la salle"),
                 "",
-                MoodStyle.info("Choisis une taille")
+                MoodStyle.info("Choisis un style puis une taille")
         )));
 
-        addSize(inv, 10, Material.OAK_DOOR, "Mini", "7x7", "3 à 8 joueurs");
-        addSize(inv, 12, Material.SPRUCE_DOOR, "Petite", "9x9", "5 à 15 joueurs");
-        addSize(inv, 14, Material.DARK_OAK_DOOR, "Moyenne", "11x11", "10 à 25 joueurs");
-        addSize(inv, 16, Material.IRON_DOOR, "Grande", "15x15", "20 à 40 joueurs");
-        addSize(inv, 28, Material.COPPER_DOOR, "Très grande", "19x19", "40 à 70 joueurs");
-        addSize(inv, 30, Material.WARPED_DOOR, "Festival", "23x23", "70 joueurs et plus");
+        addSize(inv, 10, Material.OAK_DOOR, "Mini", "7x7", "3 à 8 joueurs", selectedStyle);
+        addSize(inv, 12, Material.SPRUCE_DOOR, "Petite", "9x9", "5 à 15 joueurs", selectedStyle);
+        addSize(inv, 14, Material.DARK_OAK_DOOR, "Moyenne", "11x11", "10 à 25 joueurs", selectedStyle);
+        addSize(inv, 16, Material.IRON_DOOR, "Grande", "15x15", "20 à 40 joueurs", selectedStyle);
+        addSize(inv, 28, Material.COPPER_DOOR, "Très grande", "19x19", "40 à 70 joueurs", selectedStyle);
+        addSize(inv, 30, Material.WARPED_DOOR, "Festival", "23x23", "70 joueurs et plus", selectedStyle);
 
         inv.setItem(22, EventItem.glow(EventItem.item(
-                Material.DEEPSLATE_TILES,
-                "§6✦ §fStyle unique §6✦",
+                WaitingRoomManager.getSelectedTheme(player).accent(),
+                "§6✦ §fChanger le style §6✦",
                 MoodStyle.detail("Actuel : §e" + selectedStyle),
-                MoodStyle.detail("Les thèmes multiples sont retirés."),
-                MoodStyle.detail("Moins de conflits entre les jeux."),
+                MoodStyle.detail("Clique pour passer au style suivant."),
+                MoodStyle.detail("20 styles disponibles."),
                 "",
-                MoodStyle.success("Stable")
+                MoodStyle.success("Style salle uniquement")
         )));
 
         inv.setItem(33, EventItem.item(
@@ -76,13 +75,13 @@ public final class WaitingRoomGUI {
         player.openInventory(inv);
     }
 
-    private static void addSize(Inventory inv, int slot, Material material, String name, String size, String capacity) {
+    private static void addSize(Inventory inv, int slot, Material material, String name, String size, String capacity, String selectedStyle) {
         inv.setItem(slot, EventItem.item(
                 material,
                 "§6✦ §f" + name + " §6✦",
                 MoodStyle.detail("Taille : §e" + size),
                 MoodStyle.detail("Capacité : §e" + capacity),
-                MoodStyle.detail("Style unique MoodCraft"),
+                MoodStyle.detail("Style : §e" + selectedStyle),
                 "",
                 WaitingRoomManager.hasRoom() ? MoodStyle.error("Restaure d'abord l'ancienne salle") : MoodStyle.success("Générer ici")
         ));
