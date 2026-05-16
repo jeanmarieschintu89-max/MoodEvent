@@ -162,11 +162,11 @@ public final class SquidPackManager {
         config.set("players", null);
         save();
 
-        EventManager.createEvent(null, GAME_NAME);
-        EventManager.setDescription(null, "Une suite d'épreuves show : dortoir, Feu Rouge / Feu Vert et Pont de Verre.");
-        EventManager.setType(null, "custom");
+        EventManager.createEvent(player, GAME_NAME);
+        EventManager.setDescription(player, "Une suite d'épreuves show : dortoir, Feu Rouge / Feu Vert et Pont de Verre.");
+        EventManager.setType(player, "custom");
         player.teleport(start);
-        EventManager.setLocation(null);
+        EventManager.setLocation(player);
         player.teleport(origin);
 
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
