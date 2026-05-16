@@ -23,7 +23,7 @@ import java.util.UUID;
 public final class WaitingRoomManager {
 
     private static final Map<UUID, String> SELECTED_STYLE = new HashMap<>();
-    private static final String STYLE_KEY = "moodcraft";
+    private static final String DEFAULT_STYLE_KEY = "moodcraft";
 
     private static File file;
     private static FileConfiguration config;
@@ -67,15 +67,33 @@ public final class WaitingRoomManager {
 
     public static void setSelectedStyle(Player player, String style) {
         if (player == null) return;
-        SELECTED_STYLE.put(player.getUniqueId(), STYLE_KEY);
+        SELECTED_STYLE.put(player.getUniqueId(), WaitingRoomTheme.key(style));
+    }
+
+    public static WaitingRoomTheme getSelectedTheme(Player player) {
+        if (player == null) return WaitingRoomTheme.MOODCRAFT;
+        return WaitingRoomTheme.of(SELECTED_STYLE.getOrDefault(player.getUniqueId(), DEFAULT_STYLE_KEY));
     }
 
     public static String getSelectedStyle(Player player) {
-        return STYLE_KEY;
+        return getSelectedTheme(player).key();
+    }
+
+    public static WaitingRoomTheme cycleSelectedStyle(Player player) {
+        WaitingRoomTheme next = getSelectedTheme(player).next();
+        setSelectedStyle(player, next.key());
+        MoodStyle.successMessage(
+                player,
+                MoodStyle.MODULE,
+                "Style de salle sélectionné.",
+                MoodStyle.detail("Style : §e" + next.displayName()),
+                MoodStyle.detail("Ce choix touche uniquement la salle d'attente.")
+        );
+        return next;
     }
 
     public static String formatStyle(String style) {
-        return WaitingRoomTheme.MOODCRAFT.displayName();
+        return WaitingRoomTheme.of(style).displayName();
     }
 
     public static void teleport(Player player) {
@@ -93,7 +111,7 @@ public final class WaitingRoomManager {
             return;
         }
 
-        WaitingRoomTheme theme = WaitingRoomTheme.MOODCRAFT;
+        WaitingRoomTheme theme = getSelectedTheme(player);
         int radius = radius(rawSize);
         int height = height(radius);
         Location center = player.getLocation().getBlock().getLocation().add(0.5, 0, 0.5);
@@ -114,7 +132,7 @@ public final class WaitingRoomManager {
         config.set("active", true);
         config.set("radius", radius);
         config.set("height", height);
-        config.set("style", STYLE_KEY);
+        config.set("style", theme.key());
         config.set("size-name", rawSize == null ? "moyenne" : rawSize.toLowerCase(Locale.ROOT));
         writeLocation("spawn", spawn);
         save();
@@ -126,7 +144,7 @@ public final class WaitingRoomManager {
                 MoodStyle.MODULE,
                 "Salle d'attente générée.",
                 MoodStyle.detail("Taille : §e" + ((radius * 2) + 1) + "x" + ((radius * 2) + 1)),
-                MoodStyle.detail("Style unique : §e" + theme.displayName()),
+                MoodStyle.detail("Style salle : §e" + theme.displayName()),
                 MoodStyle.detail("Zone sauvegardée avant construction."),
                 MoodStyle.detail("Restauration : §e/eventrestaurersalle")
         );
@@ -221,7 +239,7 @@ public final class WaitingRoomManager {
     private static Material floorMaterial(WaitingRoomTheme theme, int cx, int cz, int x, int z) {
         int dx = Math.abs(x - cx);
         int dz = Math.abs(z - cz);
-        if (dx <= 1 && dz <= 1) return Material.SEA_LANTERN;
+        if (dx <= 1 && dz <= 1) return theme.light();
         if (dx == dz || dx == 0 || dz == 0) return theme.accent();
         return (x + z) % 2 == 0 ? theme.primary() : Material.SMOOTH_STONE;
     }
@@ -268,12 +286,15 @@ public final class WaitingRoomManager {
         return switch (material) {
             case QUARTZ_BLOCK, SMOOTH_QUARTZ, WHITE_CONCRETE -> Material.QUARTZ_SLAB;
             case PURPUR_BLOCK -> Material.PURPUR_SLAB;
-            case OAK_LOG, OAK_PLANKS, JUNGLE_LOG -> Material.OAK_SLAB;
+            case OAK_LOG, OAK_PLANKS, JUNGLE_LOG, JUNGLE_PLANKS -> Material.OAK_SLAB;
             case SPRUCE_LOG, PACKED_ICE, SNOW_BLOCK -> Material.SPRUCE_SLAB;
             case SANDSTONE, SMOOTH_SANDSTONE, CHISELED_SANDSTONE -> Material.SANDSTONE_SLAB;
             case PRISMARINE_BRICKS, DARK_PRISMARINE -> Material.PRISMARINE_SLAB;
             case CUT_COPPER, COPPER_BLOCK -> Material.CUT_COPPER_SLAB;
             case POLISHED_BLACKSTONE, BLACKSTONE, POLISHED_BLACKSTONE_BRICKS, GILDED_BLACKSTONE -> Material.BLACKSTONE_SLAB;
+            case WARPED_PLANKS, WARPED_WART_BLOCK -> Material.WARPED_SLAB;
+            case CRIMSON_PLANKS, CRIMSON_NYLIUM -> Material.CRIMSON_SLAB;
+            case STONE_BRICKS, MOSSY_COBBLESTONE, DEEPSLATE_BRICKS -> Material.STONE_BRICK_SLAB;
             default -> Material.SMOOTH_STONE_SLAB;
         };
     }
@@ -282,12 +303,15 @@ public final class WaitingRoomManager {
         return switch (material) {
             case QUARTZ_BLOCK, SMOOTH_QUARTZ, WHITE_CONCRETE -> Material.QUARTZ_STAIRS;
             case PURPUR_BLOCK -> Material.PURPUR_STAIRS;
-            case OAK_LOG, OAK_PLANKS, JUNGLE_LOG -> Material.OAK_STAIRS;
+            case OAK_LOG, OAK_PLANKS, JUNGLE_LOG, JUNGLE_PLANKS -> Material.OAK_STAIRS;
             case SPRUCE_LOG, PACKED_ICE, SNOW_BLOCK -> Material.SPRUCE_STAIRS;
             case SANDSTONE, SMOOTH_SANDSTONE, CHISELED_SANDSTONE -> Material.SANDSTONE_STAIRS;
             case PRISMARINE_BRICKS, DARK_PRISMARINE -> Material.PRISMARINE_STAIRS;
             case CUT_COPPER, COPPER_BLOCK -> Material.CUT_COPPER_STAIRS;
             case POLISHED_BLACKSTONE, BLACKSTONE, POLISHED_BLACKSTONE_BRICKS, GILDED_BLACKSTONE -> Material.BLACKSTONE_STAIRS;
+            case WARPED_PLANKS, WARPED_WART_BLOCK -> Material.WARPED_STAIRS;
+            case CRIMSON_PLANKS, CRIMSON_NYLIUM -> Material.CRIMSON_STAIRS;
+            case STONE_BRICKS, MOSSY_COBBLESTONE, DEEPSLATE_BRICKS -> Material.STONE_BRICK_STAIRS;
             default -> Material.STONE_BRICK_STAIRS;
         };
     }
