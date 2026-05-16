@@ -33,7 +33,7 @@ public final class GeneratedGameThemePainter {
             case LIGHT_BLUE_STAINED_GLASS, CYAN_STAINED_GLASS, WHITE_STAINED_GLASS, GRAY_STAINED_GLASS,
                  TINTED_GLASS, GLASS -> theme.glass();
             case SEA_LANTERN, GLOWSTONE, SHROOMLIGHT, SOUL_LANTERN, REDSTONE_LAMP -> theme.light();
-            case WHITE_WOOL, YELLOW_WOOL, ORANGE_WOOL, LIME_WOOL, LIGHT_BLUE_WOOL, CYAN_WOOL,
+            case WHITE_WOOL, YELLOW_WOOL, ORANGE_WOOL, LIGHT_BLUE_WOOL, CYAN_WOOL,
                  MAGENTA_WOOL, PINK_WOOL -> woolAccent(theme, x, z);
             case LIME_WOOL, LIME_CONCRETE -> theme.start();
             case RED_WOOL, RED_CONCRETE -> theme.finish();
