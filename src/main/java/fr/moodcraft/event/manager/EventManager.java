@@ -2,7 +2,6 @@ package fr.moodcraft.event.manager;
 
 import fr.moodcraft.event.Main;
 import fr.moodcraft.event.generator.GeneratedGameManager;
-import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.model.EventType;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Bukkit;
@@ -412,10 +411,8 @@ public final class EventManager {
     private static void restoreGeneratedZones(Player actor) {
         boolean restoredRoom = WaitingRoomManager.hasRoom();
         boolean restoredGenerated = GeneratedGameManager.hasStructure();
-        boolean restoredSquid = SquidPackManager.hasPack();
         if (restoredRoom) WaitingRoomManager.restore(actor);
         if (restoredGenerated) GeneratedGameManager.restore(actor);
-        if (restoredSquid) SquidPackManager.restore(actor);
     }
 
     private static void scheduleAutoStop(Player actor, String reason) {
