@@ -22,17 +22,14 @@ public final class RewardGUI {
         inv.setItem(4, EventItem.glow(EventItem.item(
                 Material.CHEST,
                 "§6✦ §fRécompenses Event §6✦",
-                MoodStyle.detail("Récompense globale de participation"),
-                MoodStyle.detail("Récompenses spéciales Top 3"),
-                MoodStyle.detail("Items + argent configurables"),
+                MoodStyle.detail("Récompense globale de participation."),
+                MoodStyle.detail("Podiums et Top 3 désactivés."),
+                MoodStyle.detail("Items + argent configurables."),
                 "",
                 MoodStyle.info("Tout se règle depuis ce menu")
         )));
 
-        addReward(inv, 10, RewardManager.PARTICIPATION, Material.EMERALD, "Participation");
-        addReward(inv, 19, 1, Material.NETHER_STAR, "1er");
-        addReward(inv, 28, 2, Material.GOLD_INGOT, "2e");
-        addReward(inv, 37, 3, Material.COPPER_INGOT, "3e");
+        addReward(inv, 20, RewardManager.PARTICIPATION, Material.EMERALD, "Participation");
 
         inv.setItem(49, EventItem.item(
                 Material.BARRIER,
