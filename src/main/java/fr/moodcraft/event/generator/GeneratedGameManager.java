@@ -77,6 +77,11 @@ public final class GeneratedGameManager {
         return activeType;
     }
 
+    public static FileConfiguration config() {
+        ensureLoaded();
+        return config;
+    }
+
     public static boolean isInsideStructure(Location location) {
         ensureLoaded();
         return hasStructure() && activeRegion.contains(location);
@@ -133,7 +138,7 @@ public final class GeneratedGameManager {
     public static String customRule(GeneratedGameType type) {
         return switch (type) {
             case LABYRINTHE -> MoodStyle.detail("Largeur impaire entre §e15 §7et §e101§7.");
-            case JUMP -> MoodStyle.detail("Longueur entre §e30 §7et §e250 §7blocs.");
+            case JUMP -> MoodStyle.detail("Hauteur entre §e30 §7et §e250 §7niveaux visuels." );
             case COURSE -> MoodStyle.detail("Longueur entre §e50 §7et §e1000 §7blocs.");
             case WATER_JUMP -> MoodStyle.detail("Longueur entre §e30 §7et §e250 §7blocs.");
             case SURVIE_ETAGES -> MoodStyle.detail("Largeur entre §e15 §7et §e61§7, étages automatiques.");
@@ -222,12 +227,14 @@ public final class GeneratedGameManager {
             case RUEE_OR -> generateGoldRush(center, spec);
         };
 
-        if (type != GeneratedGameType.LABYRINTHE) {
+        if (type != GeneratedGameType.LABYRINTHE && type != GeneratedGameType.JUMP && type != GeneratedGameType.WATER_JUMP) {
             GeneratedGameStyle style = GeneratedGameStyleManager.get(player);
             GeneratedGameThemePainter.paint(world, region.minX, region.maxX, region.minY, region.maxY, region.minZ, region.maxZ, style);
             config.set("style", style.name());
-        } else {
+        } else if (type == GeneratedGameType.LABYRINTHE) {
             config.set("style", "LABYRINTHE_PREMIUM");
+        } else {
+            config.set("style", "LAINE_CONSTANTE");
         }
 
         active = true;
@@ -271,7 +278,7 @@ public final class GeneratedGameManager {
     private static String description(GeneratedGameType type) {
         return switch (type) {
             case LABYRINTHE -> "Trouvez la sortie rouge avant les autres.";
-            case JUMP -> "Sautez de laine en laine dans le couloir sécurisé jusqu'à l'arrivée rouge.";
+            case JUMP -> "Montez de plateforme en plateforme jusqu'à la ligne rouge en hauteur.";
             case COURSE -> "Restez dans la piste et atteignez la ligne rouge avant les autres.";
             case WATER_JUMP -> "Franchissez les blocs de laine au-dessus de l'eau jusqu'à l'arrivée rouge.";
             case SURVIE_ETAGES -> "Restez le plus longtemps possible dans l'arène fermée pendant que les étages disparaissent.";
@@ -285,25 +292,8 @@ public final class GeneratedGameManager {
     }
 
     private static Points generateJump(Location center, Spec spec) {
-        World world = center.getWorld();
-        int cx = center.getBlockX(), cy = center.getBlockY(), cz = center.getBlockZ();
-        int endX = cx + spec.length + 10;
-        buildLinearArena(world, cx - 5, endX + 6, cz - 8, cz + 8, cy, cy + 7, Material.LIGHT_BLUE_STAINED_GLASS, Material.SMOOTH_STONE);
-        safeFloor(world, cx - 5, endX + 6, cz - 8, cz + 8, cy - 1, Material.BLUE_CONCRETE);
-        platform(world, cx, cy, cz, 3, Material.LIME_WOOL);
-        startGate(world, cx, cy, cz, true);
-        int x = cx, z = cz, y = cy;
-        for (int i = 1; i <= spec.platforms; i++) {
-            x += 4 + RANDOM.nextInt(2);
-            z += RANDOM.nextInt(5) - 2;
-            z = clamp(z, cz - 5, cz + 5);
-            y = cy + 1 + RANDOM.nextInt(3);
-            platform(world, x, y, z, i % 5 == 0 ? 2 : 1, WOOL[i % WOOL.length]);
-        }
-        int finishX = x + 5;
-        platform(world, finishX, cy + 1, z, 3, Material.RED_WOOL);
-        finishGate(world, finishX, cy + 1, z, true);
-        return new Points(new Location(world, cx + 0.5, cy + 1, cz + 0.5, 90f, 0f), new Location(world, finishX + 0.5, cy + 2, z + 0.5, 90f, 0f));
+        GeneratedVerticalJumpBuilder.Layout layout = GeneratedVerticalJumpBuilder.build(center, spec.platforms);
+        return new Points(layout.start(), layout.finish());
     }
 
     private static Points generateRace(Location center, Spec spec) {
@@ -390,7 +380,7 @@ public final class GeneratedGameManager {
         int cx = center.getBlockX(), cy = center.getBlockY(), cz = center.getBlockZ();
         return switch (type) {
             case LABYRINTHE -> new Region(world, cx - spec.width / 2 - 5, cy - 1, cz - spec.width / 2 - 5, cx + spec.width / 2 + 5, cy + 9, cz + spec.width / 2 + 5);
-            case JUMP -> new Region(world, cx - 8, cy - 2, cz - 10, cx + spec.length + 20, cy + 11, cz + 10);
+            case JUMP -> new Region(world, cx - 12, cy - 2, cz - 12, cx + 12, cy + Math.max(28, spec.platforms + 14), cz + 12);
             case COURSE -> new Region(world, cx - 8, cy - 1, cz - 6, cx + spec.length + 10, cy + 6, cz + 6);
             case WATER_JUMP -> new Region(world, cx - 8, cy - 2, cz - 8, cx + spec.length + 10, cy + 7, cz + 8);
             case SURVIE_ETAGES -> new Region(world, cx - spec.width / 2 - 4, cy - 2, cz - spec.width / 2 - 4, cx + spec.width / 2 + 4, cy + 10 + spec.floors * 5, cz + spec.width / 2 + 4);
@@ -548,7 +538,7 @@ public final class GeneratedGameManager {
         private static Spec preset(GeneratedGameType type, GeneratedGameSize size) {
             return switch (type) {
                 case LABYRINTHE -> new Spec(size.getMazeWidth(), 0, 0, 0, 0, 0);
-                case JUMP -> new Spec(0, size.getJumpPlatforms() * 5, size.getJumpPlatforms(), 0, 0, 0);
+                case JUMP -> new Spec(0, 0, size.getJumpPlatforms(), 0, 0, 0);
                 case COURSE -> new Spec(0, size.getRaceLength(), 0, 0, 0, 0);
                 case WATER_JUMP -> new Spec(0, size.getWaterLength(), 0, 0, 0, 0);
                 case SURVIE_ETAGES -> new Spec(size.getSurvivalWidth(), 0, 0, size.getSurvivalFloors(), 0, 0);
@@ -559,7 +549,7 @@ public final class GeneratedGameManager {
         private static Spec custom(GeneratedGameType type, int value) {
             return switch (type) {
                 case LABYRINTHE -> value >= 15 && value <= 101 && value % 2 == 1 ? new Spec(value, 0, 0, 0, 0, 0) : null;
-                case JUMP -> value >= 30 && value <= 250 ? new Spec(0, value, Math.max(8, value / 5), 0, 0, 0) : null;
+                case JUMP -> value >= 30 && value <= 250 ? new Spec(0, 0, Math.max(8, value / 5), 0, 0, 0) : null;
                 case COURSE -> value >= 50 && value <= 1000 ? new Spec(0, value, 0, 0, 0, 0) : null;
                 case WATER_JUMP -> value >= 30 && value <= 250 ? new Spec(0, value, 0, 0, 0, 0) : null;
                 case SURVIE_ETAGES -> value >= 15 && value <= 61 ? new Spec(value % 2 == 1 ? value : value + 1, 0, 0, floors(value), 0, 0) : null;
@@ -578,7 +568,7 @@ public final class GeneratedGameManager {
         private String describe(GeneratedGameType type) {
             return switch (type) {
                 case LABYRINTHE -> width + "x" + width;
-                case JUMP -> platforms + " plateformes";
+                case JUMP -> platforms + " plateformes en hauteur";
                 case COURSE, WATER_JUMP -> length + " blocs";
                 case SURVIE_ETAGES -> width + "x" + width + " §8• §7" + floors + " étages";
                 case RUEE_OR -> width + "x" + goldHeight + " §8• §7" + goldDuration + "s";
