@@ -100,7 +100,7 @@ public final class MiniGameGeneratorGUI {
                 type.getIcon(),
                 "§6✦ §f" + type.getDisplayName() + " §6✦",
                 MoodStyle.detail("Choisis une taille."),
-                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Géant masqué pour ce mode.") : MoodStyle.detail("Géant disponible."),
+                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Modèles plus hauts, moins étalés.") : MoodStyle.detail("Géant disponible."),
                 MoodStyle.detail("Style : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
                 "",
                 MoodStyle.info("Taille de génération")
@@ -109,10 +109,7 @@ public final class MiniGameGeneratorGUI {
         addSize(inv, 10, type, GeneratedGameSize.PETIT);
         addSize(inv, 12, type, GeneratedGameSize.MOYEN);
         addSize(inv, 14, type, GeneratedGameSize.GRAND);
-
-        if (type != GeneratedGameType.SURVIE_ETAGES) {
-            addSize(inv, 16, type, GeneratedGameSize.GEANT);
-        }
+        addSize(inv, 16, type, GeneratedGameSize.GEANT);
 
         inv.setItem(31, EventItem.item(
                 Material.GRAY_DYE,
@@ -160,7 +157,7 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Type : §e" + pending.type().getDisplayName()),
                 MoodStyle.detail("Taille : §e" + pending.describe()),
                 MoodStyle.detail("Style : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
-                pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : génération plus lourde.") : MoodStyle.detail("Restauration possible avec /eventstop."),
+                pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : génération plus haute.") : MoodStyle.detail("Restauration possible avec /eventstop."),
                 "",
                 MoodStyle.info("Confirmer la génération")
         )));
@@ -175,7 +172,7 @@ public final class MiniGameGeneratorGUI {
     }
 
     private static void addSize(Inventory inv, int slot, GeneratedGameType type, GeneratedGameSize size) {
-        inv.setItem(slot, EventItem.item(size.getIcon(), "§6✦ §f" + size.getDisplayName() + " §6✦", MoodStyle.detail("Format : §e" + size.describeFor(type)), size == GeneratedGameSize.GEANT ? MoodStyle.detail("Très lourd : prudence.") : size == GeneratedGameSize.GRAND ? MoodStyle.detail("Plus lourd : prudence.") : MoodStyle.detail("Taille sûre."), "", MoodStyle.info("Préparer")));
+        inv.setItem(slot, EventItem.item(size.getIcon(), "§6✦ §f" + size.getDisplayName() + " §6✦", MoodStyle.detail("Format : §e" + size.describeFor(type)), size == GeneratedGameSize.GEANT ? MoodStyle.detail(type == GeneratedGameType.SURVIE_ETAGES ? "Plus haut, peu étalé." : "Très lourd : prudence.") : size == GeneratedGameSize.GRAND ? MoodStyle.detail("Plus lourd : prudence.") : MoodStyle.detail("Taille sûre."), "", MoodStyle.info("Préparer")));
     }
 
     private static void fill(Inventory inv) {
