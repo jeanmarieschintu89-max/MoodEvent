@@ -19,10 +19,7 @@ public final class MoodStyle {
     }
 
     public static String cleanTitle(String title) {
-
-        if (title == null) {
-            return "";
-        }
+        if (title == null) return "";
 
         String clean = title
                 .replaceAll("§.", "")
@@ -58,52 +55,31 @@ public final class MoodStyle {
         return "§8• §7" + cleanPrefix(text);
     }
 
-    public static void send(
-            CommandSender sender,
-            String module,
-            String... lines
-    ) {
-
-        if (sender == null) {
-            return;
-        }
+    public static void send(CommandSender sender, String module, String... lines) {
+        if (sender == null) return;
 
         sender.sendMessage("");
         sender.sendMessage(header(module));
 
         if (lines != null) {
             for (String line : lines) {
-                sender.sendMessage(normalize(line));
+                String normalized = normalize(line);
+                if (!normalized.isBlank()) sender.sendMessage(normalized);
             }
         }
 
         sender.sendMessage(FRAME);
     }
 
-    public static void infoMessage(
-            CommandSender sender,
-            String module,
-            String message,
-            String... details
-    ) {
+    public static void infoMessage(CommandSender sender, String module, String message, String... details) {
         send(sender, module, concat(info(message), details));
     }
 
-    public static void successMessage(
-            CommandSender sender,
-            String module,
-            String message,
-            String... details
-    ) {
+    public static void successMessage(CommandSender sender, String module, String message, String... details) {
         send(sender, module, concat(success(message), details));
     }
 
-    public static void errorMessage(
-            CommandSender sender,
-            String module,
-            String message,
-            String... details
-    ) {
+    public static void errorMessage(CommandSender sender, String module, String message, String... details) {
         send(sender, module, concat(error(message), details));
     }
 
@@ -111,21 +87,17 @@ public final class MoodStyle {
         int size = 1 + (rest == null ? 0 : rest.length);
         String[] result = new String[size];
         result[0] = first;
-
-        if (rest != null) {
-            System.arraycopy(rest, 0, result, 1, rest.length);
-        }
-
+        if (rest != null) System.arraycopy(rest, 0, result, 1, rest.length);
         return result;
     }
 
     private static String normalize(String line) {
-
-        if (line == null || line.isBlank()) {
-            return "";
-        }
+        if (line == null || line.isBlank()) return "";
 
         String trimmed = line.trim().replace("§c✘", "§c✖");
+        String rewritten = rewriteLaunchObjective(trimmed);
+        if (rewritten != null) return rewritten;
+        if (isExtraLaunchRule(trimmed)) return "";
 
         if (trimmed.startsWith("§8•")
                 || trimmed.startsWith("§e➜")
@@ -136,26 +108,62 @@ public final class MoodStyle {
             return trimmed;
         }
 
-        if (trimmed.startsWith("§a")) {
-            return success(trimmed);
-        }
-
-        if (trimmed.startsWith("§c")) {
-            return error(trimmed);
-        }
-
-        if (trimmed.startsWith("§7") || trimmed.startsWith("§8")) {
-            return detail(trimmed);
-        }
+        if (trimmed.startsWith("§a")) return success(trimmed);
+        if (trimmed.startsWith("§c")) return error(trimmed);
+        if (trimmed.startsWith("§7") || trimmed.startsWith("§8")) return detail(trimmed);
 
         return info(trimmed);
     }
 
-    private static String cleanPrefix(String text) {
+    private static String rewriteLaunchObjective(String line) {
+        String clean = stripDecorations(line).toLowerCase(Locale.ROOT);
 
-        if (text == null) {
-            return "";
+        if (clean.equals("objectif : atteignez la ligne rouge avant les autres.")) {
+            return detail("Objectif : Atteins la ligne d'arrivée le plus rapidement possible.");
         }
+
+        if (clean.equals("objectif : sautez de laine en laine jusqu'à l'arrivée.")) {
+            return detail("Objectif : Termine le parcours le plus rapidement possible.");
+        }
+
+        if (clean.equals("objectif : trouvez la sortie avant les autres.")) {
+            return detail("Objectif : Trouve la sortie le plus rapidement possible.");
+        }
+
+        if (clean.equals("objectif : franchissez les blocs de laine au-dessus de l'eau.")) {
+            return detail("Objectif : Traverse le parcours sans tomber.");
+        }
+
+        if (clean.equals("objectif : restez le plus longtemps possible.")) {
+            return detail("Objectif : Reste le dernier joueur encore en jeu.");
+        }
+
+        return null;
+    }
+
+    private static boolean isExtraLaunchRule(String line) {
+        String clean = stripDecorations(line).toLowerCase(Locale.ROOT);
+        return clean.equals("les 3 premiers seront récompensés.")
+                || clean.equals("ender pearl interdite.")
+                || clean.equals("les étages disparaissent progressivement.")
+                || clean.equals("le premier en bas est perdant.")
+                || clean.equals("les derniers survivants sont récompensés.");
+    }
+
+    private static String stripDecorations(String text) {
+        if (text == null) return "";
+        return text
+                .replaceAll("§.", "")
+                .replace("➜", "")
+                .replace("✔", "")
+                .replace("✘", "")
+                .replace("✖", "")
+                .replace("•", "")
+                .trim();
+    }
+
+    private static String cleanPrefix(String text) {
+        if (text == null) return "";
 
         return text
                 .replaceFirst("^§[0-9a-fk-or]", "")
