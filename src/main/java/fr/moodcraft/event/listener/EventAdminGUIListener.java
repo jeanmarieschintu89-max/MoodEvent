@@ -69,15 +69,23 @@ public class EventAdminGUIListener implements Listener {
                 if (EventManager.isQueueOpen()) EventManager.closeQueue(player); else EventManager.openQueue(player);
                 EventAdminGUI.open(player);
             }
-            case 24 -> { click(player); player.closeInventory(); EventManager.startEvent(player); }
+            case 24 -> {
+                click(player);
+                EventManager.startEvent(player);
+                EventAdminGUI.open(player);
+            }
             case 29 -> { click(player); RewardGUI.open(player); }
-            case 31 -> { click(player); player.closeInventory(); EventManager.stopEvent(player); }
+            case 31 -> {
+                click(player);
+                EventManager.stopEvent(player);
+                EventAdminGUI.open(player);
+            }
             case 33 -> { click(player); EventAdvancedGUI.open(player); }
             case 38 -> {
                 click(player);
-                player.closeInventory();
                 EventReturnSafety.remember(player);
                 EventManager.joinQueue(player);
+                EventAdminGUI.open(player);
             }
             case 40 -> { click(player); player.closeInventory(); }
             default -> { }
@@ -97,7 +105,11 @@ public class EventAdminGUIListener implements Listener {
             case 15 -> { click(player); EventManager.setFinishLocation(player); EventAdvancedGUI.open(player); }
             case 16 -> { click(player); WaitingRoomGUI.open(player); }
             case 22 -> { no(player); WaitingRoomManager.restore(player); EventAdvancedGUI.open(player); }
-            case 31 -> { no(player); player.closeInventory(); EventManager.cancelEvent(player); }
+            case 31 -> {
+                no(player);
+                EventManager.cancelEvent(player);
+                EventAdminGUI.open(player);
+            }
             case 49 -> { click(player); EventAdminGUI.open(player); }
             default -> { }
         }
@@ -168,11 +180,11 @@ public class EventAdminGUIListener implements Listener {
         switch (slot) {
             case 11 -> {
                 click(player);
-                player.closeInventory();
                 if (pending.isCustom()) GeneratedGameManager.generateCustom(player, pending.type(), pending.customValue());
                 else EventPackManager.generatePack(player, pending.type(), pending.size());
                 EventLogManager.log(player, "Pack généré", pending.type().getDisplayName() + " - " + pending.describe() + " - style " + GeneratedGameStyleManager.get(player).getDisplayName());
                 MiniGameGeneratorGUI.clearPending(player);
+                MiniGameGeneratorGUI.openMain(player);
             }
             case 15 -> { no(player); MiniGameGeneratorGUI.clearPending(player); MiniGameGeneratorGUI.openMain(player); }
             default -> { }
@@ -235,7 +247,7 @@ public class EventAdminGUIListener implements Listener {
             case 30 -> editMoney(player, 2);
             case 38 -> openItems(player, 3);
             case 39 -> editMoney(player, 3);
-            case 49 -> player.closeInventory();
+            case 49 -> EventAdminGUI.open(player);
             default -> { }
         }
     }
