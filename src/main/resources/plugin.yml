@@ -33,6 +33,7 @@ commands:
     permission-message: "§c✖ §fAccès réservé à l'administration événementielle."
     aliases:
       - eventgui
+      - éventgui
       - eventpanel
 
   eventcreer:
