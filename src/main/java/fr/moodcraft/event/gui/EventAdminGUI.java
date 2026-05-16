@@ -31,15 +31,15 @@ public final class EventAdminGUI {
                 MoodStyle.detail("File : " + (EventManager.isQueueOpen() ? "§aouverte" : "§cfermée")),
                 MoodStyle.detail("En file : §e" + EventManager.getQueueSize() + " §8• §7En jeu : §e" + EventManager.getParticipantSize()),
                 "",
-                MoodStyle.info("Workflow recommandé : Pack événement")
+                MoodStyle.info("Modes actifs : Mine en folie / Tour Infernale")
         )));
 
         inv.setItem(20, EventItem.glow(EventItem.item(
                 Material.COMPASS,
                 "§d✦ §fCréer un Pack Événement §d✦",
                 MoodStyle.detail("Génère la zone d'attente."),
-                MoodStyle.detail("Génère le mini-jeu à côté."),
-                MoodStyle.detail("Départ et arrivée automatiques."),
+                MoodStyle.detail("Génère Mine en folie ou Tour Infernale."),
+                MoodStyle.detail("Départ automatique."),
                 MoodStyle.detail("Restauration liée à /eventstop."),
                 "",
                 MoodStyle.success("Ouvrir le générateur")
@@ -68,9 +68,9 @@ public final class EventAdminGUI {
         inv.setItem(29, EventItem.item(
                 Material.CHEST,
                 "§d✦ §fRécompenses §d✦",
-                MoodStyle.detail("Participation + Top 3"),
+                MoodStyle.detail("Participation uniquement"),
+                MoodStyle.detail("Podiums et Top 3 désactivés"),
                 MoodStyle.detail("Items + argent"),
-                MoodStyle.detail("Ne concerne pas la Ruée vers l'or."),
                 "",
                 MoodStyle.info("Configurer")
         ));
@@ -89,8 +89,8 @@ public final class EventAdminGUI {
                 Material.COMMAND_BLOCK,
                 "§d✦ §fMode avancé §d✦",
                 MoodStyle.detail("Réglages manuels."),
-                MoodStyle.detail("Nom, type, départ, arrivée."),
-                MoodStyle.detail("À utiliser en dépannage."),
+                MoodStyle.detail("Nom, type, départ."),
+                MoodStyle.detail("Arrivée classique désactivée."),
                 "",
                 MoodStyle.info("Ouvrir")
         ));
