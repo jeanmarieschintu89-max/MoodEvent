@@ -65,8 +65,7 @@ public final class GeneratedVerticalJumpBuilder {
 
     private static void buildStep(World world, int x, int y, int z, int index, boolean finish) {
         if (finish) {
-            platform(world, x, y, z, 2, Material.RED_WOOL);
-            world.getBlockAt(x, y + 2, z).setType(Material.SEA_LANTERN, false);
+            platform(world, x, y, z, 1, Material.RED_WOOL);
             return;
         }
 
@@ -104,11 +103,11 @@ public final class GeneratedVerticalJumpBuilder {
     }
 
     private static void clearOldTowerArea(World world, int cx, int cy, int cz) {
-        int minY = Math.max(world.getMinHeight(), cy - 3);
-        int maxY = Math.min(world.getMaxHeight() - 1, cy + 90);
-        for (int x = cx - 12; x <= cx + 12; x++) {
+        int minY = Math.max(world.getMinHeight(), cy - 5);
+        int maxY = Math.min(world.getMaxHeight() - 1, cy + 120);
+        for (int x = cx - 18; x <= cx + 18; x++) {
             for (int y = minY; y <= maxY; y++) {
-                for (int z = cz - 12; z <= cz + 12; z++) {
+                for (int z = cz - 18; z <= cz + 18; z++) {
                     world.getBlockAt(x, y, z).setType(Material.AIR, false);
                 }
             }
@@ -123,7 +122,7 @@ public final class GeneratedVerticalJumpBuilder {
 
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
-                world.getBlockAt(x, cy - 1, z).setType(Material.BLUE_CONCRETE, false);
+                world.getBlockAt(x, cy - 1, z).setType(Material.BLACK_CONCRETE, false);
             }
         }
 
@@ -136,25 +135,15 @@ public final class GeneratedVerticalJumpBuilder {
                 world.getBlockAt(minX, y, z).setType(Material.LIGHT_BLUE_STAINED_GLASS, false);
                 world.getBlockAt(maxX, y, z).setType(Material.LIGHT_BLUE_STAINED_GLASS, false);
             }
-            if (y % 5 == 0) {
-                world.getBlockAt(minX, y, minZ).setType(Material.SEA_LANTERN, false);
-                world.getBlockAt(maxX, y, minZ).setType(Material.SEA_LANTERN, false);
-                world.getBlockAt(minX, y, maxZ).setType(Material.SEA_LANTERN, false);
-                world.getBlockAt(maxX, y, maxZ).setType(Material.SEA_LANTERN, false);
-            }
         }
     }
 
     private static void buildCleanStart(World world, int cx, int cy, int cz) {
-        for (int x = cx - 2; x <= cx + 2; x++) {
-            for (int z = cz - 4; z <= cz + 4; z++) {
-                world.getBlockAt(x, cy, z).setType(Material.BLUE_CONCRETE, false);
-                world.getBlockAt(x, cy + 1, z).setType(Material.AIR, false);
-                world.getBlockAt(x, cy + 2, z).setType(Material.AIR, false);
-            }
+        for (int z = cz - 4; z <= cz + 4; z++) {
+            world.getBlockAt(cx, cy, z).setType(Material.LIME_WOOL, false);
+            world.getBlockAt(cx, cy + 1, z).setType(Material.AIR, false);
+            world.getBlockAt(cx, cy + 2, z).setType(Material.AIR, false);
         }
-        for (int z = cz - 4; z <= cz + 4; z++) world.getBlockAt(cx, cy, z).setType(Material.LIME_WOOL, false);
-        world.getBlockAt(cx, cy + 3, cz).setType(Material.SEA_LANTERN, false);
     }
 
     private static void fenceBack(World world, int cx, int y, int cz, int radius) {
