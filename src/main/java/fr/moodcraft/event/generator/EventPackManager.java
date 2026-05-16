@@ -57,7 +57,7 @@ public final class EventPackManager {
                 "Pack événement créé.",
                 MoodStyle.detail("Mini-jeu : §e" + type.getDisplayName()),
                 MoodStyle.detail("Taille : §e" + size.getDisplayName()),
-                MoodStyle.detail("Style : §e" + style.getDisplayName()),
+                MoodStyle.detail("Thème : §e" + style.getDisplayName()),
                 MoodStyle.detail("Salle : §e" + waitingSize + " §8• §7" + WaitingRoomManager.formatStyle(waitingStyle)),
                 MoodStyle.detail("Salle à gauche §8• §7Mini-jeu à droite"),
                 MoodStyle.info("Ouvre la file avec §e/eventouvrir")
@@ -76,12 +76,7 @@ public final class EventPackManager {
     }
 
     private static String waitingStyleFor(GeneratedGameStyle style) {
-        return switch (style) {
-            case ROYAL -> "royal";
-            case NATURE -> "nature";
-            case NEIGE -> "neige";
-            case FESTIVAL -> "joyeux";
-            case CLASSIQUE, SOMBRE -> "sombre";
-        };
+        if (style == null) return "classique";
+        return style.getWaitingRoomStyle();
     }
 }
