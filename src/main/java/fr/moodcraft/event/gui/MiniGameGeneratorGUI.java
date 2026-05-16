@@ -24,8 +24,7 @@ public final class MiniGameGeneratorGUI {
     private static final Map<UUID, GeneratedGameType> SELECTED_TYPE = new HashMap<>();
     private static final Map<UUID, PendingGeneration> PENDING = new HashMap<>();
 
-    private MiniGameGeneratorGUI() {
-    }
+    private MiniGameGeneratorGUI() {}
 
     public static void openMain(Player player) {
         Inventory inv = Bukkit.createInventory(null, 54, MAIN_TITLE);
@@ -34,8 +33,8 @@ public final class MiniGameGeneratorGUI {
         inv.setItem(4, EventItem.glow(EventItem.item(
                 Material.COMPASS,
                 "§6✦ §fGénérateur de mini-jeux §6✦",
-                MoodStyle.detail("Modes disponibles : §e2"),
-                MoodStyle.detail("Tour Infernale et Mine en folie."),
+                MoodStyle.detail("Modes disponibles : §e3"),
+                MoodStyle.detail("Tour Infernale, Mine en folie, Water Jump."),
                 MoodStyle.detail("Style unique : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
                 "",
                 MoodStyle.info("Sélectionne une épreuve")
@@ -43,13 +42,14 @@ public final class MiniGameGeneratorGUI {
 
         addType(inv, 10, GeneratedGameType.SURVIE_ETAGES, "Objectif : survivre aux étages qui tombent.");
         addType(inv, 12, GeneratedGameType.RUEE_OR, "Objectif : miner un maximum de minerais.");
+        addType(inv, 14, GeneratedGameType.WATER_JUMP, "Objectif : atteindre l'arrivée rouge sans tomber.");
 
         inv.setItem(28, EventItem.item(
                 Material.DEEPSLATE_TILES,
                 "§6✦ §fStyle unique §6✦",
                 MoodStyle.detail("Actuel : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
-                MoodStyle.detail("Les anciens thèmes ont été retirés."),
-                MoodStyle.detail("Tous les anciens jeux ont été supprimés."),
+                MoodStyle.detail("Départ propre et piste lisible."),
+                MoodStyle.detail("Aucun ancien podium décoratif."),
                 "",
                 MoodStyle.success("Stable")
         ));
@@ -86,7 +86,7 @@ public final class MiniGameGeneratorGUI {
                 type.getIcon(),
                 "§6✦ §f" + type.getDisplayName() + " §6✦",
                 MoodStyle.detail("Choisis une taille."),
-                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Modèles plus hauts, moins étalés.") : MoodStyle.detail("Durée calculée automatiquement."),
+                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Modèles plus hauts, moins étalés.") : type == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Plateformes montantes au-dessus de l'eau.") : MoodStyle.detail("Durée calculée automatiquement."),
                 MoodStyle.detail("Style unique : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
                 "",
                 MoodStyle.info("Taille de génération")
@@ -121,17 +121,9 @@ public final class MiniGameGeneratorGUI {
         openSize(player, type);
     }
 
-    public static GeneratedGameType getSelectedType(Player player) {
-        return player == null ? null : SELECTED_TYPE.get(player.getUniqueId());
-    }
-
-    public static PendingGeneration getPending(Player player) {
-        return player == null ? null : PENDING.get(player.getUniqueId());
-    }
-
-    public static void clearPending(Player player) {
-        if (player != null) PENDING.remove(player.getUniqueId());
-    }
+    public static GeneratedGameType getSelectedType(Player player) { return player == null ? null : SELECTED_TYPE.get(player.getUniqueId()); }
+    public static PendingGeneration getPending(Player player) { return player == null ? null : PENDING.get(player.getUniqueId()); }
+    public static void clearPending(Player player) { if (player != null) PENDING.remove(player.getUniqueId()); }
 
     private static void openConfirmInventory(Player player, PendingGeneration pending) {
         Inventory inv = Bukkit.createInventory(null, 27, CONFIRM_TITLE);
@@ -143,7 +135,7 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Type : §e" + pending.type().getDisplayName()),
                 MoodStyle.detail("Taille : §e" + pending.describe()),
                 MoodStyle.detail("Style unique : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
-                pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : prudence.") : MoodStyle.detail("Restauration possible avec /eventstop."),
+                pending.type() == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Départ fermé, piste montante, arrivée simple.") : pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : prudence.") : MoodStyle.detail("Restauration possible avec /eventstop."),
                 "",
                 MoodStyle.info("Confirmer la génération")
         )));
