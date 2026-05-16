@@ -4,7 +4,6 @@ import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameSize;
 import fr.moodcraft.event.generator.GeneratedGameStyleManager;
 import fr.moodcraft.event.generator.GeneratedGameType;
-import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.util.EventItem;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Bukkit;
@@ -45,22 +44,12 @@ public final class MiniGameGeneratorGUI {
         addType(inv, 10, GeneratedGameType.SURVIE_ETAGES, "Objectif : survivre aux étages qui tombent.");
         addType(inv, 12, GeneratedGameType.RUEE_OR, "Objectif : miner un maximum de minerais.");
 
-        inv.setItem(25, EventItem.glow(EventItem.item(
-                Material.REDSTONE_TORCH,
-                "§6✦ §f" + SquidPackManager.GAME_NAME + " §6✦",
-                MoodStyle.detail("Pack spécial séparé."),
-                MoodStyle.detail("Feu Rouge / Feu Vert."),
-                MoodStyle.detail("Pont de verre."),
-                "",
-                MoodStyle.success("Créer le pack")
-        )));
-
         inv.setItem(28, EventItem.item(
                 Material.DEEPSLATE_TILES,
                 "§6✦ §fStyle unique §6✦",
                 MoodStyle.detail("Actuel : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
                 MoodStyle.detail("Les anciens thèmes ont été retirés."),
-                MoodStyle.detail("Les anciens jeux ont été retirés."),
+                MoodStyle.detail("Tous les anciens jeux ont été supprimés."),
                 "",
                 MoodStyle.success("Stable")
         ));
