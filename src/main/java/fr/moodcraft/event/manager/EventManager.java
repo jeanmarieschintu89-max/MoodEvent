@@ -112,7 +112,7 @@ public final class EventManager {
     public static void createEvent(Player player, String rawName) {
         String cleanName = rawName == null ? "" : rawName.trim();
         if (cleanName.length() < 3) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Nom d'événement trop court.", MoodStyle.detail("Exemple : §eWater Jump"));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Nom d'événement trop court.", MoodStyle.detail("Exemple : §eLabyrinthe"));
             return;
         }
         name = cleanName;
@@ -125,7 +125,7 @@ public final class EventManager {
         MoodStyle.successMessage(player, MoodStyle.MODULE,
                 "Événement créé.",
                 MoodStyle.detail("Nom : §e" + name),
-                MoodStyle.detail("Types disponibles : §emine_en_folie§7, §etour_infernale§7, §ewater_jump"),
+                MoodStyle.detail("Types disponibles : §emine_en_folie§7, §etour_infernale§7, §ewater_jump§7, §elabyrinthe"),
                 MoodStyle.detail("Départ : §e/eventdepart"));
     }
 
@@ -145,7 +145,7 @@ public final class EventManager {
         if (!ensureEvent(player)) return;
         EventType next = sanitizeType(EventType.fromText(rawType));
         if (next == EventType.CUSTOM) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type non disponible.", MoodStyle.detail("Modes actifs : §emine_en_folie§7, §etour_infernale§7, §ewater_jump"));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type non disponible.", MoodStyle.detail("Modes actifs : §emine_en_folie§7, §etour_infernale§7, §ewater_jump§7, §elabyrinthe"));
             return;
         }
         type = next;
@@ -159,6 +159,7 @@ public final class EventManager {
         type = switch (getType()) {
             case SURVIE_ETAGES -> EventType.RUEE_OR;
             case RUEE_OR -> EventType.WATER_JUMP;
+            case WATER_JUMP -> EventType.LABYRINTHE;
             default -> EventType.SURVIE_ETAGES;
         };
         if (!type.usesFinishLine()) finishLocation = null;
@@ -177,12 +178,12 @@ public final class EventManager {
         if (!ensureEvent(player)) return;
         if (!getType().usesFinishLine()) {
             clearFinishLocation(player);
-            MoodStyle.infoMessage(player, MoodStyle.MODULE, "Arrivée classique non utilisée.", MoodStyle.detail("Seul Water Jump utilise une arrivée."));
+            MoodStyle.infoMessage(player, MoodStyle.MODULE, "Arrivée classique non utilisée.", MoodStyle.detail("Water Jump et Labyrinthe utilisent une arrivée."));
             return;
         }
         finishLocation = player.getLocation().clone();
         save();
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Point d'arrivée défini.", MoodStyle.detail("Water Jump classera les joueurs ici."));
+        MoodStyle.successMessage(player, MoodStyle.MODULE, "Point d'arrivée défini.", MoodStyle.detail("Le Top 3 sera classé ici."));
     }
 
     public static void clearFinishLocation(Player player) {
@@ -195,7 +196,7 @@ public final class EventManager {
     public static void openQueue(Player player) {
         if (!ensureEvent(player) || !ensureLocation(player)) return;
         if (getType() == EventType.CUSTOM) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type d'événement non défini.", MoodStyle.detail("Utilise le générateur ou §e/eventtype mine_en_folie|tour_infernale|water_jump"));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type d'événement non défini.", MoodStyle.detail("Utilise le générateur ou §e/eventtype mine_en_folie|tour_infernale|water_jump|labyrinthe"));
             return;
         }
         queueOpen = true;
@@ -348,7 +349,7 @@ public final class EventManager {
         finalRanking.add(uuid);
         int place = finalRanking.size();
         WaitingRoomManager.teleport(player);
-        player.sendTitle(place <= 3 ? "§6Top " + place : "§aArrivée", "§fWater Jump", 0, 50, 10);
+        player.sendTitle(place <= 3 ? "§6Top " + place : "§aArrivée", "§f" + cleanDisplay(getType().getDisplayName()), 0, 50, 10);
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
         if (place <= 3) {
             MoodStyle.successMessage(player, MoodStyle.MODULE,
@@ -357,9 +358,9 @@ public final class EventManager {
                     MoodStyle.detail("Récompense Top 3 distribuée."));
             RewardManager.giveTopReward(player, place);
         } else {
-            MoodStyle.successMessage(player, MoodStyle.MODULE, "Vous avez terminé le Water Jump.", MoodStyle.detail("Retour en salle d'attente."));
+            MoodStyle.successMessage(player, MoodStyle.MODULE, "Vous avez terminé l'épreuve.", MoodStyle.detail("Retour en salle d'attente."));
         }
-        if (finishedPlayers.containsAll(participants)) scheduleAutoStop(player, "Tous les joueurs ont terminé le Water Jump.");
+        if (finishedPlayers.containsAll(participants)) scheduleAutoStop(player, "Tous les joueurs ont terminé " + cleanDisplay(getType().getDisplayName()) + ".");
     }
 
     public static void checkSurvivalFloorElimination(Player player) {
@@ -401,7 +402,7 @@ public final class EventManager {
         MoodStyle.send(player, MoodStyle.MODULE,
                 MoodStyle.info("Commandes événement."),
                 MoodStyle.detail("/eventcreer <nom>"),
-                MoodStyle.detail("/eventtype <mine_en_folie|tour_infernale|water_jump>"),
+                MoodStyle.detail("/eventtype <mine_en_folie|tour_infernale|water_jump|labyrinthe>"),
                 MoodStyle.detail("/eventdepart"),
                 MoodStyle.detail("/eventsalleattente <mini|petite|moyenne|grande|tresgrande|festival>"),
                 MoodStyle.detail("/eventrestaurersalle"),
@@ -464,6 +465,11 @@ public final class EventManager {
                     MoodStyle.detail("Objectif : franchissez les plateformes montantes."),
                     MoodStyle.detail("Chute dans l'eau : retour au départ."),
                     MoodStyle.detail("Top 3 à l'arrivée rouge."));
+            case LABYRINTHE -> MoodStyle.send(player, MoodStyle.MODULE,
+                    MoodStyle.info("Labyrinthe lancé."),
+                    MoodStyle.detail("Objectif : traversez le dédale."),
+                    MoodStyle.detail("Départ et arrivée sont dans des sas extérieurs."),
+                    MoodStyle.detail("Top 3 au sas d'arrivée."));
             default -> MoodStyle.infoMessage(player, MoodStyle.MODULE, "Vous êtes entré dans l'événement.");
         }
     }
@@ -622,7 +628,7 @@ public final class EventManager {
     }
 
     private static EventType sanitizeType(EventType raw) {
-        if (raw == EventType.SURVIE_ETAGES || raw == EventType.RUEE_OR || raw == EventType.WATER_JUMP) return raw;
+        if (raw == EventType.SURVIE_ETAGES || raw == EventType.RUEE_OR || raw == EventType.WATER_JUMP || raw == EventType.LABYRINTHE) return raw;
         return EventType.CUSTOM;
     }
 
