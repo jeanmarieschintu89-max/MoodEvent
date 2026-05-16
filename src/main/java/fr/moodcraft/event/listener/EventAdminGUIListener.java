@@ -15,7 +15,6 @@ import fr.moodcraft.event.loot.EventLootManager;
 import fr.moodcraft.event.loot.LootTier;
 import fr.moodcraft.event.manager.EventLogManager;
 import fr.moodcraft.event.manager.EventManager;
-import fr.moodcraft.event.manager.EventReturnSafety;
 import fr.moodcraft.event.manager.RewardManager;
 import fr.moodcraft.event.manager.WaitingRoomManager;
 import fr.moodcraft.event.util.MoodStyle;
@@ -82,7 +81,6 @@ public class EventAdminGUIListener implements Listener {
             case 33 -> { click(player); EventAdvancedGUI.open(player); }
             case 38 -> {
                 click(player);
-                EventReturnSafety.remember(player);
                 EventManager.joinQueue(player);
                 EventAdminGUI.open(player);
             }
@@ -218,6 +216,12 @@ public class EventAdminGUIListener implements Listener {
         switch (slot) {
             case 11 -> openItems(player, RewardManager.PARTICIPATION);
             case 12 -> editMoney(player, RewardManager.PARTICIPATION);
+            case 20 -> openItems(player, 1);
+            case 21 -> editMoney(player, 1);
+            case 29 -> openItems(player, 2);
+            case 30 -> editMoney(player, 2);
+            case 38 -> openItems(player, 3);
+            case 39 -> editMoney(player, 3);
             case 49 -> EventAdminGUI.open(player);
             default -> { }
         }
