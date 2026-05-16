@@ -24,6 +24,28 @@ public final class SquidPackManager {
     public static final String GAME_NAME = "SquidMoodGame";
 
     private static final Random RANDOM = new Random();
+
+    private static final int REGION_MIN_X = -100;
+    private static final int REGION_MAX_X = 60;
+    private static final int REGION_MIN_Y = -1;
+    private static final int REGION_MAX_Y = 20;
+    private static final int REGION_MIN_Z = -26;
+    private static final int REGION_MAX_Z = 64;
+
+    private static final int DORMITORY_X = -76;
+    private static final int START_X = -34;
+    private static final int PRE_SAS_X = -40;
+    private static final int RED_GREEN_FINISH_X = 38;
+
+    private static final int BRIDGE_START_X = -24;
+    private static final int BRIDGE_FIRST_GLASS_X = -21;
+    private static final int BRIDGE_FINISH_X = 15;
+    private static final int BRIDGE_FINISH_ROOM_X = 20;
+    private static final int BRIDGE_Z = 46;
+    private static final int BRIDGE_LEFT_Z = 44;
+    private static final int BRIDGE_RIGHT_Z = 48;
+    private static final int GLASS_STEPS = 12;
+
     private static File file;
     private static FileConfiguration config;
 
@@ -86,7 +108,7 @@ public final class SquidPackManager {
         }
 
         Location origin = player.getLocation().clone();
-        Location game = origin.clone().add(35, 0, 0);
+        Location game = origin.clone().add(45, 0, 0);
         World world = game.getWorld();
         if (world == null) {
             MoodStyle.errorMessage(player, MoodStyle.MODULE, "Monde introuvable.");
@@ -100,27 +122,28 @@ public final class SquidPackManager {
         clear(world, cx, cy, cz);
         SquidPremiumLayoutBuilder.build(world, cx, cy, cz);
 
-        Location start = new Location(world, cx - 25 + 0.5, cy + 1, cz + 0.5, 90f, 0f);
-        Location bridge = new Location(world, cx - 7 + 0.5, cy + 2, cz + 14.5, 90f, 0f);
-        Location lobby = new Location(world, cx - 65 + 0.5, cy + 1, cz - 21.5, 0f, 0f);
-        Location dormitory = new Location(world, cx - 65 + 0.5, cy + 1, cz - 21.5, 0f, 0f);
-        Location preSas = new Location(world, cx - 34 + 0.5, cy + 1, cz + 0.5, 90f, 0f);
-        Location returnSas = new Location(world, cx - 5 + 0.5, cy + 1, cz + 12.5, 90f, 0f);
-        Location finish = new Location(world, cx + 31 + 0.5, cy + 2, cz + 14.5, 90f, 0f);
+        Location dormitory = new Location(world, cx + DORMITORY_X + 0.5, cy + 1, cz + 0.5, 90f, 0f);
+        Location lobby = dormitory.clone();
+        Location start = new Location(world, cx + START_X + 0.5, cy + 1, cz + 0.5, 90f, 0f);
+        Location preSas = new Location(world, cx + PRE_SAS_X + 0.5, cy + 1, cz + 0.5, 90f, 0f);
+        Location returnSas = dormitory.clone();
+        Location bridge = new Location(world, cx + BRIDGE_START_X + 0.5, cy + 2, cz + BRIDGE_Z + 0.5, 90f, 0f);
+        Location finish = new Location(world, cx + BRIDGE_FINISH_ROOM_X + 0.5, cy + 2, cz + BRIDGE_Z + 0.5, 90f, 0f);
 
         SquidWaitingRoomBridge.registerDormitory(dormitory);
 
         config.set("active", true);
         config.set("stage", "WAITING");
+        config.set("layout", "PREMIUM_SINGLE_BUILDER_V2");
         config.set("red-green.green", true);
         config.set("red-green.timer", 0);
         config.set("region.world", world.getName());
-        config.set("region.min-x", cx - 80);
-        config.set("region.max-x", cx + 38);
-        config.set("region.min-y", cy - 1);
-        config.set("region.max-y", cy + 16);
-        config.set("region.min-z", cz - 32);
-        config.set("region.max-z", cz + 22);
+        config.set("region.min-x", cx + REGION_MIN_X);
+        config.set("region.max-x", cx + REGION_MAX_X);
+        config.set("region.min-y", cy + REGION_MIN_Y);
+        config.set("region.max-y", cy + REGION_MAX_Y);
+        config.set("region.min-z", cz + REGION_MIN_Z);
+        config.set("region.max-z", cz + REGION_MAX_Z);
         writeLocation("start", start);
         writeLocation("lobby", lobby);
         writeLocation("dormitory", dormitory);
@@ -128,26 +151,35 @@ public final class SquidPackManager {
         writeLocation("return-sas", returnSas);
         writeLocation("bridge-start", bridge);
         writeLocation("bridge-finish", finish);
-        config.set("red-green.finish-x", cx + 6);
-        config.set("glass.finish-x", cx + 31);
-        config.set("glass.z-left", cz + 12);
-        config.set("glass.z-right", cz + 15);
-        for (int i = 0; i < 10; i++) {
+        config.set("red-green.finish-x", cx + RED_GREEN_FINISH_X);
+        config.set("glass.finish-x", cx + BRIDGE_FINISH_X);
+        config.set("glass.step-start-x", cx + BRIDGE_FIRST_GLASS_X);
+        config.set("glass.steps", GLASS_STEPS);
+        config.set("glass.z-left", cz + BRIDGE_LEFT_Z);
+        config.set("glass.z-right", cz + BRIDGE_RIGHT_Z);
+        config.set("glass.safe", null);
+        for (int i = 0; i < GLASS_STEPS; i++) {
             config.set("glass.safe." + i, RANDOM.nextBoolean() ? "LEFT" : "RIGHT");
         }
         config.set("players", null);
         save();
 
         EventManager.createEvent(player, GAME_NAME);
-        EventManager.setDescription(player, "Une suite d'épreuves Minecraft : dortoir, sas, feu rouge et pont de verre.");
+        EventManager.setDescription(player, "Une suite d'épreuves show : dortoir, Feu Rouge / Feu Vert et Pont de Verre.");
         EventManager.setType(player, "custom");
         player.teleport(start);
         EventManager.setLocation(player);
         player.teleport(origin);
 
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack " + GAME_NAME + " généré.", MoodStyle.detail("Plan premium séparé appliqué."), MoodStyle.detail("Dortoir, sas, arène et pont ne se chevauchent plus."), MoodStyle.detail("Aucune salle d'attente classique générée."), MoodStyle.info("Ouvre la file avec §e/eventouvrir"));
-        EventLogManager.log(player, "Pack " + GAME_NAME, "Pack premium séparé généré");
+        sendSquidMessage(player,
+                "§a▶ §fPack §e" + GAME_NAME + " §fgénéré.",
+                "§b◆ §fDortoir fermé : §dzone d'attente officielle.",
+                "§b◆ §fSas, arène et pont séparés : §aaucun chevauchement.",
+                "§e★ §fConstruction : §6un seul builder premium.",
+                "§d➜ §fOuvre la file avec §e/eventouvrir§f."
+        );
+        EventLogManager.log(player, "Pack " + GAME_NAME, "Pack premium single builder généré");
     }
 
     public static void restore(Player player) {
@@ -173,10 +205,14 @@ public final class SquidPackManager {
         }
         config.set("active", false);
         config.set("stage", null);
+        config.set("layout", null);
         config.set("players", null);
         config.set("backup", null);
         save();
-        if (player != null) MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack " + GAME_NAME + " restauré.", MoodStyle.detail("Blocs restaurés : §e" + restored));
+        if (player != null) sendSquidMessage(player,
+                "§a▶ §fPack §e" + GAME_NAME + " §frestauré.",
+                "§b◆ §fBlocs restaurés : §e" + restored
+        );
     }
 
     public static Location location(String path) {
@@ -187,9 +223,9 @@ public final class SquidPackManager {
     private static void backup(World world, int cx, int cy, int cz) {
         config.set("backup", null);
         int index = 0;
-        for (int x = cx - 80; x <= cx + 38; x++) {
-            for (int y = cy - 1; y <= cy + 16; y++) {
-                for (int z = cz - 32; z <= cz + 22; z++) {
+        for (int x = cx + REGION_MIN_X; x <= cx + REGION_MAX_X; x++) {
+            for (int y = cy + REGION_MIN_Y; y <= cy + REGION_MAX_Y; y++) {
+                for (int z = cz + REGION_MIN_Z; z <= cz + REGION_MAX_Z; z++) {
                     Block block = world.getBlockAt(x, y, z);
                     String path = "backup.blocks." + index++;
                     config.set(path + ".world", world.getName());
@@ -203,9 +239,9 @@ public final class SquidPackManager {
     }
 
     private static void clear(World world, int cx, int cy, int cz) {
-        for (int x = cx - 80; x <= cx + 38; x++) {
-            for (int y = cy; y <= cy + 16; y++) {
-                for (int z = cz - 32; z <= cz + 22; z++) {
+        for (int x = cx + REGION_MIN_X; x <= cx + REGION_MAX_X; x++) {
+            for (int y = cy; y <= cy + REGION_MAX_Y; y++) {
+                for (int z = cz + REGION_MIN_Z; z <= cz + REGION_MAX_Z; z++) {
                     world.getBlockAt(x, y, z).setType(Material.AIR, false);
                 }
             }
@@ -225,6 +261,13 @@ public final class SquidPackManager {
         World world = Bukkit.getWorld(config.getString(path + ".world", ""));
         if (world == null) return null;
         return new Location(world, config.getDouble(path + ".x"), config.getDouble(path + ".y"), config.getDouble(path + ".z"), (float) config.getDouble(path + ".yaw"), (float) config.getDouble(path + ".pitch"));
+    }
+
+    private static void sendSquidMessage(Player player, String... lines) {
+        if (player == null) return;
+        player.sendMessage("§8----- §c§l✦ SQUID MOOD GAME ✦ §8-----");
+        if (lines != null) for (String line : lines) player.sendMessage(line);
+        player.sendMessage("§8-----------------------------");
     }
 
     private static void ensureLoaded() {
