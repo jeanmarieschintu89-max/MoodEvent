@@ -23,7 +23,7 @@ public final class EventAdminGUI {
 
         inv.setItem(4, EventItem.glow(EventItem.item(
                 Material.NETHER_STAR,
-                "§6✦ §fTableau de bord §6✦",
+                "§d✦ §fTableau de bord §d✦",
                 MoodStyle.detail("Event : §e" + EventManager.getName()),
                 MoodStyle.detail("Type : " + EventManager.getType().getDisplayName()),
                 MoodStyle.detail("Salle : " + state(WaitingRoomManager.hasRoom())),
@@ -36,8 +36,8 @@ public final class EventAdminGUI {
 
         inv.setItem(20, EventItem.glow(EventItem.item(
                 Material.COMPASS,
-                "§6✦ §fCréer un Pack Événement §6✦",
-                MoodStyle.detail("Génère la salle d'attente."),
+                "§d✦ §fCréer un Pack Événement §d✦",
+                MoodStyle.detail("Génère la zone d'attente."),
                 MoodStyle.detail("Génère le mini-jeu à côté."),
                 MoodStyle.detail("Départ et arrivée automatiques."),
                 MoodStyle.detail("Restauration liée à /eventstop."),
@@ -47,10 +47,10 @@ public final class EventAdminGUI {
 
         inv.setItem(22, EventItem.item(
                 EventManager.isQueueOpen() ? Material.REDSTONE_BLOCK : Material.EMERALD_BLOCK,
-                EventManager.isQueueOpen() ? "§c✦ §fFermer la file §c✦" : "§6✦ §fOuvrir la file §6✦",
+                EventManager.isQueueOpen() ? "§c✦ §fFermer la file §c✦" : "§d✦ §fOuvrir la file §d✦",
                 MoodStyle.detail("En file : §e" + EventManager.getQueueSize()),
                 EventManager.isQueueOpen()
-                        ? MoodStyle.detail("Envoie les joueurs en salle d'attente")
+                        ? MoodStyle.detail("Envoie les joueurs en zone d'attente")
                         : MoodStyle.detail("Les joueurs pourront faire §e/event"),
                 "",
                 EventManager.isQueueOpen() ? MoodStyle.error("Fermer") : MoodStyle.success("Ouvrir")
@@ -58,8 +58,8 @@ public final class EventAdminGUI {
 
         inv.setItem(24, EventItem.glow(EventItem.item(
                 Material.LIME_CONCRETE,
-                "§6✦ §fLancer §6✦",
-                MoodStyle.detail("Salle d'attente → départ"),
+                "§d✦ §fLancer §d✦",
+                MoodStyle.detail("Zone d'attente → départ"),
                 MoodStyle.detail("Explication automatique"),
                 "",
                 MoodStyle.success("Démarrer")
@@ -67,7 +67,7 @@ public final class EventAdminGUI {
 
         inv.setItem(29, EventItem.item(
                 Material.CHEST,
-                "§6✦ §fRécompenses §6✦",
+                "§d✦ §fRécompenses §d✦",
                 MoodStyle.detail("Participation + Top 3"),
                 MoodStyle.detail("Items + argent"),
                 MoodStyle.detail("Ne concerne pas la Ruée vers l'or."),
@@ -77,7 +77,7 @@ public final class EventAdminGUI {
 
         inv.setItem(31, EventItem.item(
                 Material.ORANGE_CONCRETE,
-                "§6✦ §fTerminer §6✦",
+                "§d✦ §fTerminer §d✦",
                 MoodStyle.detail("Retour joueurs ancienne position"),
                 MoodStyle.detail("Restaure salle + structure"),
                 MoodStyle.detail("Reset l'événement"),
@@ -87,13 +87,25 @@ public final class EventAdminGUI {
 
         inv.setItem(33, EventItem.item(
                 Material.COMMAND_BLOCK,
-                "§6✦ §fMode avancé §6✦",
+                "§d✦ §fMode avancé §d✦",
                 MoodStyle.detail("Réglages manuels."),
                 MoodStyle.detail("Nom, type, départ, arrivée."),
                 MoodStyle.detail("À utiliser en dépannage."),
                 "",
                 MoodStyle.info("Ouvrir")
         ));
+
+        inv.setItem(38, EventItem.glow(EventItem.item(
+                Material.FIREWORK_ROCKET,
+                "§d✦ §fRejoindre l'événement §d✦",
+                MoodStyle.detail("Raccourci test : §e/event"),
+                MoodStyle.detail("Sauvegarde ta position actuelle."),
+                EventManager.isQueueOpen()
+                        ? MoodStyle.detail("File ouverte : tu rejoins directement.")
+                        : MoodStyle.detail("File fermée : affiche les infos du jeu."),
+                "",
+                MoodStyle.success("Entrer dans la file")
+        )));
 
         inv.setItem(40, EventItem.item(
                 Material.BARRIER,
