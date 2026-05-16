@@ -17,18 +17,60 @@ public final class SquidSetPolishBuilder {
     }
 
     private static void polishDormitory(World world, int cx, int cy, int cz) {
-        for (int x = cx - 53; x <= cx - 33; x++) {
-            for (int z = cz - 16; z <= cz - 9; z++) {
-                world.getBlockAt(x, cy, z).setType((x + z) % 2 == 0 ? Material.WHITE_CONCRETE : Material.LIGHT_GRAY_CONCRETE, false);
+        int minX = cx - 55;
+        int maxX = cx - 25;
+        int minZ = cz - 18;
+        int maxZ = cz - 4;
+        int minY = cy;
+        int maxY = cy + 12;
+
+        // Grande salle fermée : sol, murs, vitres hautes, plafond.
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    boolean floor = y == minY;
+                    boolean roof = y == maxY;
+                    boolean wallX = x == minX || x == maxX;
+                    boolean wallZ = z == minZ || z == maxZ;
+                    boolean wall = wallX || wallZ;
+                    boolean window = wall && (y == minY + 5 || y == minY + 6 || y == minY + 7);
+
+                    if (floor) world.getBlockAt(x, y, z).setType((x + z) % 2 == 0 ? Material.WHITE_CONCRETE : Material.LIGHT_GRAY_CONCRETE, false);
+                    else if (roof) world.getBlockAt(x, y, z).setType((x == (minX + maxX) / 2 || z == (minZ + maxZ) / 2) ? Material.SEA_LANTERN : Material.SMOOTH_QUARTZ, false);
+                    else if (window) world.getBlockAt(x, y, z).setType(Material.LIGHT_GRAY_STAINED_GLASS, false);
+                    else if (wall) world.getBlockAt(x, y, z).setType(y % 2 == 0 ? Material.WHITE_CONCRETE : Material.PINK_CONCRETE, false);
+                    else world.getBlockAt(x, y, z).setType(Material.AIR, false);
+                }
             }
         }
-        for (int x = cx - 53; x <= cx - 33; x += 5) {
-            bunkTower(world, x, cy + 1, cz - 16);
-            bunkTower(world, x, cy + 1, cz - 9);
+
+        // Sortie contrôlée vers le couloir, pas un trou aléatoire.
+        openDoor(world, maxX, cy, cz - 11, false);
+        for (int y = cy + 1; y <= cy + 5; y++) {
+            world.getBlockAt(maxX, y, cz - 13).setType(Material.RED_CONCRETE, false);
+            world.getBlockAt(maxX, y, cz - 9).setType(Material.RED_CONCRETE, false);
         }
-        symbol(world, cx - 53, cy + 5, cz - 12, Material.RED_CONCRETE);
-        symbol(world, cx - 33, cy + 5, cz - 13, Material.LIGHT_BLUE_CONCRETE);
-        world.getBlockAt(cx - 43, cy + 8, cz - 13).setType(Material.SEA_LANTERN, false);
+        for (int z = cz - 13; z <= cz - 9; z++) world.getBlockAt(maxX, cy + 6, z).setType(Material.SEA_LANTERN, false);
+
+        // Lits empilés façon dortoir/entrepôt.
+        for (int x = minX + 3; x <= maxX - 6; x += 6) {
+            bunkTower(world, x, cy + 1, minZ + 2);
+            bunkTower(world, x, cy + 1, maxZ - 2);
+        }
+        for (int z = minZ + 4; z <= maxZ - 4; z += 4) {
+            bunkTower(world, minX + 3, cy + 1, z);
+            bunkTower(world, maxX - 5, cy + 1, z);
+        }
+
+        // Zone centrale de briefing.
+        platform(world, cx - 40, cy, cz - 11, 3, Material.RED_CONCRETE);
+        world.getBlockAt(cx - 40, cy + 1, cz - 11).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(cx - 40, cy + 8, cz - 11).setType(Material.SEA_LANTERN, false);
+
+        // Symboles stylisés sur les murs.
+        symbol(world, minX + 1, cy + 5, cz - 14, Material.RED_CONCRETE);
+        symbol(world, maxX - 2, cy + 5, cz - 8, Material.LIGHT_BLUE_CONCRETE);
+        symbol(world, cx - 40, cy + 5, minZ + 1, Material.LIME_CONCRETE);
     }
 
     private static void buildColorStairCorridor(World world, int cx, int cy, int cz) {
@@ -63,10 +105,8 @@ public final class SquidSetPolishBuilder {
         int zRight = cz + 13;
         int centerZ = cz + 11;
 
-        // Vraie zone de départ du jeu 2 : salle d'attente du pont, fermée derrière et ouverte vers les vitres.
         buildBridgeStartRoom(world, cx, cy, centerZ);
 
-        // Pont de verre plus show : rails, lumières et scène sombre.
         for (int x = cx - 1; x <= cx + 30; x++) {
             world.getBlockAt(x, cy + 2, cz + 7).setType(Material.PURPLE_STAINED_GLASS, false);
             world.getBlockAt(x, cy + 2, cz + 16).setType(Material.PURPLE_STAINED_GLASS, false);
@@ -76,12 +116,9 @@ public final class SquidSetPolishBuilder {
             }
         }
 
-        // Point de départ lisible : deux lanes vers gauche/droite, sans trou derrière.
         platform(world, cx - 5, cy + 1, centerZ, 4, Material.LIME_CONCRETE);
         laneArrow(world, cx - 3, cy + 2, zLeft, Material.LIGHT_BLUE_CONCRETE);
         laneArrow(world, cx - 3, cy + 2, zRight, Material.MAGENTA_CONCRETE);
-
-        // Scène d'arrivée propre et fermée derrière pour éviter l'effet plateforme trouée.
         buildBridgeFinishStage(world, cx, cy, centerZ);
     }
 
@@ -105,7 +142,6 @@ public final class SquidSetPolishBuilder {
             }
         }
 
-        // Portique de sortie vers le pont.
         for (int y = cy + 2; y <= cy + 5; y++) {
             world.getBlockAt(maxX, y, centerZ - 2).setType(Material.PURPLE_CONCRETE, false);
             world.getBlockAt(maxX, y, centerZ + 2).setType(Material.PURPLE_CONCRETE, false);
@@ -130,6 +166,19 @@ public final class SquidSetPolishBuilder {
         }
         world.getBlockAt(finishX, cy + 2, centerZ).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
         world.getBlockAt(finishX, cy + 5, centerZ).setType(Material.SEA_LANTERN, false);
+    }
+
+    private static void openDoor(World world, int x, int y, int z, boolean alongZ) {
+        for (int dy = 1; dy <= 5; dy++) {
+            world.getBlockAt(x, y + dy, z).setType(Material.AIR, false);
+            if (alongZ) {
+                world.getBlockAt(x - 1, y + dy, z).setType(Material.AIR, false);
+                world.getBlockAt(x + 1, y + dy, z).setType(Material.AIR, false);
+            } else {
+                world.getBlockAt(x, y + dy, z - 1).setType(Material.AIR, false);
+                world.getBlockAt(x, y + dy, z + 1).setType(Material.AIR, false);
+            }
+        }
     }
 
     private static void laneArrow(World world, int x, int y, int z, Material material) {
