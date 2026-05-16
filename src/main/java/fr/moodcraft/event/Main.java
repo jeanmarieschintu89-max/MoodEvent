@@ -4,6 +4,7 @@ import fr.moodcraft.event.command.EventAdminCommand;
 import fr.moodcraft.event.command.EventCommand;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameplayEnhancer;
+import fr.moodcraft.event.generator.GeneratedOpenPathTask;
 import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
@@ -48,6 +49,7 @@ public class Main extends JavaPlugin {
         EventLogManager.load();
         EventSecurityManager.load();
         GeneratedGameplayEnhancer.start();
+        GeneratedOpenPathTask.start();
 
         EventCommand eventCommand = new EventCommand();
         EventAdminCommand adminCommand = new EventAdminCommand();
