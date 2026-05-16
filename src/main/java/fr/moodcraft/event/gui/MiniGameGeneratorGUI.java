@@ -35,24 +35,20 @@ public final class MiniGameGeneratorGUI {
         inv.setItem(4, EventItem.glow(EventItem.item(
                 Material.COMPASS,
                 "§6✦ §fGénérateur de mini-jeux §6✦",
-                MoodStyle.detail("Choisis un mini-jeu."),
-                MoodStyle.detail("Chaque mode est indépendant."),
+                MoodStyle.detail("Modes disponibles : §e2"),
+                MoodStyle.detail("Tour Infernale et Mine en folie."),
                 MoodStyle.detail("Style unique : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
                 "",
                 MoodStyle.info("Sélectionne une épreuve")
         )));
 
-        addType(inv, 10, GeneratedGameType.LABYRINTHE, "Objectif : trouver la sortie rouge.");
-        addType(inv, 12, GeneratedGameType.JUMP, "Objectif : terminer le parcours.");
-        addType(inv, 14, GeneratedGameType.COURSE, "Objectif : atteindre la ligne rouge.");
-        addType(inv, 16, GeneratedGameType.WATER_JUMP, "Objectif : traverser au-dessus de l'eau.");
-        addType(inv, 22, GeneratedGameType.SURVIE_ETAGES, "Objectif : rester le dernier en jeu.");
-        addType(inv, 24, GeneratedGameType.RUEE_OR, "Objectif : miner le plus de minerais.");
+        addType(inv, 10, GeneratedGameType.SURVIE_ETAGES, "Objectif : survivre aux étages qui tombent.");
+        addType(inv, 12, GeneratedGameType.RUEE_OR, "Objectif : miner un maximum de minerais.");
 
         inv.setItem(25, EventItem.glow(EventItem.item(
                 Material.REDSTONE_TORCH,
                 "§6✦ §f" + SquidPackManager.GAME_NAME + " §6✦",
-                MoodStyle.detail("Objectif : réussir les épreuves."),
+                MoodStyle.detail("Pack spécial séparé."),
                 MoodStyle.detail("Feu Rouge / Feu Vert."),
                 MoodStyle.detail("Pont de verre."),
                 "",
@@ -63,8 +59,8 @@ public final class MiniGameGeneratorGUI {
                 Material.DEEPSLATE_TILES,
                 "§6✦ §fStyle unique §6✦",
                 MoodStyle.detail("Actuel : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
-                MoodStyle.detail("Les 20 thèmes ont été retirés."),
-                MoodStyle.detail("Chaque jeu garde sa logique indépendante."),
+                MoodStyle.detail("Les anciens thèmes ont été retirés."),
+                MoodStyle.detail("Les anciens jeux ont été retirés."),
                 "",
                 MoodStyle.success("Stable")
         ));
@@ -101,7 +97,7 @@ public final class MiniGameGeneratorGUI {
                 type.getIcon(),
                 "§6✦ §f" + type.getDisplayName() + " §6✦",
                 MoodStyle.detail("Choisis une taille."),
-                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Modèles plus hauts, moins étalés.") : MoodStyle.detail("Géant disponible."),
+                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Modèles plus hauts, moins étalés.") : MoodStyle.detail("Durée calculée automatiquement."),
                 MoodStyle.detail("Style unique : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
                 "",
                 MoodStyle.info("Taille de génération")
@@ -158,7 +154,7 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Type : §e" + pending.type().getDisplayName()),
                 MoodStyle.detail("Taille : §e" + pending.describe()),
                 MoodStyle.detail("Style unique : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
-                pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : génération plus haute.") : MoodStyle.detail("Restauration possible avec /eventstop."),
+                pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : prudence.") : MoodStyle.detail("Restauration possible avec /eventstop."),
                 "",
                 MoodStyle.info("Confirmer la génération")
         )));
@@ -173,7 +169,7 @@ public final class MiniGameGeneratorGUI {
     }
 
     private static void addSize(Inventory inv, int slot, GeneratedGameType type, GeneratedGameSize size) {
-        inv.setItem(slot, EventItem.item(size.getIcon(), "§6✦ §f" + size.getDisplayName() + " §6✦", MoodStyle.detail("Format : §e" + size.describeFor(type)), size == GeneratedGameSize.GEANT ? MoodStyle.detail(type == GeneratedGameType.SURVIE_ETAGES ? "Plus haut, peu étalé." : "Très lourd : prudence.") : size == GeneratedGameSize.GRAND ? MoodStyle.detail("Plus lourd : prudence.") : MoodStyle.detail("Taille sûre."), "", MoodStyle.info("Préparer")));
+        inv.setItem(slot, EventItem.item(size.getIcon(), "§6✦ §f" + size.getDisplayName() + " §6✦", MoodStyle.detail("Format : §e" + size.describeFor(type)), size == GeneratedGameSize.GEANT ? MoodStyle.detail("Très lourd : prudence.") : size == GeneratedGameSize.GRAND ? MoodStyle.detail("Plus lourd : prudence.") : MoodStyle.detail("Taille sûre."), "", MoodStyle.info("Préparer")));
     }
 
     private static void fill(Inventory inv) {
