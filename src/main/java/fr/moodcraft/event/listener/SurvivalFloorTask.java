@@ -2,6 +2,7 @@ package fr.moodcraft.event.listener;
 
 import fr.moodcraft.event.Main;
 import fr.moodcraft.event.generator.GeneratedGameManager;
+import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.model.EventType;
 import org.bukkit.Bukkit;
@@ -34,7 +35,11 @@ public class SurvivalFloorTask implements Listener {
     }
 
     private void runSurvivalTick() {
-        if (!EventManager.isRunning() || EventManager.getType() != EventType.SURVIE_ETAGES || !GeneratedGameManager.hasStructure()) {
+        if (SquidPackManager.hasPack()
+                || !EventManager.isRunning()
+                || EventManager.getType() != EventType.SURVIE_ETAGES
+                || !GeneratedGameManager.hasStructure()
+                || GeneratedGameManager.getActiveType() != fr.moodcraft.event.generator.GeneratedGameType.SURVIE_ETAGES) {
             tick = 0;
             wave = 0;
             return;
@@ -79,6 +84,7 @@ public class SurvivalFloorTask implements Listener {
     }
 
     private int breakLooseSurvivalBlocks(int maxRemoved) {
+        if (SquidPackManager.hasPack()) return 0;
         File file = new File(Main.getInstance().getDataFolder(), "generated-game.yml");
         if (!file.exists()) return 0;
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
