@@ -2,6 +2,7 @@ package fr.moodcraft.event.generator;
 
 import fr.moodcraft.event.manager.EventLogManager;
 import fr.moodcraft.event.manager.WaitingRoomManager;
+import fr.moodcraft.event.manager.WaitingRoomTheme;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -28,15 +29,14 @@ public final class EventPackManager {
             return;
         }
 
-        GeneratedGameStyle style = GeneratedGameStyleManager.get(player);
-        String waitingStyle = style.getWaitingRoomStyle();
+        WaitingRoomTheme waitingTheme = WaitingRoomManager.getSelectedTheme(player);
         String waitingSize = waitingSizeFor(size);
 
         Location original = player.getLocation().clone();
         Location waitingCenter = original.clone().add(WAITING_ROOM_OFFSET_X, 0, 0);
         Location gameCenter = original.clone().add(GAME_OFFSET_X, 0, 0);
 
-        WaitingRoomManager.setSelectedStyle(player, waitingStyle);
+        WaitingRoomManager.setSelectedStyle(player, waitingTheme.key());
         player.teleport(waitingCenter);
         WaitingRoomManager.build(player, waitingSize);
 
@@ -56,14 +56,14 @@ public final class EventPackManager {
                 MoodStyle.MODULE,
                 "Pack événement créé.",
                 MoodStyle.detail("Mini-jeu : §e" + type.getDisplayName()),
-                MoodStyle.detail("Taille : §e" + size.getDisplayName()),
-                MoodStyle.detail("Style unique : §e" + style.getDisplayName()),
-                MoodStyle.detail("Salle : §e" + waitingSize + " §8• §7" + WaitingRoomManager.formatStyle(waitingStyle)),
+                MoodStyle.detail("Taille jeu : §e" + size.getDisplayName()),
+                MoodStyle.detail("Salle : §e" + waitingSize + " §8• §7" + waitingTheme.displayName()),
+                MoodStyle.detail("Style appliqué uniquement à la salle d'attente."),
                 MoodStyle.detail("Salle à gauche §8• §7Mini-jeu à droite"),
                 MoodStyle.info("Ouvre la file avec §e/eventouvrir")
         );
 
-        EventLogManager.log(player, "Pack événement", type.getDisplayName() + " - " + size.getDisplayName() + " - " + style.getDisplayName());
+        EventLogManager.log(player, "Pack événement", type.getDisplayName() + " - " + size.getDisplayName() + " - salle " + waitingTheme.displayName());
     }
 
     private static String waitingSizeFor(GeneratedGameSize size) {
