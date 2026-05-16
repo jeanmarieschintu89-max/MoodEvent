@@ -3,6 +3,8 @@ package fr.moodcraft.event.util;
 import org.bukkit.command.CommandSender;
 
 import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public final class MoodStyle {
@@ -75,16 +77,18 @@ public final class MoodStyle {
     public static void send(CommandSender sender, String module, String... lines) {
         if (sender == null || Boolean.TRUE.equals(SILENT.get())) return;
 
-        sender.sendMessage("");
-        sender.sendMessage(header(module));
-
+        List<String> normalizedLines = new ArrayList<>();
         if (lines != null) {
             for (String line : lines) {
                 String normalized = normalize(line);
-                if (!normalized.isBlank()) sender.sendMessage(normalized);
+                if (!normalized.isBlank()) normalizedLines.add(normalized);
             }
         }
+        if (normalizedLines.isEmpty()) return;
 
+        sender.sendMessage("");
+        sender.sendMessage(header(module));
+        for (String line : normalizedLines) sender.sendMessage(line);
         sender.sendMessage(FRAME);
     }
 
@@ -174,7 +178,17 @@ public final class MoodStyle {
 
     private static boolean isEndSpam(String line) {
         String clean = stripDecorations(line).toLowerCase(Locale.ROOT);
-        return clean.startsWith("participants renvoyés")
+        return clean.startsWith("événement créé")
+                || clean.startsWith("description mise à jour")
+                || clean.startsWith("type d'événement défini")
+                || clean.startsWith("point de départ défini")
+                || clean.startsWith("point d'arrivée défini")
+                || clean.startsWith("nom :")
+                || clean.startsWith("type :")
+                || clean.startsWith("départ :")
+                || clean.startsWith("les joueurs commenceront ici")
+                || clean.startsWith("course, jump, water jump")
+                || clean.startsWith("participants renvoyés")
                 || clean.equals("récompenses distribuées.")
                 || clean.contains("récompense de participation")
                 || clean.contains("récompense top 3")
