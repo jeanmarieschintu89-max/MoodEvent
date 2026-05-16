@@ -2,14 +2,12 @@ package fr.moodcraft.event;
 
 import fr.moodcraft.event.command.EventAdminCommand;
 import fr.moodcraft.event.command.EventCommand;
-import fr.moodcraft.event.generator.EventGiveStructureManager;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameplayEnhancer;
 import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
 import fr.moodcraft.event.listener.EventChatListener;
-import fr.moodcraft.event.listener.EventGiveRestoreGuard;
 import fr.moodcraft.event.listener.EventLootListener;
 import fr.moodcraft.event.listener.EventProgressListener;
 import fr.moodcraft.event.listener.EventProtectionListener;
@@ -45,7 +43,6 @@ public class Main extends JavaPlugin {
         WaitingRoomManager.load();
         RewardManager.load();
         GeneratedGameManager.load();
-        EventGiveStructureManager.load();
         SquidPackManager.load();
         EventLootManager.load();
         EventLogManager.load();
@@ -82,7 +79,6 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new GoldRushTask(), this);
         Bukkit.getPluginManager().registerEvents(new GoldRushStopGuard(), this);
         Bukkit.getPluginManager().registerEvents(new GoldRushInventoryGuard(), this);
-        Bukkit.getPluginManager().registerEvents(new EventGiveRestoreGuard(), this);
         Bukkit.getPluginManager().registerEvents(new SquidPackTask(), this);
 
         getLogger().info("MoodEvent active en mode securite TPS.");
@@ -94,7 +90,6 @@ public class Main extends JavaPlugin {
         WaitingRoomManager.save();
         RewardManager.save();
         GeneratedGameManager.save();
-        EventGiveStructureManager.save();
         SquidPackManager.save();
         EventLootManager.save();
         EventLogManager.save();
