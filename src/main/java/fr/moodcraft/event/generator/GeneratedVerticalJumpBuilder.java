@@ -25,9 +25,10 @@ public final class GeneratedVerticalJumpBuilder {
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
         int safePlatforms = Math.max(12, Math.min(44, platforms));
-        int topY = cy + safePlatforms + 7;
+        int topY = cy + safePlatforms + 8;
 
-        buildSafetyTower(world, cx, cy, cz, topY);
+        clearTowerArea(world, cx, cy, cz, topY);
+        buildGlassCage(world, cx, cy, cz, topY);
         buildCleanStart(world, cx, cy, cz);
 
         int x = cx;
@@ -50,13 +51,15 @@ public final class GeneratedVerticalJumpBuilder {
     }
 
     private static Step stepFor(int cx, int cz, int index) {
-        int[][] spiral = {
-                {1, 0}, {2, 1}, {2, 3}, {0, 4}, {-2, 4}, {-4, 2}, {-4, 0}, {-3, -2},
-                {-1, -4}, {1, -4}, {3, -3}, {5, -1}, {5, 1}, {4, 3}, {2, 5}, {0, 5},
-                {-2, 5}, {-5, 3}, {-5, 1}, {-5, -1}, {-4, -3}, {-2, -5}, {0, -5}, {2, -5},
-                {4, -4}, {6, -2}, {6, 0}, {6, 2}, {4, 4}, {2, 6}, {0, 6}, {-2, 6}
+        int[][] route = {
+                {1, 0}, {2, 1}, {2, 2}, {1, 3}, {0, 3}, {-1, 3}, {-2, 2}, {-2, 1},
+                {-2, 0}, {-2, -1}, {-1, -2}, {0, -2}, {1, -2}, {2, -1}, {3, 0}, {3, 1},
+                {3, 3}, {1, 4}, {-1, 4}, {-3, 3}, {-4, 1}, {-4, -1}, {-3, -3}, {-1, -4},
+                {1, -4}, {3, -3}, {4, -1}, {4, 1}, {3, 4}, {0, 5}, {-3, 4}, {-5, 1},
+                {-5, -2}, {-3, -5}, {0, -6}, {3, -5}, {5, -2}, {6, 1}, {4, 5}, {1, 6},
+                {-2, 6}, {-5, 4}, {-6, 0}, {-5, -4}
         };
-        int[] point = spiral[(index - 1) % spiral.length];
+        int[] point = route[(index - 1) % route.length];
         return new Step(cx + point[0], cz + point[1]);
     }
 
@@ -73,7 +76,7 @@ public final class GeneratedVerticalJumpBuilder {
         }
         if (index % 12 == 0) {
             platform(world, x, y, z, 2, Material.OAK_PLANKS);
-            fenceEdge(world, x, y, z, 2);
+            fenceBack(world, x, y, z, 2);
             return;
         }
         if (index % 10 == 0) {
@@ -82,7 +85,6 @@ public final class GeneratedVerticalJumpBuilder {
         }
         if (index % 9 == 0) {
             platform(world, x, y, z, 1, Material.SOUL_SAND);
-            addSmallObstacle(world, x, y, z);
             return;
         }
         if (index % 8 == 0) {
@@ -101,7 +103,17 @@ public final class GeneratedVerticalJumpBuilder {
         platform(world, x, y, z, 1, WOOL[index % WOOL.length]);
     }
 
-    private static void buildSafetyTower(World world, int cx, int cy, int cz, int topY) {
+    private static void clearTowerArea(World world, int cx, int cy, int cz, int topY) {
+        for (int x = cx - 9; x <= cx + 9; x++) {
+            for (int y = cy; y <= topY + 4; y++) {
+                for (int z = cz - 9; z <= cz + 9; z++) {
+                    world.getBlockAt(x, y, z).setType(Material.AIR, false);
+                }
+            }
+        }
+    }
+
+    private static void buildGlassCage(World world, int cx, int cy, int cz, int topY) {
         int minX = cx - 9;
         int maxX = cx + 9;
         int minZ = cz - 9;
@@ -135,21 +147,18 @@ public final class GeneratedVerticalJumpBuilder {
         for (int x = cx - 2; x <= cx + 2; x++) {
             for (int z = cz - 4; z <= cz + 4; z++) {
                 world.getBlockAt(x, cy, z).setType(Material.BLUE_CONCRETE, false);
-                for (int y = cy + 1; y <= cy + 4; y++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
+                world.getBlockAt(x, cy + 1, z).setType(Material.AIR, false);
+                world.getBlockAt(x, cy + 2, z).setType(Material.AIR, false);
             }
         }
         for (int z = cz - 4; z <= cz + 4; z++) world.getBlockAt(cx, cy, z).setType(Material.LIME_WOOL, false);
         world.getBlockAt(cx, cy + 3, cz).setType(Material.SEA_LANTERN, false);
     }
 
-    private static void fenceEdge(World world, int cx, int y, int cz, int radius) {
+    private static void fenceBack(World world, int cx, int y, int cz, int radius) {
         for (int x = cx - radius; x <= cx + radius; x++) {
             world.getBlockAt(x, y + 1, cz - radius).setType(Material.OAK_FENCE, false);
         }
-    }
-
-    private static void addSmallObstacle(World world, int x, int y, int z) {
-        world.getBlockAt(x + 1, y + 1, z).setType(Material.OAK_FENCE, false);
     }
 
     private static void addLadderSupport(World world, int x, int y, int z, BlockFace facing) {
