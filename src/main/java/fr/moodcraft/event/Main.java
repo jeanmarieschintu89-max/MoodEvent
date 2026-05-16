@@ -16,6 +16,7 @@ import fr.moodcraft.event.listener.EventProgressListener;
 import fr.moodcraft.event.listener.EventProtectionListener;
 import fr.moodcraft.event.listener.GeneratorInputManager;
 import fr.moodcraft.event.listener.GoldRushInventoryGuard;
+import fr.moodcraft.event.listener.GoldRushPressureReminder;
 import fr.moodcraft.event.listener.GoldRushStopGuard;
 import fr.moodcraft.event.listener.GoldRushTask;
 import fr.moodcraft.event.listener.SquidPackTask;
@@ -87,6 +88,7 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new EventProgressListener(), this);
         Bukkit.getPluginManager().registerEvents(new SurvivalFloorTask(), this);
         Bukkit.getPluginManager().registerEvents(new GoldRushTask(), this);
+        Bukkit.getPluginManager().registerEvents(new GoldRushPressureReminder(), this);
         Bukkit.getPluginManager().registerEvents(new GoldRushStopGuard(), this);
         Bukkit.getPluginManager().registerEvents(new GoldRushInventoryGuard(), this);
         Bukkit.getPluginManager().registerEvents(new SquidPackTask(), this);
