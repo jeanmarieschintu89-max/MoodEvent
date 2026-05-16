@@ -21,6 +21,7 @@ import fr.moodcraft.event.listener.SurvivalFloorTask;
 import fr.moodcraft.event.loot.EventLootManager;
 import fr.moodcraft.event.manager.EventLogManager;
 import fr.moodcraft.event.manager.EventManager;
+import fr.moodcraft.event.manager.EventReturnSafety;
 import fr.moodcraft.event.manager.EventSecurityManager;
 import fr.moodcraft.event.manager.RewardManager;
 import fr.moodcraft.event.manager.WaitingRoomManager;
@@ -50,6 +51,7 @@ public class Main extends JavaPlugin {
         EventSecurityManager.load();
         GeneratedGameplayEnhancer.start();
         GeneratedOpenPathTask.start();
+        EventReturnSafety.start();
 
         EventCommand eventCommand = new EventCommand();
         EventAdminCommand adminCommand = new EventAdminCommand();
