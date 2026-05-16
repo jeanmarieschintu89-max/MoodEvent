@@ -7,11 +7,8 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 
-import java.util.Random;
-
 public final class GeneratedVerticalJumpBuilder {
 
-    private static final Random RANDOM = new Random();
     private static final Material[] WOOL = {
             Material.WHITE_WOOL, Material.YELLOW_WOOL, Material.ORANGE_WOOL, Material.LIGHT_BLUE_WOOL,
             Material.CYAN_WOOL, Material.MAGENTA_WOOL, Material.PINK_WOOL
@@ -28,49 +25,59 @@ public final class GeneratedVerticalJumpBuilder {
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
         int safePlatforms = Math.max(12, Math.min(44, platforms));
-        int topY = cy + 3 + safePlatforms;
+        int topY = cy + 4 + safePlatforms;
 
         buildSafetyTower(world, cx, cy, cz, topY);
-        drawGroundLine(world, cx, cy, cz, 4, Material.LIME_WOOL);
-        buildStartMark(world, cx, cy, cz);
-        buildStarterPath(world, cx, cy, cz);
+        drawStartLine(world, cx, cy, cz);
 
-        int x = cx + 2;
+        int x = cx;
         int z = cz;
         int y = cy + 1;
+        platform(world, x, y, z, 1, Material.LIME_WOOL);
+
         for (int i = 1; i <= safePlatforms; i++) {
-            Step step = nextStep(cx, cz, x, z, cy + i, i);
+            Step step = nextStep(cx, cz, i);
             x = step.x();
             z = step.z();
-            y = step.y();
-            buildChallengePlatform(world, x, y, z, i);
+            y = cy + 1 + i;
+            buildChallengePlatform(world, x, y, z, i, i == safePlatforms);
         }
 
-        int finishY = y + 1;
-        drawGroundLine(world, cx, finishY, cz, 4, Material.RED_WOOL);
-        buildFinishMark(world, cx, finishY, cz);
-        return new Layout(new Location(world, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f), new Location(world, cx + 0.5, finishY + 1, cz + 0.5, 180f, 0f));
+        Location start = new Location(world, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f);
+        Location finish = new Location(world, x + 0.5, y + 1, z + 0.5, 180f, 0f);
+        return new Layout(start, finish);
     }
 
-    private static void buildStarterPath(World world, int cx, int cy, int cz) {
-        platform(world, cx + 1, cy, cz, 1, Material.LIME_WOOL);
-        platform(world, cx + 2, cy + 1, cz, 1, Material.WHITE_WOOL);
-        world.getBlockAt(cx + 1, cy + 1, cz).setType(Material.AIR, false);
-        world.getBlockAt(cx + 2, cy + 2, cz).setType(Material.AIR, false);
+    private static Step nextStep(int cx, int cz, int index) {
+        int ring = Math.min(7, 2 + (index / 7));
+        int phase = index % 16;
+        int x;
+        int z;
+
+        if (phase < 4) {
+            x = cx - ring + (phase * 2);
+            z = cz - ring;
+        } else if (phase < 8) {
+            x = cx + ring;
+            z = cz - ring + ((phase - 4) * 2);
+        } else if (phase < 12) {
+            x = cx + ring - ((phase - 8) * 2);
+            z = cz + ring;
+        } else {
+            x = cx - ring;
+            z = cz + ring - ((phase - 12) * 2);
+        }
+
+        return new Step(clamp(x, cx - 7, cx + 7), clamp(z, cz - 7, cz + 7));
     }
 
-    private static Step nextStep(int cx, int cz, int previousX, int previousZ, int y, int index) {
-        int[][] pattern = {
-                {1, 1}, {2, 0}, {1, -1}, {0, -2}, {-1, -1}, {-2, 0}, {-1, 1}, {0, 2},
-                {2, 1}, {-2, 1}, {-2, -1}, {2, -1}
-        };
-        int[] delta = pattern[index % pattern.length];
-        int x = clamp(previousX + delta[0], cx - 6, cx + 6);
-        int z = clamp(previousZ + delta[1], cz - 6, cz + 6);
-        return new Step(x, y, z);
-    }
+    private static void buildChallengePlatform(World world, int x, int y, int z, int index, boolean finish) {
+        if (finish) {
+            platform(world, x, y, z, 2, Material.RED_WOOL);
+            buildFinishFlag(world, x, y, z);
+            return;
+        }
 
-    private static void buildChallengePlatform(World world, int x, int y, int z, int index) {
         if (index <= 2) {
             platform(world, x, y, z, 1, WOOL[index % WOOL.length]);
             return;
@@ -102,8 +109,7 @@ public final class GeneratedVerticalJumpBuilder {
             return;
         }
         if (index % 6 == 0) {
-            platform(world, x, y, z, 1, Material.OAK_FENCE);
-            world.getBlockAt(x, y, z).setType(WOOL[index % WOOL.length], false);
+            platform(world, x, y, z, 1, WOOL[index % WOOL.length]);
             addFencePosts(world, x, y, z, 1);
             return;
         }
@@ -148,10 +154,26 @@ public final class GeneratedVerticalJumpBuilder {
         }
     }
 
+    private static void drawStartLine(World world, int x, int y, int z) {
+        for (int dz = -4; dz <= 4; dz++) {
+            world.getBlockAt(x, y, z + dz).setType(Material.LIME_WOOL, false);
+            world.getBlockAt(x, y + 1, z + dz).setType(Material.AIR, false);
+        }
+        world.getBlockAt(x, y + 3, z).setType(Material.SEA_LANTERN, false);
+    }
+
+    private static void buildFinishFlag(World world, int x, int y, int z) {
+        for (int dy = 1; dy <= 3; dy++) {
+            world.getBlockAt(x - 2, y + dy, z - 2).setType(Material.REDSTONE_BLOCK, false);
+            world.getBlockAt(x + 2, y + dy, z + 2).setType(Material.REDSTONE_BLOCK, false);
+        }
+        world.getBlockAt(x, y + 3, z).setType(Material.SEA_LANTERN, false);
+    }
+
     private static void addFenceRails(World world, int cx, int y, int cz, int radius) {
-        for (int x = cx - radius; x <= cx + radius; x++) {
-            world.getBlockAt(x, y + 1, cz - radius).setType(Material.OAK_FENCE, false);
-            world.getBlockAt(x, y + 1, cz + radius).setType(Material.OAK_FENCE, false);
+        for (int ix = cx - radius; ix <= cx + radius; ix++) {
+            world.getBlockAt(ix, y + 1, cz - radius).setType(Material.OAK_FENCE, false);
+            world.getBlockAt(ix, y + 1, cz + radius).setType(Material.OAK_FENCE, false);
         }
     }
 
@@ -179,27 +201,10 @@ public final class GeneratedVerticalJumpBuilder {
         }
     }
 
-    private static void drawGroundLine(World world, int x, int y, int z, int halfWidth, Material material) {
-        for (int dz = -halfWidth; dz <= halfWidth; dz++) {
-            world.getBlockAt(x, y, z + dz).setType(material, false);
-            world.getBlockAt(x, y + 1, z + dz).setType(Material.AIR, false);
-        }
-    }
-
-    private static void buildStartMark(World world, int x, int y, int z) {
-        for (int dz = -4; dz <= 4; dz++) world.getBlockAt(x - 1, y, z + dz).setType(Material.LIME_WOOL, false);
-        world.getBlockAt(x, y + 3, z).setType(Material.SEA_LANTERN, false);
-    }
-
-    private static void buildFinishMark(World world, int x, int y, int z) {
-        for (int dz = -4; dz <= 4; dz++) world.getBlockAt(x + 1, y, z + dz).setType(Material.RED_WOOL, false);
-        world.getBlockAt(x, y + 3, z).setType(Material.SEA_LANTERN, false);
-    }
-
     private static void platform(World world, int cx, int cy, int cz, int radius, Material material) {
-        for (int x = cx - radius; x <= cx + radius; x++) {
-            for (int z = cz - radius; z <= cz + radius; z++) {
-                world.getBlockAt(x, cy, z).setType(material, false);
+        for (int ix = cx - radius; ix <= cx + radius; ix++) {
+            for (int iz = cz - radius; iz <= cz + radius; iz++) {
+                world.getBlockAt(ix, cy, iz).setType(material, false);
             }
         }
     }
@@ -208,7 +213,7 @@ public final class GeneratedVerticalJumpBuilder {
         return Math.max(min, Math.min(max, value));
     }
 
-    private record Step(int x, int y, int z) {
+    private record Step(int x, int z) {
     }
 
     public record Layout(Location start, Location finish) {
