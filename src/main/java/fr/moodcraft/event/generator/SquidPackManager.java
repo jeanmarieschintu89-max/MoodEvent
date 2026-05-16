@@ -98,20 +98,15 @@ public final class SquidPackManager {
         int cz = game.getBlockZ();
         backup(world, cx, cy, cz);
         clear(world, cx, cy, cz);
-        SquidMoodDecorBuilder.buildDormitory(world, cx, cy, cz);
-        SquidMoodDecorBuilder.buildPreGameSas(world, cx, cy, cz);
-        buildRedGreen(world, cx, cy, cz);
-        SquidMoodDecorBuilder.buildReturnSas(world, cx, cy, cz);
-        buildGlassBridge(world, cx, cy, cz);
-        SquidSetPolishBuilder.polish(world, cx, cy, cz);
+        SquidPremiumLayoutBuilder.build(world, cx, cy, cz);
 
-        Location start = new Location(world, cx - 52 + 0.5, cy + 1, cz + 0.5, 90f, 0f);
-        Location bridge = new Location(world, cx - 4 + 0.5, cy + 2, cz + 11.5, 90f, 0f);
-        Location lobby = new Location(world, cx - 47 + 0.5, cy + 1, cz + 13.5, 90f, 0f);
-        Location dormitory = new Location(world, cx - 43 + 0.5, cy + 1, cz - 13.5, 0f, 0f);
-        Location preSas = new Location(world, cx - 52 + 0.5, cy + 1, cz + 0.5, 90f, 0f);
-        Location returnSas = new Location(world, cx - 8 + 0.5, cy + 1, cz + 11.5, 90f, 0f);
-        Location finish = new Location(world, cx + 27 + 0.5, cy + 2, cz + 11.5, 90f, 0f);
+        Location start = new Location(world, cx - 25 + 0.5, cy + 1, cz + 0.5, 90f, 0f);
+        Location bridge = new Location(world, cx - 7 + 0.5, cy + 2, cz + 14.5, 90f, 0f);
+        Location lobby = new Location(world, cx - 65 + 0.5, cy + 1, cz - 21.5, 0f, 0f);
+        Location dormitory = new Location(world, cx - 65 + 0.5, cy + 1, cz - 21.5, 0f, 0f);
+        Location preSas = new Location(world, cx - 34 + 0.5, cy + 1, cz + 0.5, 90f, 0f);
+        Location returnSas = new Location(world, cx - 5 + 0.5, cy + 1, cz + 12.5, 90f, 0f);
+        Location finish = new Location(world, cx + 31 + 0.5, cy + 2, cz + 14.5, 90f, 0f);
 
         SquidWaitingRoomBridge.registerDormitory(dormitory);
 
@@ -120,12 +115,12 @@ public final class SquidPackManager {
         config.set("red-green.green", true);
         config.set("red-green.timer", 0);
         config.set("region.world", world.getName());
-        config.set("region.min-x", cx - 55);
-        config.set("region.max-x", cx + 35);
+        config.set("region.min-x", cx - 80);
+        config.set("region.max-x", cx + 38);
         config.set("region.min-y", cy - 1);
-        config.set("region.max-y", cy + 14);
-        config.set("region.min-z", cz - 18);
-        config.set("region.max-z", cz + 18);
+        config.set("region.max-y", cy + 16);
+        config.set("region.min-z", cz - 32);
+        config.set("region.max-z", cz + 22);
         writeLocation("start", start);
         writeLocation("lobby", lobby);
         writeLocation("dormitory", dormitory);
@@ -133,10 +128,10 @@ public final class SquidPackManager {
         writeLocation("return-sas", returnSas);
         writeLocation("bridge-start", bridge);
         writeLocation("bridge-finish", finish);
-        config.set("red-green.finish-x", cx - 10);
-        config.set("glass.finish-x", cx + 26);
-        config.set("glass.z-left", cz + 10);
-        config.set("glass.z-right", cz + 13);
+        config.set("red-green.finish-x", cx + 6);
+        config.set("glass.finish-x", cx + 31);
+        config.set("glass.z-left", cz + 12);
+        config.set("glass.z-right", cz + 15);
         for (int i = 0; i < 10; i++) {
             config.set("glass.safe." + i, RANDOM.nextBoolean() ? "LEFT" : "RIGHT");
         }
@@ -151,8 +146,8 @@ public final class SquidPackManager {
         player.teleport(origin);
 
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack " + GAME_NAME + " généré.", MoodStyle.detail("Dortoir utilisé comme zone d'attente."), MoodStyle.detail("Aucune salle d'attente classique générée."), MoodStyle.detail("Décor Squid complet appliqué."), MoodStyle.info("Ouvre la file avec §e/eventouvrir"));
-        EventLogManager.log(player, "Pack " + GAME_NAME, "Pack spécial généré avec décor Squid complet");
+        MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack " + GAME_NAME + " généré.", MoodStyle.detail("Plan premium séparé appliqué."), MoodStyle.detail("Dortoir, sas, arène et pont ne se chevauchent plus."), MoodStyle.detail("Aucune salle d'attente classique générée."), MoodStyle.info("Ouvre la file avec §e/eventouvrir"));
+        EventLogManager.log(player, "Pack " + GAME_NAME, "Pack premium séparé généré");
     }
 
     public static void restore(Player player) {
@@ -189,43 +184,12 @@ public final class SquidPackManager {
         return readLocation(path);
     }
 
-    private static void buildRedGreen(World world, int cx, int cy, int cz) {
-        for (int x = cx - 48; x <= cx - 8; x++) {
-            for (int z = cz - 5; z <= cz + 5; z++) {
-                world.getBlockAt(x, cy, z).setType((x + z) % 2 == 0 ? Material.WHITE_CONCRETE : Material.LIGHT_GRAY_CONCRETE, false);
-                world.getBlockAt(x, cy + 1, z).setType(Material.AIR, false);
-            }
-        }
-        platform(world, cx - 45, cy, cz, 4, Material.LIME_CONCRETE);
-        platform(world, cx - 10, cy, cz, 4, Material.RED_CONCRETE);
-        line(world, cx - 49, cy + 1, cz - 6, cx - 7, cz - 6, Material.IRON_BARS);
-        line(world, cx - 49, cy + 1, cz + 6, cx - 7, cz + 6, Material.IRON_BARS);
-        for (int y = cy + 1; y <= cy + 6; y++) world.getBlockAt(cx - 5, y, cz).setType(Material.REDSTONE_BLOCK, false);
-        world.getBlockAt(cx - 5, cy + 7, cz).setType(Material.SEA_LANTERN, false);
-    }
-
-    private static void buildGlassBridge(World world, int cx, int cy, int cz) {
-        int zLeft = cz + 10;
-        int zRight = cz + 13;
-        platform(world, cx - 5, cy + 1, zLeft + 1, 3, Material.LIME_CONCRETE);
-        platform(world, cx + 28, cy + 1, zLeft + 1, 3, Material.RED_CONCRETE);
-        for (int i = 0; i < 10; i++) {
-            int x = cx - 1 + (i * 3);
-            platform(world, x, cy + 1, zLeft, 1, Material.GLASS);
-            platform(world, x, cy + 1, zRight, 1, Material.GLASS);
-            world.getBlockAt(x, cy, zLeft).setType(Material.SEA_LANTERN, false);
-            world.getBlockAt(x, cy, zRight).setType(Material.SEA_LANTERN, false);
-        }
-        line(world, cx - 8, cy + 1, cz + 7, cx + 30, cz + 7, Material.CYAN_STAINED_GLASS);
-        line(world, cx - 8, cy + 1, cz + 16, cx + 30, cz + 16, Material.CYAN_STAINED_GLASS);
-    }
-
     private static void backup(World world, int cx, int cy, int cz) {
         config.set("backup", null);
         int index = 0;
-        for (int x = cx - 55; x <= cx + 35; x++) {
-            for (int y = cy - 1; y <= cy + 14; y++) {
-                for (int z = cz - 18; z <= cz + 18; z++) {
+        for (int x = cx - 80; x <= cx + 38; x++) {
+            for (int y = cy - 1; y <= cy + 16; y++) {
+                for (int z = cz - 32; z <= cz + 22; z++) {
                     Block block = world.getBlockAt(x, y, z);
                     String path = "backup.blocks." + index++;
                     config.set(path + ".world", world.getName());
@@ -239,25 +203,13 @@ public final class SquidPackManager {
     }
 
     private static void clear(World world, int cx, int cy, int cz) {
-        for (int x = cx - 55; x <= cx + 35; x++) {
-            for (int y = cy; y <= cy + 14; y++) {
-                for (int z = cz - 18; z <= cz + 18; z++) {
+        for (int x = cx - 80; x <= cx + 38; x++) {
+            for (int y = cy; y <= cy + 16; y++) {
+                for (int z = cz - 32; z <= cz + 22; z++) {
                     world.getBlockAt(x, y, z).setType(Material.AIR, false);
                 }
             }
         }
-    }
-
-    private static void line(World world, int x1, int y, int z1, int x2, int z2, Material material) {
-        if (x1 != x2) {
-            for (int x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) world.getBlockAt(x, y, z1).setType(material, false);
-        } else {
-            for (int z = Math.min(z1, z2); z <= Math.max(z1, z2); z++) world.getBlockAt(x1, y, z).setType(material, false);
-        }
-    }
-
-    private static void platform(World world, int cx, int cy, int cz, int radius, Material material) {
-        for (int x = cx - radius; x <= cx + radius; x++) for (int z = cz - radius; z <= cz + radius; z++) world.getBlockAt(x, cy, z).setType(material, false);
     }
 
     private static void writeLocation(String path, Location location) {
