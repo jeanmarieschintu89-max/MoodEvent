@@ -31,8 +31,7 @@ public final class GeneratedGameManager {
     private static Region activeRegion;
     private static final List<Location> survivalBlocks = new ArrayList<>();
 
-    private GeneratedGameManager() {
-    }
+    private GeneratedGameManager() {}
 
     public static void load() {
         file = new File(Main.getInstance().getDataFolder(), "generated-game.yml");
@@ -87,6 +86,16 @@ public final class GeneratedGameManager {
         return y != Integer.MIN_VALUE && location.getBlockY() <= y;
     }
 
+    public static boolean isWaterJumpFall(Player player) {
+        ensureLoaded();
+        if (player == null || player.getWorld() == null || activeType != GeneratedGameType.WATER_JUMP) return false;
+        if (!hasStructure() || !activeRegion.contains(player.getLocation())) return false;
+        Location location = player.getLocation();
+        Material feet = location.getBlock().getType();
+        Material below = location.clone().subtract(0, 1, 0).getBlock().getType();
+        return feet == Material.WATER || below == Material.WATER || location.getY() <= config.getDouble("water-jump.fall-y", -9999);
+    }
+
     public static int getGoldRushDurationSeconds() {
         ensureLoaded();
         return config.getInt("gold-rush.duration-seconds", 60);
@@ -132,6 +141,7 @@ public final class GeneratedGameManager {
         return switch (type) {
             case SURVIE_ETAGES -> MoodStyle.detail("Largeur entre §e15 §7et §e61§7, étages automatiques.");
             case RUEE_OR -> MoodStyle.detail("Largeur mine entre §e15 §7et §e51§7. Temps calculé automatiquement.");
+            case WATER_JUMP -> MoodStyle.detail("Longueur entre §e40 §7et §e140 §7blocs.");
         };
     }
 
@@ -180,6 +190,7 @@ public final class GeneratedGameManager {
         config.set("finish", null);
         config.set("survival", null);
         config.set("gold-rush", null);
+        config.set("water-jump", null);
         active = false;
         activeType = null;
         activeRegion = null;
@@ -214,6 +225,7 @@ public final class GeneratedGameManager {
         Points points = switch (type) {
             case SURVIE_ETAGES -> routeCollapse(center, spec);
             case RUEE_OR -> routeMine(center, spec);
+            case WATER_JUMP -> routeWaterJump(center, spec);
         };
 
         config.set("style", null);
@@ -226,12 +238,13 @@ public final class GeneratedGameManager {
         config.set("size", sizeName);
         writeRegion("region", region);
         writeLocation("start", points.start());
-        writeLocation("finish", null);
+        writeLocation("finish", points.finish());
         if (type == GeneratedGameType.SURVIE_ETAGES) {
             config.set("survival.elimination-y", points.eliminationY());
             writeSurvivalBlocks();
         }
         if (type == GeneratedGameType.RUEE_OR) config.set("gold-rush.duration-seconds", spec.goldDuration);
+        if (type == GeneratedGameType.WATER_JUMP) config.set("water-jump.fall-y", points.start().getY() - 1.5);
         save();
 
         configureEvent(player, type, points);
@@ -246,6 +259,7 @@ public final class GeneratedGameManager {
         return switch (type) {
             case SURVIE_ETAGES -> "survie_etages";
             case RUEE_OR -> "ruee_or";
+            case WATER_JUMP -> "water_jump_v2";
         };
     }
 
@@ -267,6 +281,100 @@ public final class GeneratedGameManager {
         return new Points(layout.start(), null, 0);
     }
 
+    private static Points routeWaterJump(Location center, Spec spec) {
+        World world = center.getWorld();
+        int cx = center.getBlockX();
+        int cy = center.getBlockY();
+        int cz = center.getBlockZ();
+        int length = spec.waterLength;
+        int laneHalf = 5;
+
+        // Bassin d'eau sécurisé sous toute la piste.
+        for (int x = cx - 8; x <= cx + length + 10; x++) {
+            for (int z = cz - 9; z <= cz + 9; z++) {
+                world.getBlockAt(x, cy - 2, z).setType(Material.PRISMARINE_BRICKS, false);
+                world.getBlockAt(x, cy - 1, z).setType(Material.WATER, false);
+                for (int y = cy; y <= cy + 16; y++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
+            }
+        }
+
+        // Zone de départ : ligne gauche-droite, côtés fermés, sortie ouverte vers la piste.
+        for (int x = cx - 4; x <= cx + 4; x++) {
+            for (int z = cz - laneHalf; z <= cz + laneHalf; z++) {
+                world.getBlockAt(x, cy, z).setType(Material.LIME_CONCRETE, false);
+            }
+        }
+        for (int z = cz - laneHalf; z <= cz + laneHalf; z++) {
+            world.getBlockAt(cx - 5, cy + 1, z).setType(Material.LIME_STAINED_GLASS, false);
+        }
+        for (int x = cx - 5; x <= cx + 4; x++) {
+            world.getBlockAt(x, cy + 1, cz - laneHalf - 1).setType(Material.LIME_STAINED_GLASS, false);
+            world.getBlockAt(x, cy + 1, cz + laneHalf + 1).setType(Material.LIME_STAINED_GLASS, false);
+        }
+        for (int z = cz - laneHalf; z <= cz + laneHalf; z++) world.getBlockAt(cx + 5, cy, z).setType(Material.YELLOW_CONCRETE, false);
+        world.getBlockAt(cx, cy + 2, cz - laneHalf).setType(Material.SEA_LANTERN, false);
+        world.getBlockAt(cx, cy + 2, cz + laneHalf).setType(Material.SEA_LANTERN, false);
+
+        Material[] colors = {
+                Material.LIGHT_BLUE_WOOL,
+                Material.CYAN_WOOL,
+                Material.WHITE_WOOL,
+                Material.YELLOW_WOOL,
+                Material.ORANGE_WOOL,
+                Material.MAGENTA_WOOL
+        };
+        int x = cx + 9;
+        int step = 0;
+        int lastY = cy + 1;
+        while (x < cx + length) {
+            step++;
+            int z = cz + switch (step % 7) {
+                case 0 -> -4;
+                case 1 -> 0;
+                case 2 -> 4;
+                case 3 -> 2;
+                case 4 -> -2;
+                case 5 -> 5;
+                default -> -5;
+            };
+            int y = cy + 1 + Math.min(10, step / 2) + (step % 5 == 0 ? 1 : 0);
+            int radius = step % 6 == 0 ? 2 : 1;
+            Material platform = step % 6 == 0 ? Material.GOLD_BLOCK : colors[step % colors.length];
+            buildPlatform(world, x, y, z, radius, platform);
+            if (step % 4 == 0) buildPlatform(world, x + 2, y + 1, clamp(z + 3, cz - laneHalf, cz + laneHalf), 1, colors[(step + 2) % colors.length]);
+            lastY = Math.max(lastY, y);
+            x += step % 4 == 0 ? 5 : 4;
+        }
+
+        int finishX = cx + length + 5;
+        int finishY = Math.max(cy + 2, lastY);
+        for (int x2 = finishX - 4; x2 <= finishX + 4; x2++) {
+            for (int z2 = cz - 4; z2 <= cz + 4; z2++) {
+                world.getBlockAt(x2, finishY, z2).setType(Material.RED_CONCRETE, false);
+            }
+        }
+        for (int z = cz - 4; z <= cz + 4; z++) world.getBlockAt(finishX + 5, finishY + 1, z).setType(Material.RED_STAINED_GLASS, false);
+        world.getBlockAt(finishX, finishY + 1, cz).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(finishX, finishY + 3, cz - 4).setType(Material.SEA_LANTERN, false);
+        world.getBlockAt(finishX, finishY + 3, cz + 4).setType(Material.SEA_LANTERN, false);
+
+        Location start = new Location(world, cx, cy + 1, cz, -90f, 0f);
+        Location finish = new Location(world, finishX + 0.5, finishY + 1, cz + 0.5, -90f, 0f);
+        return new Points(start, finish, 0);
+    }
+
+    private static void buildPlatform(World world, int cx, int cy, int cz, int radius, Material material) {
+        for (int x = cx - radius; x <= cx + radius; x++) {
+            for (int z = cz - radius; z <= cz + radius; z++) {
+                world.getBlockAt(x, cy, z).setType(material, false);
+            }
+        }
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
     private static void configureEvent(Player player, GeneratedGameType type, Points points) {
         Location back = player.getLocation().clone().add(0, 3, 0);
         EventManager.createEvent(player, type.getDisplayName());
@@ -274,7 +382,12 @@ public final class GeneratedGameManager {
         EventManager.setType(player, type.getEventType().name());
         player.teleport(points.start());
         EventManager.setLocation(player);
-        EventManager.clearFinishLocation(player);
+        if (points.finish() != null && type.getEventType().usesFinishLine()) {
+            player.teleport(points.finish());
+            EventManager.setFinishLocation(player);
+        } else {
+            EventManager.clearFinishLocation(player);
+        }
         player.teleport(back);
     }
 
@@ -282,6 +395,7 @@ public final class GeneratedGameManager {
         return switch (type) {
             case SURVIE_ETAGES -> "Survivez dans la tour pendant que les étages disparaissent.";
             case RUEE_OR -> "Minez un maximum de minerais dans le temps imparti. Vous gardez les minerais.";
+            case WATER_JUMP -> "Franchissez les plateformes au-dessus de l'eau. Chute dans l'eau = retour au départ. Top 3 à l'arrivée.";
         };
     }
 
@@ -291,6 +405,7 @@ public final class GeneratedGameManager {
         return switch (type) {
             case SURVIE_ETAGES -> new Region(world, cx - spec.width / 2 - 4, cy - 2, cz - spec.width / 2 - 4, cx + spec.width / 2 + 4, cy + 10 + spec.floors * 5, cz + spec.width / 2 + 4);
             case RUEE_OR -> new Region(world, cx - spec.width / 2 - 2, cy - 1, cz - spec.width / 2 - 2, cx + spec.width / 2 + 2, cy + spec.goldHeight + 2, cz + spec.width / 2 + 2);
+            case WATER_JUMP -> new Region(world, cx - 10, cy - 3, cz - 11, cx + spec.waterLength + 18, cy + 22, cz + 11);
         };
     }
 
@@ -387,18 +502,20 @@ public final class GeneratedGameManager {
         }
     }
 
-    private record Spec(int width, int floors, int goldHeight, int goldDuration) {
+    private record Spec(int width, int floors, int goldHeight, int goldDuration, int waterLength) {
         private static Spec preset(GeneratedGameType type, GeneratedGameSize size) {
             return switch (type) {
-                case SURVIE_ETAGES -> new Spec(size.getSurvivalWidth(), size.getSurvivalFloors(), 0, 0);
-                case RUEE_OR -> new Spec(size.getGoldRushWidth(), 0, size.getGoldRushHeight(), size.getGoldRushDurationSeconds());
+                case SURVIE_ETAGES -> new Spec(size.getSurvivalWidth(), size.getSurvivalFloors(), 0, 0, 0);
+                case RUEE_OR -> new Spec(size.getGoldRushWidth(), 0, size.getGoldRushHeight(), size.getGoldRushDurationSeconds(), 0);
+                case WATER_JUMP -> new Spec(0, 0, 0, 0, size.getWaterLength());
             };
         }
 
         private static Spec custom(GeneratedGameType type, int value) {
             return switch (type) {
-                case SURVIE_ETAGES -> value >= 15 && value <= 61 ? new Spec(value % 2 == 1 ? value : value + 1, floors(value), 0, 0) : null;
-                case RUEE_OR -> value >= 15 && value <= 51 ? new Spec(value % 2 == 1 ? value : value + 1, 0, Math.max(9, value / 3), Math.max(60, Math.min(240, value * 4))) : null;
+                case SURVIE_ETAGES -> value >= 15 && value <= 61 ? new Spec(value % 2 == 1 ? value : value + 1, floors(value), 0, 0, 0) : null;
+                case RUEE_OR -> value >= 15 && value <= 51 ? new Spec(value % 2 == 1 ? value : value + 1, 0, Math.max(9, value / 3), Math.max(60, Math.min(240, value * 4)), 0) : null;
+                case WATER_JUMP -> value >= 40 && value <= 140 ? new Spec(0, 0, 0, 0, value) : null;
             };
         }
 
@@ -414,6 +531,7 @@ public final class GeneratedGameManager {
             return switch (type) {
                 case SURVIE_ETAGES -> width + "x" + width + " §8• §7" + floors + " étages";
                 case RUEE_OR -> width + "x" + goldHeight + " §8• §7" + goldDuration + "s";
+                case WATER_JUMP -> waterLength + " blocs §8• §7montée progressive";
             };
         }
     }
