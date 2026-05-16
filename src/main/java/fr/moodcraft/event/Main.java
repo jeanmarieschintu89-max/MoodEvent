@@ -2,7 +2,6 @@ package fr.moodcraft.event;
 
 import fr.moodcraft.event.command.EventAdminCommand;
 import fr.moodcraft.event.command.EventCommand;
-import fr.moodcraft.event.generator.GeneratedArenaShellTask;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
@@ -51,7 +50,6 @@ public class Main extends JavaPlugin {
         EventLootManager.load();
         EventLogManager.load();
         EventSecurityManager.load();
-        GeneratedArenaShellTask.start();
         EventReturnSafety.start();
         EventAutoStartTask.start();
         EventLaunchBufferManager.start();
@@ -91,7 +89,7 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new GoldRushStopGuard(), this);
         Bukkit.getPluginManager().registerEvents(new GoldRushInventoryGuard(), this);
 
-        getLogger().info("MoodEvent active : Mine en folie et Tour Infernale uniquement.");
+        getLogger().info("MoodEvent active : Mine en folie, Tour Infernale et Water Jump.");
     }
 
     @Override
