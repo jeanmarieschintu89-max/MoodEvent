@@ -221,7 +221,7 @@ public final class WaitingRoomManager {
     private static Material floorMaterial(WaitingRoomTheme theme, int cx, int cz, int x, int z) {
         int dx = Math.abs(x - cx);
         int dz = Math.abs(z - cz);
-        if (dx <= 1 && dz <= 1) return theme.light();
+        if (dx <= 1 && dz <= 1) return Material.SEA_LANTERN;
         if (dx == dz || dx == 0 || dz == 0) return theme.accent();
         return (x + z) % 2 == 0 ? theme.primary() : Material.SMOOTH_STONE;
     }
