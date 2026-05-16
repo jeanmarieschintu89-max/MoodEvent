@@ -4,7 +4,6 @@ import fr.moodcraft.event.command.EventAdminCommand;
 import fr.moodcraft.event.command.EventCommand;
 import fr.moodcraft.event.generator.GeneratedArenaShellTask;
 import fr.moodcraft.event.generator.GeneratedGameManager;
-import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
 import fr.moodcraft.event.listener.EventChatListener;
@@ -18,7 +17,6 @@ import fr.moodcraft.event.listener.GoldRushInventoryGuard;
 import fr.moodcraft.event.listener.GoldRushPressureReminder;
 import fr.moodcraft.event.listener.GoldRushStopGuard;
 import fr.moodcraft.event.listener.GoldRushTask;
-import fr.moodcraft.event.listener.SquidPackTask;
 import fr.moodcraft.event.listener.SurvivalFloorTask;
 import fr.moodcraft.event.loot.EventLootManager;
 import fr.moodcraft.event.manager.EventAutoStartTask;
@@ -50,7 +48,6 @@ public class Main extends JavaPlugin {
         WaitingRoomManager.load();
         RewardManager.load();
         GeneratedGameManager.load();
-        SquidPackManager.load();
         EventLootManager.load();
         EventLogManager.load();
         EventSecurityManager.load();
@@ -93,7 +90,6 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new GoldRushPressureReminder(), this);
         Bukkit.getPluginManager().registerEvents(new GoldRushStopGuard(), this);
         Bukkit.getPluginManager().registerEvents(new GoldRushInventoryGuard(), this);
-        Bukkit.getPluginManager().registerEvents(new SquidPackTask(), this);
 
         getLogger().info("MoodEvent active : Mine en folie et Tour Infernale uniquement.");
     }
@@ -104,7 +100,6 @@ public class Main extends JavaPlugin {
         WaitingRoomManager.save();
         RewardManager.save();
         GeneratedGameManager.save();
-        SquidPackManager.save();
         EventLootManager.save();
         EventLogManager.save();
         EventSecurityManager.save();
