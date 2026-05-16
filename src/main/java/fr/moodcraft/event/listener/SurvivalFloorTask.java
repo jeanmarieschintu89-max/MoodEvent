@@ -44,7 +44,7 @@ public class SurvivalFloorTask implements Listener {
 
         if (tick == 1) {
             forEachSurvivor(player -> {
-                player.sendTitle("§dSurvie", "§fPréparez-vous", 0, 35, 10);
+                player.sendTitle("§dEffondrement", "§fPréparez-vous", 0, 35, 10);
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.9f, 0.8f);
             });
         }
@@ -53,7 +53,7 @@ public class SurvivalFloorTask implements Listener {
 
         if (tick < START_DELAY_SECONDS) {
             int countdown = Math.max(1, START_DELAY_SECONDS - tick);
-            forEachSurvivor(player -> player.sendActionBar("§d▣ §fSurvie des étages §8• §e" + countdown + "s §7avant effondrement"));
+            forEachSurvivor(player -> player.sendActionBar("§d▣ §fEffondrement §8• §e" + countdown + "s §7avant effondrement"));
             return;
         }
 
@@ -120,16 +120,14 @@ public class SurvivalFloorTask implements Listener {
         if (material == null || material.isAir()) return false;
         String name = material.name();
         return name.endsWith("_WOOL")
-                || name.endsWith("_CONCRETE")
-                || name.endsWith("_STAINED_GLASS")
-                || material == Material.GLASS
-                || material == Material.SEA_LANTERN
-                || material == Material.LIGHT_WEIGHTED_PRESSURE_PLATE
-                || material == Material.HEAVY_WEIGHTED_PRESSURE_PLATE
+                || material == Material.LIME_CONCRETE
+                || material == Material.RED_CONCRETE
                 || material == Material.GOLD_BLOCK
                 || material == Material.EMERALD_BLOCK
                 || material == Material.REDSTONE_BLOCK
-                || material == Material.AMETHYST_BLOCK;
+                || material == Material.SEA_LANTERN
+                || material == Material.LIGHT_WEIGHTED_PRESSURE_PLATE
+                || material == Material.HEAVY_WEIGHTED_PRESSURE_PLATE;
     }
 
     private void forEachSurvivor(PlayerAction action) {
