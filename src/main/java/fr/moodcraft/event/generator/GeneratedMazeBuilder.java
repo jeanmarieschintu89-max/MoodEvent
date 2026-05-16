@@ -34,12 +34,15 @@ public final class GeneratedMazeBuilder {
         int maxZ = cz + half;
 
         boolean[][] open = generateMaze(width);
-        open[1][1] = true;
-        open[2][1] = true;
-        open[3][1] = true;
-        open[width - 2][width - 2] = true;
-        open[width - 3][width - 2] = true;
-        open[width - 4][width - 2] = true;
+        int entryOffset = randomOddOffset(width);
+        int exitOffset = randomOddOffset(width);
+
+        open[1][entryOffset] = true;
+        open[2][entryOffset] = true;
+        open[3][entryOffset] = true;
+        open[width - 2][exitOffset] = true;
+        open[width - 3][exitOffset] = true;
+        open[width - 4][exitOffset] = true;
 
         buildOuterShell(world, minX, maxX, cy, minZ, maxZ);
         buildMazeBlocks(world, minX, cy, minZ, width, open);
@@ -47,13 +50,13 @@ public final class GeneratedMazeBuilder {
 
         int startSasMinX = minX - 10;
         int startSasMaxX = minX - 3;
-        int startZ = minZ + 1;
-        int entryZ = minZ + 1;
+        int startZ = minZ + entryOffset;
+        int entryZ = startZ;
 
         int finishSasMinX = maxX + 3;
         int finishSasMaxX = maxX + 10;
-        int finishZ = maxZ - 1;
-        int exitZ = maxZ - 1;
+        int finishZ = minZ + exitOffset;
+        int exitZ = finishZ;
 
         clearInternalOldMarker(world, minX + 1, cy, entryZ);
         clearInternalOldMarker(world, maxX - 1, cy, exitZ);
@@ -74,6 +77,12 @@ public final class GeneratedMazeBuilder {
         placeLoot(world, LootTier.EPIQUE, maxX - Math.max(4, width / 4), cy + 1, maxZ - Math.max(4, width / 4));
 
         return new Layout(start, finish);
+    }
+
+    private static int randomOddOffset(int width) {
+        int maxOdd = width - 2;
+        int value = 1 + (RANDOM.nextInt(Math.max(1, (maxOdd - 1) / 2 + 1)) * 2);
+        return Math.max(1, Math.min(width - 2, value));
     }
 
     private static boolean[][] generateMaze(int width) {
