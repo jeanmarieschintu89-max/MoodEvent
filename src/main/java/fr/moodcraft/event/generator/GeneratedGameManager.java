@@ -289,7 +289,6 @@ public final class GeneratedGameManager {
         int length = spec.waterLength;
         int laneHalf = 5;
 
-        // Bassin d'eau sécurisé sous toute la piste.
         for (int x = cx - 8; x <= cx + length + 10; x++) {
             for (int z = cz - 9; z <= cz + 9; z++) {
                 world.getBlockAt(x, cy - 2, z).setType(Material.PRISMARINE_BRICKS, false);
@@ -298,15 +297,12 @@ public final class GeneratedGameManager {
             }
         }
 
-        // Zone de départ : ligne gauche-droite, côtés fermés, sortie ouverte vers la piste.
         for (int x = cx - 4; x <= cx + 4; x++) {
             for (int z = cz - laneHalf; z <= cz + laneHalf; z++) {
                 world.getBlockAt(x, cy, z).setType(Material.LIME_CONCRETE, false);
             }
         }
-        for (int z = cz - laneHalf; z <= cz + laneHalf; z++) {
-            world.getBlockAt(cx - 5, cy + 1, z).setType(Material.LIME_STAINED_GLASS, false);
-        }
+        for (int z = cz - laneHalf; z <= cz + laneHalf; z++) world.getBlockAt(cx - 5, cy + 1, z).setType(Material.LIME_STAINED_GLASS, false);
         for (int x = cx - 5; x <= cx + 4; x++) {
             world.getBlockAt(x, cy + 1, cz - laneHalf - 1).setType(Material.LIME_STAINED_GLASS, false);
             world.getBlockAt(x, cy + 1, cz + laneHalf + 1).setType(Material.LIME_STAINED_GLASS, false);
@@ -321,37 +317,36 @@ public final class GeneratedGameManager {
                 Material.WHITE_WOOL,
                 Material.YELLOW_WOOL,
                 Material.ORANGE_WOOL,
-                Material.MAGENTA_WOOL
+                Material.MAGENTA_WOOL,
+                Material.PINK_WOOL
         };
-        int x = cx + 9;
+        int x = cx + 8;
         int step = 0;
         int lastY = cy + 1;
         while (x < cx + length) {
             step++;
             int z = cz + switch (step % 7) {
-                case 0 -> -4;
+                case 0 -> -3;
                 case 1 -> 0;
-                case 2 -> 4;
+                case 2 -> 3;
                 case 3 -> 2;
                 case 4 -> -2;
-                case 5 -> 5;
-                default -> -5;
+                case 5 -> 4;
+                default -> -4;
             };
-            int y = cy + 1 + Math.min(10, step / 2) + (step % 5 == 0 ? 1 : 0);
-            int radius = step % 6 == 0 ? 2 : 1;
-            Material platform = step % 6 == 0 ? Material.GOLD_BLOCK : colors[step % colors.length];
+            int y = cy + 1 + Math.min(8, step / 3) + (step % 7 == 0 ? 1 : 0);
+            int radius = step % 5 == 0 ? 2 : 1;
+            Material platform = colors[step % colors.length];
             buildPlatform(world, x, y, z, radius, platform);
-            if (step % 4 == 0) buildPlatform(world, x + 2, y + 1, clamp(z + 3, cz - laneHalf, cz + laneHalf), 1, colors[(step + 2) % colors.length]);
+            if (step % 3 == 0) buildPlatform(world, x + 2, y, clamp(z + 2, cz - laneHalf, cz + laneHalf), 1, colors[(step + 2) % colors.length]);
             lastY = Math.max(lastY, y);
-            x += step % 4 == 0 ? 5 : 4;
+            x += step % 5 == 0 ? 4 : 3;
         }
 
-        int finishX = cx + length + 5;
+        int finishX = cx + length + 4;
         int finishY = Math.max(cy + 2, lastY);
         for (int x2 = finishX - 4; x2 <= finishX + 4; x2++) {
-            for (int z2 = cz - 4; z2 <= cz + 4; z2++) {
-                world.getBlockAt(x2, finishY, z2).setType(Material.RED_CONCRETE, false);
-            }
+            for (int z2 = cz - 4; z2 <= cz + 4; z2++) world.getBlockAt(x2, finishY, z2).setType(Material.RED_CONCRETE, false);
         }
         for (int z = cz - 4; z <= cz + 4; z++) world.getBlockAt(finishX + 5, finishY + 1, z).setType(Material.RED_STAINED_GLASS, false);
         world.getBlockAt(finishX, finishY + 1, cz).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
@@ -365,15 +360,11 @@ public final class GeneratedGameManager {
 
     private static void buildPlatform(World world, int cx, int cy, int cz, int radius, Material material) {
         for (int x = cx - radius; x <= cx + radius; x++) {
-            for (int z = cz - radius; z <= cz + radius; z++) {
-                world.getBlockAt(x, cy, z).setType(material, false);
-            }
+            for (int z = cz - radius; z <= cz + radius; z++) world.getBlockAt(x, cy, z).setType(material, false);
         }
     }
 
-    private static int clamp(int value, int min, int max) {
-        return Math.max(min, Math.min(max, value));
-    }
+    private static int clamp(int value, int min, int max) { return Math.max(min, Math.min(max, value)); }
 
     private static void configureEvent(Player player, GeneratedGameType type, Points points) {
         Location back = player.getLocation().clone().add(0, 3, 0);
