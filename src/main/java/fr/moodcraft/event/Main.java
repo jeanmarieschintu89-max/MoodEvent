@@ -5,6 +5,7 @@ import fr.moodcraft.event.command.EventCommand;
 import fr.moodcraft.event.generator.GeneratedArenaShellTask;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameplayEnhancer;
+import fr.moodcraft.event.generator.GeneratedLineMarkerTask;
 import fr.moodcraft.event.generator.GeneratedMazeSealTask;
 import fr.moodcraft.event.generator.GeneratedOpenPathTask;
 import fr.moodcraft.event.generator.SquidPackManager;
@@ -59,6 +60,7 @@ public class Main extends JavaPlugin {
         GeneratedOpenPathTask.start();
         GeneratedMazeSealTask.start();
         GeneratedArenaShellTask.start();
+        GeneratedLineMarkerTask.start();
         EventReturnSafety.start();
         EventAutoStartTask.start();
         SurvivalFloorLagGuard.start();
