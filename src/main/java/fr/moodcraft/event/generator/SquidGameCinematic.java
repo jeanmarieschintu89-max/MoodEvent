@@ -52,12 +52,13 @@ public final class SquidGameCinematic {
     }
 
     public static void announcePrize(String title, String detail, int eliminated, int prizeEach) {
-        int prize = Math.max(0, eliminated * prizeEach);
+        int survivors = Math.max(0, Bukkit.getOnlinePlayers().size() - eliminated);
         Bukkit.broadcastMessage("");
-        Bukkit.broadcastMessage("§8----- §6§l✦ CAGNOTTE SQUID ✦ §8-----");
+        Bukkit.broadcastMessage("§8----- §d§l✦ DORTOIR SQUID ✦ §8-----");
         Bukkit.broadcastMessage("§e★ §f" + title);
         Bukkit.broadcastMessage("§d➜ §f" + detail);
-        Bukkit.broadcastMessage("§6$ §fCagnotte actuelle : §a" + prize + "€");
+        Bukkit.broadcastMessage("§c■ §fÉliminés : §c" + eliminated + " §8• §aSurvivants en piste : §a" + survivors);
+        Bukkit.broadcastMessage("§e▶ §fLe prochain jeu commence bientôt. Reste prêt.");
         Bukkit.broadcastMessage("§8-----------------------------");
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.2f);
@@ -69,7 +70,7 @@ public final class SquidGameCinematic {
         Bukkit.broadcastMessage("§8----- §c§l✦ SQUID MOOD GAME ✦ §8-----");
         Bukkit.broadcastMessage("§e★ §f" + title);
         Bukkit.broadcastMessage("§d➜ §f" + detail);
-        Bukkit.broadcastMessage("§a▶ §fTape §e/event §fpour rejoindre le prochain jeu !");
+        Bukkit.broadcastMessage("§a▶ §fTape §e/event §fpour tenter le prochain jeu !");
         Bukkit.broadcastMessage("§8-----------------------------");
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.5f, 1.2f);
