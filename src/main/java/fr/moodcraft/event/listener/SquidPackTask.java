@@ -26,6 +26,7 @@ public class SquidPackTask implements Listener {
 
     private int tick;
     private int redReaction;
+    private int initialParticipants;
     private boolean green = true;
     private boolean runtimeStarted;
     private boolean finished;
@@ -69,6 +70,7 @@ public class SquidPackTask implements Listener {
     private void startRedGreen() {
         tick = 0;
         redReaction = 0;
+        initialParticipants = Math.max(1, EventManager.getParticipantSize());
         green = true;
         runtimeStarted = true;
         finished = false;
@@ -283,6 +285,8 @@ public class SquidPackTask implements Listener {
     }
 
     private boolean tryFinishLastSurvivor() {
+        if (initialParticipants <= 1) return false;
+        if (eliminated.isEmpty()) return false;
         if (!falling.isEmpty()) return false;
         Player survivor = findLastAlivePlayer();
         if (survivor != null && countAliveAll() == 1) {
@@ -368,6 +372,7 @@ public class SquidPackTask implements Listener {
     private void resetRuntime() {
         tick = 0;
         redReaction = 0;
+        initialParticipants = 0;
         green = true;
         runtimeStarted = false;
         finished = false;
