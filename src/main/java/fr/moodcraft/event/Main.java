@@ -4,9 +4,6 @@ import fr.moodcraft.event.command.EventAdminCommand;
 import fr.moodcraft.event.command.EventCommand;
 import fr.moodcraft.event.generator.GeneratedArenaShellTask;
 import fr.moodcraft.event.generator.GeneratedGameManager;
-import fr.moodcraft.event.generator.GeneratedGameplayEnhancer;
-import fr.moodcraft.event.generator.GeneratedMazeSealTask;
-import fr.moodcraft.event.generator.GeneratedOpenPathTask;
 import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.hook.VaultHook;
 import fr.moodcraft.event.listener.EventAdminGUIListener;
@@ -57,9 +54,6 @@ public class Main extends JavaPlugin {
         EventLootManager.load();
         EventLogManager.load();
         EventSecurityManager.load();
-        GeneratedGameplayEnhancer.start();
-        GeneratedOpenPathTask.start();
-        GeneratedMazeSealTask.start();
         GeneratedArenaShellTask.start();
         EventReturnSafety.start();
         EventAutoStartTask.start();
@@ -101,7 +95,7 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new GoldRushInventoryGuard(), this);
         Bukkit.getPluginManager().registerEvents(new SquidPackTask(), this);
 
-        getLogger().info("MoodEvent active en mode securite TPS.");
+        getLogger().info("MoodEvent active : Mine en folie et Tour Infernale uniquement.");
     }
 
     @Override
