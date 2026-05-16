@@ -4,23 +4,25 @@ import org.bukkit.Material;
 
 public enum GeneratedGameSize {
 
-    PETIT("Petit", Material.LIME_CONCRETE, 13, 7, 42),
-    MOYEN("Moyen", Material.GOLD_BLOCK, 15, 8, 64),
-    GRAND("Grand", Material.ORANGE_CONCRETE, 17, 9, 88),
-    GEANT("Géant", Material.REDSTONE_BLOCK, 19, 10, 116);
+    PETIT("Petit", Material.LIME_CONCRETE, 13, 7, 42, 15),
+    MOYEN("Moyen", Material.GOLD_BLOCK, 15, 8, 64, 21),
+    GRAND("Grand", Material.ORANGE_CONCRETE, 17, 9, 88, 27),
+    GEANT("Géant", Material.REDSTONE_BLOCK, 19, 10, 116, 33);
 
     private final String displayName;
     private final Material icon;
     private final int survivalWidth;
     private final int survivalFloors;
     private final int waterLength;
+    private final int mazeWidth;
 
-    GeneratedGameSize(String displayName, Material icon, int survivalWidth, int survivalFloors, int waterLength) {
+    GeneratedGameSize(String displayName, Material icon, int survivalWidth, int survivalFloors, int waterLength, int mazeWidth) {
         this.displayName = displayName;
         this.icon = icon;
         this.survivalWidth = survivalWidth;
         this.survivalFloors = survivalFloors;
         this.waterLength = waterLength;
+        this.mazeWidth = mazeWidth;
     }
 
     public String getDisplayName() { return displayName; }
@@ -28,6 +30,7 @@ public enum GeneratedGameSize {
     public int getSurvivalWidth() { return survivalWidth; }
     public int getSurvivalFloors() { return survivalFloors; }
     public int getWaterLength() { return waterLength; }
+    public int getMazeWidth() { return mazeWidth; }
 
     public int getGoldRushWidth() {
         return switch (this) {
@@ -62,6 +65,7 @@ public enum GeneratedGameSize {
             case SURVIE_ETAGES -> survivalWidth + "x" + survivalWidth + " §8• §7" + survivalFloors + " étages";
             case RUEE_OR -> getGoldRushWidth() + "x" + getGoldRushHeight() + " §8• §7" + getGoldRushDurationSeconds() + "s";
             case WATER_JUMP -> waterLength + " blocs §8• §7hauteur progressive";
+            case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7sas opposés aléatoires";
         };
     }
 }
