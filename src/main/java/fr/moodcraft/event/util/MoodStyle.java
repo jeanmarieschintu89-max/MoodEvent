@@ -7,12 +7,25 @@ import java.util.Locale;
 
 public final class MoodStyle {
 
+    private static final ThreadLocal<Boolean> SILENT = ThreadLocal.withInitial(() -> false);
+
     private MoodStyle() {
     }
 
     public static final String BRAND = "§d§lMood§5§lEvent";
     public static final String MODULE = "Mood Event";
     public static final String FRAME = "§8-----------------------------";
+
+    public static void silence(Runnable action) {
+        if (action == null) return;
+        boolean previous = Boolean.TRUE.equals(SILENT.get());
+        SILENT.set(true);
+        try {
+            action.run();
+        } finally {
+            SILENT.set(previous);
+        }
+    }
 
     public static String guiTitle(String title) {
         return "§d✦ §8§l" + title + " §d✦";
@@ -60,7 +73,7 @@ public final class MoodStyle {
     }
 
     public static void send(CommandSender sender, String module, String... lines) {
-        if (sender == null) return;
+        if (sender == null || Boolean.TRUE.equals(SILENT.get())) return;
 
         sender.sendMessage("");
         sender.sendMessage(header(module));
@@ -99,6 +112,8 @@ public final class MoodStyle {
         if (line == null || line.isBlank()) return "";
 
         String trimmed = line.trim().replace("§c✘", "§c✖");
+        if (isEndSpam(trimmed)) return "";
+
         String rewritten = rewriteLaunchObjective(trimmed);
         if (rewritten != null) return rewritten;
         if (isExtraLaunchRule(trimmed)) return "";
@@ -139,25 +154,11 @@ public final class MoodStyle {
     private static String rewriteLaunchObjective(String line) {
         String clean = stripDecorations(line).toLowerCase(Locale.ROOT);
 
-        if (clean.equals("objectif : atteignez la ligne rouge avant les autres.")) {
-            return hype("Objectif : fonce jusqu'à la zone rouge avant les autres.");
-        }
-
-        if (clean.equals("objectif : sautez de laine en laine jusqu'à l'arrivée.")) {
-            return hype("Objectif : termine le parcours sans tomber.");
-        }
-
-        if (clean.equals("objectif : trouvez la sortie avant les autres.")) {
-            return hype("Objectif : trouve la sortie, vite et proprement.");
-        }
-
-        if (clean.equals("objectif : franchissez les blocs de laine au-dessus de l'eau.")) {
-            return hype("Objectif : traverse au-dessus de l'eau sans plonger.");
-        }
-
-        if (clean.equals("objectif : restez le plus longtemps possible.")) {
-            return hype("Objectif : reste debout, deviens le dernier survivant.");
-        }
+        if (clean.equals("objectif : atteignez la ligne rouge avant les autres.")) return hype("Objectif : fonce jusqu'à la zone rouge avant les autres.");
+        if (clean.equals("objectif : sautez de laine en laine jusqu'à l'arrivée.")) return hype("Objectif : termine le parcours sans tomber.");
+        if (clean.equals("objectif : trouvez la sortie avant les autres.")) return hype("Objectif : trouve la sortie, vite et proprement.");
+        if (clean.equals("objectif : franchissez les blocs de laine au-dessus de l'eau.")) return hype("Objectif : traverse au-dessus de l'eau sans plonger.");
+        if (clean.equals("objectif : restez le plus longtemps possible.")) return hype("Objectif : reste debout, deviens le dernier survivant.");
 
         return null;
     }
@@ -169,6 +170,26 @@ public final class MoodStyle {
                 || clean.equals("les étages disparaissent progressivement.")
                 || clean.equals("le premier en bas est perdant.")
                 || clean.equals("les derniers survivants sont récompensés.");
+    }
+
+    private static boolean isEndSpam(String line) {
+        String clean = stripDecorations(line).toLowerCase(Locale.ROOT);
+        return clean.startsWith("participants renvoyés")
+                || clean.equals("récompenses distribuées.")
+                || clean.contains("récompense de participation")
+                || clean.contains("récompense top 3")
+                || clean.contains("récompense de classement")
+                || clean.contains("vous recevez la récompense")
+                || clean.startsWith("salle d'attente restaurée")
+                || clean.startsWith("structure générée restaurée")
+                || clean.startsWith("aucune salle à restaurer")
+                || clean.startsWith("aucune structure générée")
+                || clean.startsWith("aucun pack spécial")
+                || clean.contains("restauré automatiquement")
+                || clean.startsWith("votre place")
+                || clean.startsWith("place :")
+                || clean.startsWith("vous êtes dans le top 3")
+                || clean.startsWith("classement final confirmé");
     }
 
     private static String stripDecorations(String text) {
