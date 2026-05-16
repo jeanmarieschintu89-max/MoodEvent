@@ -51,7 +51,7 @@ public final class GeneratedGameplayEnhancer {
         if (!config.getBoolean("active", false)) return;
 
         String typeName = config.getString("type", "");
-        String key = typeName + ":" + config.getString("start.world", "") + ":" + config.getInt("start.x") + ":" + config.getInt("start.y") + ":" + config.getInt("start.z");
+        String key = "open-start-v7:" + typeName + ":" + config.getString("start.world", "") + ":" + config.getInt("start.x") + ":" + config.getInt("start.y") + ":" + config.getInt("start.z");
         if (key.equals(config.getString("gameplay-enhanced-key", ""))) return;
 
         GeneratedGameType type;
@@ -110,8 +110,8 @@ public final class GeneratedGameplayEnhancer {
             }
         }
 
-        startPodium(start, Material.LIME_CONCRETE, Material.EMERALD_BLOCK);
-        if (finish != null) finishPodium(finish, Material.RED_CONCRETE, Material.REDSTONE_BLOCK);
+        openStartPodium(start, Material.LIME_CONCRETE, Material.EMERALD_BLOCK);
+        if (finish != null) openFinishPodium(finish, Material.RED_CONCRETE, Material.REDSTONE_BLOCK);
     }
 
     private static void enhanceJump(Region r, Location start, Location finish) {
@@ -126,16 +126,15 @@ public final class GeneratedGameplayEnhancer {
             int z = clamp(baseZ + LANES[step % LANES.length], r.minZ + 4, r.maxZ - 4);
             int py = y + ((step % 6 == 0) ? 2 : (step % 3 == 0 ? 1 : 0));
             boolean checkpoint = step % 7 == 0;
-            platform(r.world, x, py, z, checkpoint ? 2 : 1, checkpoint ? Material.GOLD_BLOCK : WOOL[step % WOOL.length]);
+            Material material = checkpoint ? Material.GOLD_BLOCK : WOOL[step % WOOL.length];
+            platform(r.world, x, py, z, checkpoint ? 2 : 1, material);
             support(r.world, x, r.minY + 1, py - 1, z, checkpoint ? Material.QUARTZ_PILLAR : Material.IRON_BARS);
-            if (checkpoint) ring(r.world, x, py + 1, z, 2, Material.OAK_FENCE);
             if (step % 5 == 0) sidePlatform(r.world, x + 2, py, clamp(z + 3, r.minZ + 4, r.maxZ - 4), WOOL[(step + 2) % WOOL.length]);
-            if (step % 6 == 0) glassArch(r.world, x, py, z, Material.YELLOW_STAINED_GLASS);
             x += step % 4 == 0 ? 4 : 3;
         }
 
-        startPodium(start, Material.LIME_WOOL, Material.EMERALD_BLOCK);
-        if (finish != null) finishPodium(finish, Material.RED_WOOL, Material.REDSTONE_BLOCK);
+        openStartPodium(start, Material.LIME_WOOL, Material.EMERALD_BLOCK);
+        if (finish != null) openFinishPodium(finish, Material.RED_WOOL, Material.REDSTONE_BLOCK);
     }
 
     private static void enhanceWaterJump(Region r, Location start, Location finish) {
@@ -149,20 +148,20 @@ public final class GeneratedGameplayEnhancer {
             step++;
             int z = clamp(baseZ + LANES[(step + 3) % LANES.length], r.minZ + 4, r.maxZ - 4);
             boolean checkpoint = step % 6 == 0;
-            platform(r.world, x, y + (checkpoint ? 1 : 0), z, checkpoint ? 2 : 1, checkpoint ? Material.LIGHT_BLUE_CONCRETE : WOOL[(step + 3) % WOOL.length]);
+            Material material = checkpoint ? Material.LIGHT_BLUE_WOOL : WOOL[(step + 3) % WOOL.length];
+            platform(r.world, x, y + (checkpoint ? 1 : 0), z, checkpoint ? 2 : 1, material);
             r.world.getBlockAt(x, y - 1, z).setType(Material.SEA_LANTERN, false);
-            if (step % 4 == 0) waterGate(r.world, x + 2, y + 1, baseZ);
             if (step % 5 == 0) buoy(r.world, x + 3, y - 1, clamp(z + 3, r.minZ + 4, r.maxZ - 4));
             x += step % 4 == 0 ? 4 : 3;
         }
 
-        startPodium(start, Material.LIME_WOOL, Material.EMERALD_BLOCK);
-        if (finish != null) finishPodium(finish, Material.RED_WOOL, Material.REDSTONE_BLOCK);
+        openStartPodium(start, Material.LIME_WOOL, Material.EMERALD_BLOCK);
+        if (finish != null) openFinishPodium(finish, Material.RED_WOOL, Material.REDSTONE_BLOCK);
     }
 
     private static void enhanceMaze(Region r, Location start, Location finish) {
-        startPodium(start, Material.LIME_CONCRETE, Material.EMERALD_BLOCK);
-        if (finish != null) finishPodium(finish, Material.RED_CONCRETE, Material.REDSTONE_BLOCK);
+        openStartPodium(start, Material.LIME_CONCRETE, Material.EMERALD_BLOCK);
+        if (finish != null) openFinishPodium(finish, Material.RED_CONCRETE, Material.REDSTONE_BLOCK);
         for (int x = r.minX + 5; x <= r.maxX - 5; x += 8) {
             for (int z = r.minZ + 5; z <= r.maxZ - 5; z += 8) {
                 if (RANDOM.nextBoolean()) decorativeColumn(r.world, x, start.getBlockY(), z);
@@ -203,14 +202,6 @@ public final class GeneratedGameplayEnhancer {
         }
     }
 
-    private static void waterGate(World w, int x, int y, int z) {
-        for (int dy = 0; dy <= 2; dy++) {
-            w.getBlockAt(x, y + dy, z - 4).setType(Material.PRISMARINE_WALL, false);
-            w.getBlockAt(x, y + dy, z + 4).setType(Material.PRISMARINE_WALL, false);
-        }
-        w.getBlockAt(x, y + 3, z).setType(Material.SEA_LANTERN, false);
-    }
-
     private static void buoy(World w, int x, int y, int z) {
         w.getBlockAt(x, y, z).setType(Material.RED_WOOL, false);
         w.getBlockAt(x, y + 1, z).setType(Material.WHITE_WOOL, false);
@@ -221,35 +212,54 @@ public final class GeneratedGameplayEnhancer {
         w.getBlockAt(x, y - 1, z).setType(Material.IRON_BARS, false);
     }
 
-    private static void glassArch(World w, int x, int y, int z, Material glass) {
-        w.getBlockAt(x, y + 2, z - 3).setType(glass, false);
-        w.getBlockAt(x, y + 2, z + 3).setType(glass, false);
-        for (int dz = -3; dz <= 3; dz++) w.getBlockAt(x, y + 4, z + dz).setType(glass, false);
-    }
-
-    private static void startPodium(Location loc, Material floor, Material pillar) {
+    private static void openStartPodium(Location loc, Material floor, Material pillar) {
         World w = loc.getWorld();
         if (w == null) return;
         int cx = loc.getBlockX();
         int cy = loc.getBlockY() - 1;
         int cz = loc.getBlockZ();
+        clearZone(w, cx, cy, cz, 5);
         platform(w, cx, cy, cz, 4, floor);
-        ring(w, cx, cy + 1, cz, 4, Material.OAK_FENCE);
-        arch(w, cx, cy, cz, pillar, Material.LIME_STAINED_GLASS);
+        openArch(w, cx, cy, cz, pillar, Material.LIME_STAINED_GLASS);
         w.getBlockAt(cx, cy + 1, cz).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
     }
 
-    private static void finishPodium(Location loc, Material floor, Material pillar) {
+    private static void openFinishPodium(Location loc, Material floor, Material pillar) {
         World w = loc.getWorld();
         if (w == null) return;
         int cx = loc.getBlockX();
         int cy = loc.getBlockY() - 1;
         int cz = loc.getBlockZ();
+        clearZone(w, cx, cy, cz, 5);
         platform(w, cx, cy, cz, 4, floor);
         platform(w, cx, cy + 1, cz, 2, Material.WHITE_WOOL);
-        ring(w, cx, cy + 1, cz, 4, Material.OAK_FENCE);
-        arch(w, cx, cy, cz, pillar, Material.RED_STAINED_GLASS);
+        openArch(w, cx, cy, cz, pillar, Material.RED_STAINED_GLASS);
         w.getBlockAt(cx, cy + 1, cz).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+    }
+
+    private static void clearZone(World w, int cx, int cy, int cz, int radius) {
+        for (int x = cx - radius; x <= cx + radius; x++) {
+            for (int z = cz - radius; z <= cz + radius; z++) {
+                for (int y = cy + 1; y <= cy + 5; y++) {
+                    Material type = w.getBlockAt(x, y, z).getType();
+                    if (type.name().contains("FENCE") || type.name().contains("WALL") || type.name().contains("GLASS") || type == Material.IRON_BARS || type == Material.HAY_BLOCK || type == Material.SPRUCE_TRAPDOOR) {
+                        w.getBlockAt(x, y, z).setType(Material.AIR, false);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void openArch(World w, int cx, int cy, int cz, Material pillar, Material glass) {
+        for (int y = cy + 1; y <= cy + 4; y++) {
+            w.getBlockAt(cx - 4, y, cz).setType(pillar, false);
+            w.getBlockAt(cx + 4, y, cz).setType(pillar, false);
+        }
+        for (int x = cx - 4; x <= cx + 4; x++) {
+            if (Math.abs(x - cx) <= 1) continue;
+            w.getBlockAt(x, cy + 4, cz).setType(glass, false);
+        }
+        w.getBlockAt(cx, cy + 5, cz).setType(Material.SEA_LANTERN, false);
     }
 
     private static void decorativeColumn(World w, int x, int y, int z) {
@@ -260,26 +270,6 @@ public final class GeneratedGameplayEnhancer {
     private static void support(World w, int x, int fromY, int toY, int z, Material material) {
         if (toY < fromY) return;
         for (int y = fromY; y <= toY; y++) w.getBlockAt(x, y, z).setType(material, false);
-    }
-
-    private static void arch(World w, int cx, int cy, int cz, Material pillar, Material glass) {
-        for (int y = cy + 1; y <= cy + 4; y++) {
-            w.getBlockAt(cx - 4, y, cz).setType(pillar, false);
-            w.getBlockAt(cx + 4, y, cz).setType(pillar, false);
-        }
-        for (int x = cx - 4; x <= cx + 4; x++) w.getBlockAt(x, cy + 4, cz).setType(glass, false);
-        w.getBlockAt(cx, cy + 5, cz).setType(Material.SEA_LANTERN, false);
-    }
-
-    private static void ring(World w, int cx, int cy, int cz, int radius, Material material) {
-        for (int x = cx - radius; x <= cx + radius; x++) {
-            w.getBlockAt(x, cy, cz - radius).setType(material, false);
-            w.getBlockAt(x, cy, cz + radius).setType(material, false);
-        }
-        for (int z = cz - radius; z <= cz + radius; z++) {
-            w.getBlockAt(cx - radius, cy, z).setType(material, false);
-            w.getBlockAt(cx + radius, cy, z).setType(material, false);
-        }
     }
 
     private static void platform(World w, int cx, int cy, int cz, int radius, Material material) {
