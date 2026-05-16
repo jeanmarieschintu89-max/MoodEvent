@@ -129,9 +129,10 @@ public class EventAdminGUIListener implements Listener {
             case 29 -> { click(player); EventLootGUI.open(player); }
             case 33 -> {
                 no(player);
-                GeneratedGameManager.restore(player);
-                SquidPackManager.restore(player);
-                EventLogManager.log(player, "Restauration", "Structures générées restaurées depuis le menu");
+                if (WaitingRoomManager.hasRoom()) WaitingRoomManager.restore(player);
+                if (GeneratedGameManager.hasStructure()) GeneratedGameManager.restore(player);
+                if (SquidPackManager.hasPack()) SquidPackManager.restore(player);
+                EventLogManager.log(player, "Restauration", "Zone d'attente et structures restaurées depuis le menu");
                 MiniGameGeneratorGUI.openMain(player);
             }
             case 49 -> { click(player); EventAdminGUI.open(player); }
