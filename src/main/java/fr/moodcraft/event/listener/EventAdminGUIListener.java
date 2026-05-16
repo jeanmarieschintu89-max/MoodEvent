@@ -41,7 +41,7 @@ public class EventAdminGUIListener implements Listener {
         if (title.equals("generateur de mini jeux")) { handleGeneratorMainClick(event, player); return; }
         if (title.equals("style salle attente")) { handleGeneratorStyleClick(event, player); return; }
         if (title.equals("taille pack event")) { handleGeneratorSizeClick(event, player); return; }
-        if (title.equals("confirmation mini jeu")) { handleGeneratorConfirmClick(event, player); return; }
+        if (title.equals("confirmation pack event")) { handleGeneratorConfirmClick(event, player); return; }
         if (title.equals("loot mini jeux")) { handleLootClick(event, player); }
     }
 
@@ -183,7 +183,7 @@ public class EventAdminGUIListener implements Listener {
         if (pending == null) { MiniGameGeneratorGUI.openMain(player); return; }
 
         switch (slot) {
-            case 11 -> {
+            case 10 -> {
                 click(player);
                 if (pending.isCustom()) GeneratedGameManager.generateCustom(player, pending.type(), pending.customValue());
                 else EventPackManager.generatePack(player, pending.type(), pending.size());
@@ -191,7 +191,15 @@ public class EventAdminGUIListener implements Listener {
                 MiniGameGeneratorGUI.clearPending(player);
                 MiniGameGeneratorGUI.openMain(player);
             }
-            case 15 -> { no(player); MiniGameGeneratorGUI.clearPending(player); MiniGameGeneratorGUI.openMain(player); }
+            case 16 -> {
+                click(player);
+                MiniGameGeneratorGUI.openSize(player, pending.type());
+            }
+            case 22 -> {
+                no(player);
+                MiniGameGeneratorGUI.clearPending(player);
+                MiniGameGeneratorGUI.openMain(player);
+            }
             default -> { }
         }
     }
