@@ -34,18 +34,33 @@ public final class GeneratedMazeBuilder {
         int maxZ = cz + half;
 
         boolean[][] open = generateMaze(width);
+        open[1][1] = true;
+        open[2][1] = true;
+        open[3][1] = true;
+        open[width - 2][width - 2] = true;
+        open[width - 3][width - 2] = true;
+        open[width - 4][width - 2] = true;
 
         buildOuterShell(world, minX, maxX, cy, minZ, maxZ);
         buildMazeBlocks(world, minX, cy, minZ, width, open);
         decorate(world, minX, maxX, cy, minZ, maxZ);
 
-        Location start = new Location(world, minX + 1.5, cy + 1, minZ + 1.5, -45f, 0f);
-        Location finish = new Location(world, maxX - 1.5, cy + 1, maxZ - 1.5, 135f, 0f);
+        int startX = minX - 5;
+        int startZ = minZ + 1;
+        int entryX = minX + 1;
+        int entryZ = minZ + 1;
+        int finishX = maxX + 5;
+        int finishZ = maxZ - 1;
+        int exitX = maxX - 1;
+        int exitZ = maxZ - 1;
 
-        clearRoom(world, start.getBlockX(), cy, start.getBlockZ(), Material.LIME_CONCRETE);
-        clearRoom(world, finish.getBlockX(), cy, finish.getBlockZ(), Material.RED_CONCRETE);
-        gate(world, start.getBlockX(), cy, start.getBlockZ(), Material.LIME_CONCRETE, Material.EMERALD_BLOCK);
-        gate(world, finish.getBlockX(), cy, finish.getBlockZ(), Material.RED_CONCRETE, Material.REDSTONE_BLOCK);
+        buildClosedSas(world, startX, entryX, cy, startZ, true);
+        buildClosedSas(world, exitX, finishX, cy, finishZ, false);
+        openMazeDoor(world, minX - 2, cy, entryZ);
+        openMazeDoor(world, maxX + 2, cy, exitZ);
+
+        Location start = new Location(world, startX + 0.5, cy + 1, startZ + 0.5, 90f, 0f);
+        Location finish = new Location(world, finishX + 0.5, cy + 1, finishZ + 0.5, -90f, 0f);
 
         placeLoot(world, LootTier.COMMUN, cx, cy + 1, minZ + Math.max(4, width / 4));
         placeLoot(world, LootTier.RARE, minX + Math.max(4, width / 3), cy + 1, cz);
@@ -131,24 +146,49 @@ public final class GeneratedMazeBuilder {
         }
     }
 
-    private static void clearRoom(World world, int cx, int cy, int cz, Material floor) {
-        for (int x = cx - 2; x <= cx + 2; x++) {
-            for (int z = cz - 2; z <= cz + 2; z++) {
+    private static void buildClosedSas(World world, int minX, int maxX, int cy, int centerZ, boolean start) {
+        Material floor = start ? Material.LIME_CONCRETE : Material.RED_CONCRETE;
+        Material wall = start ? Material.GREEN_CONCRETE : Material.RED_CONCRETE;
+        Material glass = start ? Material.LIME_STAINED_GLASS : Material.RED_STAINED_GLASS;
+        Material pillar = start ? Material.EMERALD_BLOCK : Material.REDSTONE_BLOCK;
+
+        int fromX = Math.min(minX, maxX);
+        int toX = Math.max(minX, maxX);
+        int minZ = centerZ - 3;
+        int maxZ = centerZ + 3;
+
+        for (int x = fromX; x <= toX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                world.getBlockAt(x, cy - 1, z).setType(Material.DEEPSLATE_TILES, false);
                 world.getBlockAt(x, cy, z).setType(floor, false);
-                for (int y = cy + 1; y <= cy + WALL_HEIGHT + 1; y++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
+                for (int y = cy + 1; y <= cy + WALL_HEIGHT; y++) {
+                    boolean side = z == minZ || z == maxZ;
+                    boolean end = x == fromX || x == toX;
+                    boolean door = z >= centerZ - 1 && z <= centerZ + 1 && y <= cy + 3;
+                    if (side) world.getBlockAt(x, y, z).setType(wall, false);
+                    else if (end && !door) world.getBlockAt(x, y, z).setType(wall, false);
+                    else world.getBlockAt(x, y, z).setType(Material.AIR, false);
+                }
+                world.getBlockAt(x, cy + WALL_HEIGHT + 1, z).setType(glass, false);
             }
         }
+
+        for (int y = cy + 1; y <= cy + WALL_HEIGHT; y++) {
+            world.getBlockAt(fromX, y, minZ).setType(pillar, false);
+            world.getBlockAt(fromX, y, maxZ).setType(pillar, false);
+            world.getBlockAt(toX, y, minZ).setType(pillar, false);
+            world.getBlockAt(toX, y, maxZ).setType(pillar, false);
+        }
+        world.getBlockAt(start ? fromX + 1 : toX - 1, cy + WALL_HEIGHT, centerZ).setType(Material.SEA_LANTERN, false);
     }
 
-    private static void gate(World world, int cx, int cy, int cz, Material floor, Material pillar) {
-        for (int x = cx - 2; x <= cx + 2; x++) for (int z = cz - 2; z <= cz + 2; z++) world.getBlockAt(x, cy, z).setType(floor, false);
-        for (int y = cy + 1; y <= cy + 5; y++) {
-            world.getBlockAt(cx - 2, y, cz - 2).setType(pillar, false);
-            world.getBlockAt(cx + 2, y, cz - 2).setType(pillar, false);
-            world.getBlockAt(cx - 2, y, cz + 2).setType(pillar, false);
-            world.getBlockAt(cx + 2, y, cz + 2).setType(pillar, false);
+    private static void openMazeDoor(World world, int wallX, int cy, int centerZ) {
+        for (int z = centerZ - 1; z <= centerZ + 1; z++) {
+            for (int y = cy + 1; y <= cy + 3; y++) {
+                world.getBlockAt(wallX, y, z).setType(Material.AIR, false);
+            }
+            world.getBlockAt(wallX, cy, z).setType(Material.POLISHED_ANDESITE, false);
         }
-        world.getBlockAt(cx, cy + 5, cz).setType(Material.SEA_LANTERN, false);
     }
 
     private static void placeLoot(World world, LootTier tier, int x, int y, int z) {
