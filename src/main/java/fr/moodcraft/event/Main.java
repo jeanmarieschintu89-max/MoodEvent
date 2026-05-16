@@ -2,6 +2,7 @@ package fr.moodcraft.event;
 
 import fr.moodcraft.event.command.EventAdminCommand;
 import fr.moodcraft.event.command.EventCommand;
+import fr.moodcraft.event.generator.GeneratedArenaShellTask;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameplayEnhancer;
 import fr.moodcraft.event.generator.GeneratedOpenPathTask;
@@ -53,6 +54,7 @@ public class Main extends JavaPlugin {
         EventSecurityManager.load();
         GeneratedGameplayEnhancer.start();
         GeneratedOpenPathTask.start();
+        GeneratedArenaShellTask.start();
         EventReturnSafety.start();
         SurvivalFloorLagGuard.start();
 
