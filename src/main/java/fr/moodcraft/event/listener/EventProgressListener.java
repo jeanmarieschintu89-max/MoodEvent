@@ -1,5 +1,6 @@
 package fr.moodcraft.event.listener;
 
+import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.manager.EventLaunchBufferManager;
 import fr.moodcraft.event.manager.EventManager;
 import org.bukkit.Location;
@@ -22,6 +23,16 @@ public class EventProgressListener implements Listener {
                 event.setTo(locked.clone());
                 player.sendActionBar("§6✦ §fDépart imminent");
             }
+            return;
+        }
+
+        if (EventManager.isAtFinish(player)) {
+            EventManager.finishPlayer(player);
+            return;
+        }
+
+        if (GeneratedGameManager.isWaterJumpFall(player)) {
+            EventManager.resetPlayerToStart(player);
             return;
         }
 
