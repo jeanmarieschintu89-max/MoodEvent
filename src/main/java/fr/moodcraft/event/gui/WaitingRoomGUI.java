@@ -25,12 +25,12 @@ public final class WaitingRoomGUI {
                 Material.ENDER_EYE,
                 "§6✦ §fSalle d'attente §6✦",
                 MoodStyle.detail("État : " + (WaitingRoomManager.hasRoom() ? "§agénérée" : "§cnon générée")),
-                MoodStyle.detail("Style choisi : §e" + selectedStyle),
+                MoodStyle.detail("Style unique : §e" + selectedStyle),
                 MoodStyle.detail("Zone temporaire restaurable"),
                 MoodStyle.detail("File fermée → salle"),
                 MoodStyle.detail("Arrivée → salle"),
                 "",
-                MoodStyle.info("Choisis un style puis une taille")
+                MoodStyle.info("Choisis une taille")
         )));
 
         addSize(inv, 10, Material.OAK_DOOR, "Mini", "7x7", "3 à 8 joueurs");
@@ -40,12 +40,15 @@ public final class WaitingRoomGUI {
         addSize(inv, 28, Material.COPPER_DOOR, "Très grande", "19x19", "40 à 70 joueurs");
         addSize(inv, 30, Material.WARPED_DOOR, "Festival", "23x23", "70 joueurs et plus");
 
-        addStyle(inv, 19, Material.DEEPSLATE_TILES, "Sombre", "Bois sombre, vitres, lanternes", "sombre", selectedStyle);
-        addStyle(inv, 20, Material.QUARTZ_BLOCK, "Lumineux", "Quartz, lumière claire", "lumineux", selectedStyle);
-        addStyle(inv, 21, Material.YELLOW_CONCRETE, "Joyeux", "Couleurs vives, ambiance fête", "joyeux", selectedStyle);
-        addStyle(inv, 23, Material.PURPUR_BLOCK, "Royal", "Améthyste, or, prestige", "royal", selectedStyle);
-        addStyle(inv, 24, Material.MOSS_BLOCK, "Nature", "Bois, mousse, feuillage", "nature", selectedStyle);
-        addStyle(inv, 25, Material.SNOW_BLOCK, "Neige", "Glace, neige, calme", "neige", selectedStyle);
+        inv.setItem(22, EventItem.glow(EventItem.item(
+                Material.DEEPSLATE_TILES,
+                "§6✦ §fStyle unique §6✦",
+                MoodStyle.detail("Actuel : §e" + selectedStyle),
+                MoodStyle.detail("Les thèmes multiples sont retirés."),
+                MoodStyle.detail("Moins de conflits entre les jeux."),
+                "",
+                MoodStyle.success("Stable")
+        )));
 
         inv.setItem(33, EventItem.item(
                 Material.ENDER_PEARL,
@@ -79,28 +82,9 @@ public final class WaitingRoomGUI {
                 "§6✦ §f" + name + " §6✦",
                 MoodStyle.detail("Taille : §e" + size),
                 MoodStyle.detail("Capacité : §e" + capacity),
-                MoodStyle.detail("Style choisi appliqué à la salle"),
+                MoodStyle.detail("Style unique MoodCraft"),
                 "",
                 WaitingRoomManager.hasRoom() ? MoodStyle.error("Restaure d'abord l'ancienne salle") : MoodStyle.success("Générer ici")
-        ));
-    }
-
-    private static void addStyle(Inventory inv, int slot, Material material, String name, String detail, String key, String selectedStyle) {
-        boolean selected = name.equalsIgnoreCase(selectedStyle);
-        inv.setItem(slot, selected ? EventItem.glow(EventItem.item(
-                material,
-                "§6✦ §f" + name + " §6✦",
-                MoodStyle.detail(detail),
-                MoodStyle.detail("État : §asélectionné"),
-                "",
-                MoodStyle.success("Actif")
-        )) : EventItem.item(
-                material,
-                "§6✦ §f" + name + " §6✦",
-                MoodStyle.detail(detail),
-                MoodStyle.detail("État : §7non sélectionné"),
-                "",
-                MoodStyle.info("Choisir")
         ));
     }
 
