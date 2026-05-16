@@ -3,7 +3,7 @@ package fr.moodcraft.event.listener;
 import fr.moodcraft.event.Main;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.manager.EventManager;
-import fr.moodcraft.event.manager.WaitingRoomManager;
+import fr.moodcraft.event.manager.GoldRushClosure;
 import fr.moodcraft.event.model.EventType;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Bukkit;
@@ -73,7 +73,7 @@ public class GoldRushTask implements Listener {
             cleanupAllOnlinePickaxes();
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!EventManager.isEventPlayer(player)) continue;
-                player.sendActionBar("§6⛏ §fRuée vers l'or terminée §8• §7Clôture automatique");
+                player.sendActionBar("§6⛏ §fRuée vers l'or terminée §8• §7Retour imminent");
             }
             return;
         }
@@ -103,19 +103,22 @@ public class GoldRushTask implements Listener {
             if (!EventManager.isParticipant(player)) continue;
             givePickaxe(player);
             equipped.add(player.getUniqueId());
-            player.sendTitle("§6Ruée vers l'or", "§fMine un maximum de minerais", 0, 45, 10);
+            player.sendTitle("§6§lRUÉE VERS L'OR", "§fMine vite, garde tout !", 0, 45, 10);
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.2f);
             MoodStyle.send(
                     player,
                     MoodStyle.MODULE,
-                    MoodStyle.info("Ruée vers l'or lancée."),
-                    MoodStyle.detail("Objectif : mine un maximum de minerais avant la fin du temps.")
+                    MoodStyle.hype("Ruée vers l'or lancée !"),
+                    MoodStyle.detail("Objectif : mine un maximum de minerais avant la fin."),
+                    MoodStyle.detail("Tout ce que tu récoltes reste à toi."),
+                    MoodStyle.detail("La pioche événement disparaît à la fin.")
             );
         }
         Bukkit.broadcastMessage("");
         Bukkit.broadcastMessage(MoodStyle.header(MoodStyle.MODULE));
-        Bukkit.broadcastMessage(MoodStyle.info("Ruée vers l'or lancée."));
-        Bukkit.broadcastMessage(MoodStyle.detail("Objectif : mine un maximum de minerais avant la fin du temps."));
+        Bukkit.broadcastMessage(MoodStyle.hype("Ruée vers l'or lancée !"));
+        Bukkit.broadcastMessage(MoodStyle.detail("Mine le plus possible avant la fin du chrono."));
+        Bukkit.broadcastMessage(MoodStyle.detail("Tape §e/event §fpour le prochain show."));
         Bukkit.broadcastMessage(MoodStyle.FRAME);
     }
 
@@ -128,34 +131,23 @@ public class GoldRushTask implements Listener {
     }
 
     private void finishRound() {
-        int sent = 0;
         Player closer = null;
         roundActive = false;
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!EventManager.isParticipant(player)) continue;
             if (closer == null) closer = player;
             removeEventPickaxes(player);
-            WaitingRoomManager.teleport(player);
-            player.sendTitle("§6Fin", "§fMinerais conservés", 0, 45, 10);
+            player.sendTitle("§6§lFIN DE MANCHE", "§fMinerais conservés", 0, 45, 10);
             player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
-            MoodStyle.successMessage(
+            MoodStyle.send(
                     player,
                     MoodStyle.MODULE,
-                    "Ruée vers l'or terminée.",
-                    MoodStyle.detail("Vous gardez les minerais récoltés."),
-                    MoodStyle.detail("Retour en salle d'attente."),
-                    MoodStyle.detail("Clôture automatique en cours.")
+                    MoodStyle.hype("Ruée vers l'or terminée !"),
+                    MoodStyle.detail("Tu gardes les minerais récoltés."),
+                    MoodStyle.detail("Retour à ta position d'avant événement."),
+                    MoodStyle.detail("La mine se restaure automatiquement.")
             );
-            sent++;
         }
-
-        Bukkit.broadcastMessage("");
-        Bukkit.broadcastMessage(MoodStyle.header(MoodStyle.MODULE));
-        Bukkit.broadcastMessage(MoodStyle.success("Ruée vers l'or terminée."));
-        Bukkit.broadcastMessage(MoodStyle.detail("Joueurs envoyés en salle : §e" + sent));
-        Bukkit.broadcastMessage(MoodStyle.detail("Aucune récompense ajoutée : les minerais sont le gain."));
-        Bukkit.broadcastMessage(MoodStyle.info("Clôture automatique dans §e3 secondes"));
-        Bukkit.broadcastMessage(MoodStyle.FRAME);
 
         active = false;
         finishedAwaitingStop = true;
@@ -172,7 +164,7 @@ public class GoldRushTask implements Listener {
             cleanupAllOnlinePickaxes();
             if (!EventManager.isRunning() || EventManager.getType() != EventType.RUEE_OR) return;
             Player actor = closer != null && closer.isOnline() ? closer : findEventPlayer();
-            if (actor != null) EventManager.cancelEvent(actor);
+            if (actor != null) GoldRushClosure.close(actor);
             cleanupAllOnlinePickaxes();
         }, 60L);
     }
