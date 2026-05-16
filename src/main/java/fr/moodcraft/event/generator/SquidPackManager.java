@@ -103,6 +103,7 @@ public final class SquidPackManager {
         buildRedGreen(world, cx, cy, cz);
         SquidMoodDecorBuilder.buildReturnSas(world, cx, cy, cz);
         buildGlassBridge(world, cx, cy, cz);
+        SquidSetPolishBuilder.polish(world, cx, cy, cz);
 
         Location start = new Location(world, cx - 52 + 0.5, cy + 1, cz + 0.5, 90f, 0f);
         Location bridge = new Location(world, cx - 4 + 0.5, cy + 2, cz + 11.5, 90f, 0f);
@@ -150,8 +151,8 @@ public final class SquidPackManager {
         player.teleport(origin);
 
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack " + GAME_NAME + " généré.", MoodStyle.detail("Dortoir utilisé comme zone d'attente."), MoodStyle.detail("Aucune salle d'attente classique générée."), MoodStyle.detail("Épreuves : Feu Rouge puis Pont de Verre."), MoodStyle.info("Ouvre la file avec §e/eventouvrir"));
-        EventLogManager.log(player, "Pack " + GAME_NAME, "Pack spécial généré avec dortoir comme attente");
+        MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack " + GAME_NAME + " généré.", MoodStyle.detail("Dortoir utilisé comme zone d'attente."), MoodStyle.detail("Aucune salle d'attente classique générée."), MoodStyle.detail("Décor Squid complet appliqué."), MoodStyle.info("Ouvre la file avec §e/eventouvrir"));
+        EventLogManager.log(player, "Pack " + GAME_NAME, "Pack spécial généré avec décor Squid complet");
     }
 
     public static void restore(Player player) {
