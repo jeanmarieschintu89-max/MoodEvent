@@ -158,25 +158,21 @@ public final class SquidPackManager {
         config.set("glass.z-left", cz + BRIDGE_LEFT_Z);
         config.set("glass.z-right", cz + BRIDGE_RIGHT_Z);
         config.set("glass.safe", null);
-        for (int i = 0; i < GLASS_STEPS; i++) {
-            config.set("glass.safe." + i, RANDOM.nextBoolean() ? "LEFT" : "RIGHT");
-        }
+        for (int i = 0; i < GLASS_STEPS; i++) config.set("glass.safe." + i, RANDOM.nextBoolean() ? "LEFT" : "RIGHT");
         config.set("players", null);
         save();
 
-        EventManager.createEvent(player, GAME_NAME);
-        EventManager.setDescription(player, "Une suite d'épreuves show : dortoir, Feu Rouge / Feu Vert et Pont de Verre.");
-        EventManager.setType(player, "custom");
+        EventManager.createEvent(null, GAME_NAME);
+        EventManager.setDescription(null, "Une suite d'épreuves show : dortoir, Feu Rouge / Feu Vert et Pont de Verre.");
+        EventManager.setType(null, "custom");
         player.teleport(start);
-        EventManager.setLocation(player);
+        EventManager.setLocation(null);
         player.teleport(origin);
 
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
         sendSquidMessage(player,
                 "§a▶ §fPack §e" + GAME_NAME + " §fgénéré.",
-                "§b◆ §fDortoir fermé : §dzone d'attente officielle.",
-                "§b◆ §fSas, arène et pont séparés : §aaucun chevauchement.",
-                "§e★ §fConstruction : §6un seul builder premium.",
+                "§b◆ §fDortoir fermé, sas, arène et pont séparés.",
                 "§d➜ §fOuvre la file avec §e/eventouvrir§f."
         );
         EventLogManager.log(player, "Pack " + GAME_NAME, "Pack premium single builder généré");
@@ -209,10 +205,7 @@ public final class SquidPackManager {
         config.set("players", null);
         config.set("backup", null);
         save();
-        if (player != null) sendSquidMessage(player,
-                "§a▶ §fPack §e" + GAME_NAME + " §frestauré.",
-                "§b◆ §fBlocs restaurés : §e" + restored
-        );
+        if (player != null) sendSquidMessage(player, "§a▶ §fPack §e" + GAME_NAME + " §frestauré.", "§b◆ §fBlocs restaurés : §e" + restored);
     }
 
     public static Location location(String path) {
