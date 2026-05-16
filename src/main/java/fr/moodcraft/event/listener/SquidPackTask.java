@@ -23,7 +23,6 @@ public class SquidPackTask implements Listener {
 
     private static final int RED_REACTION_SECONDS = 1;
     private static final int DORMITORY_DELAY_SECONDS = 10;
-    private static final int PRIZE_PER_ELIMINATION = 2500;
 
     private int tick;
     private int redReaction;
@@ -155,7 +154,7 @@ public class SquidPackTask implements Listener {
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.9f, 1.25f);
         player.sendMessage("§8----- §e§l★ QUALIFICATION ★ §8-----");
         player.sendMessage("§a✔ §fTu es qualifié pour le §bPont de Verre§f.");
-        player.sendMessage("§d⌂ §fRetour au dortoir : annonce de la cagnotte.");
+        player.sendMessage("§d⌂ §fRetour au dortoir : briefing du prochain jeu.");
         player.sendMessage("§8-----------------------------");
     }
 
@@ -169,7 +168,7 @@ public class SquidPackTask implements Listener {
             player.sendTitle("§d§lDORTOIR", "§fProchaine épreuve dans " + DORMITORY_DELAY_SECONDS + "s", 0, 60, 10);
             player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.25f);
         }
-        SquidGameCinematic.announcePrize("§eFin de l'épreuve 1", "§fLa cagnotte monte. Prochaine épreuve : §bPont de Verre§f.", eliminated.size(), PRIZE_PER_ELIMINATION);
+        SquidGameCinematic.announcePrize("§eFin de l'épreuve 1", "§fLes survivants avancent. Prochaine scène : §bPont de Verre§f.", eliminated.size(), 0);
     }
 
     private void dormitoryBeforeBridgeTick() {
@@ -262,11 +261,10 @@ public class SquidPackTask implements Listener {
         finished = true;
         SquidPackManager.setStage("FINISHED");
         String winnerName = winner.getName();
-        int prize = Math.max(PRIZE_PER_ELIMINATION, eliminated.size() * PRIZE_PER_ELIMINATION);
-        winner.sendTitle("§6§lVICTOIRE !", "§fCagnotte : §a" + prize + "€", 0, 60, 15);
+        winner.sendTitle("§6§lVICTOIRE !", "§fDernier survivant", 0, 60, 15);
         winner.playSound(winner.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.1f);
         EventManager.stopEvent(winner);
-        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> SquidGameCinematic.flashyBroadcast("§6§lVICTOIRE SQUID MOOD GAME", "§e" + winnerName + " §fremporte la partie et une cagnotte de §a" + prize + "€ §8• §a/event §fpour le prochain show !"), 20L);
+        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> SquidGameCinematic.flashyBroadcast("§6§lVICTOIRE SQUID MOOD GAME", "§e" + winnerName + " §fremporte le show. §a/event §fpour le prochain défi !"), 20L);
     }
 
     private void finishWithoutWinner(String reason) {
