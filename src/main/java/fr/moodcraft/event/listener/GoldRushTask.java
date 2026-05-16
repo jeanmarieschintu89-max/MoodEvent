@@ -23,7 +23,9 @@ import java.util.UUID;
 
 public class GoldRushTask implements Listener {
 
-    private static final String PICKAXE_NAME = "§6✦ §fPioche Ruée vers l'or §6✦";
+    public static final String PICKAXE_NAME = "§6✦ §fPioche Ruée vers l'or §6✦";
+
+    private static boolean roundActive;
 
     private boolean active;
     private boolean finishedAwaitingStop;
@@ -40,17 +42,35 @@ public class GoldRushTask implements Listener {
         }.runTaskTimer(Main.getInstance(), 20L, 20L);
     }
 
+    public static boolean isRoundActive() {
+        return roundActive;
+    }
+
+    public static void removeEventPickaxes(Player player) {
+        if (player == null) return;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item == null || item.getType() != Material.DIAMOND_PICKAXE) continue;
+            ItemMeta meta = item.getItemMeta();
+            if (meta == null || !PICKAXE_NAME.equals(meta.getDisplayName())) continue;
+            item.setAmount(0);
+        }
+    }
+
     private void tick() {
         if (!EventManager.isRunning() || EventManager.getType() != EventType.RUEE_OR) {
             active = false;
             finishedAwaitingStop = false;
             autoCloseScheduled = false;
+            roundActive = false;
             remaining = 0;
             equipped.clear();
+            cleanupAllOnlinePickaxes();
             return;
         }
 
         if (finishedAwaitingStop) {
+            roundActive = false;
+            cleanupAllOnlinePickaxes();
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!EventManager.isEventPlayer(player)) continue;
                 player.sendActionBar("§6⛏ §fRuée vers l'or terminée §8• §7Clôture automatique");
@@ -61,6 +81,7 @@ public class GoldRushTask implements Listener {
         if (!active) {
             active = true;
             autoCloseScheduled = false;
+            roundActive = true;
             remaining = Math.max(30, GeneratedGameManager.getGoldRushDurationSeconds());
             startRound();
             return;
@@ -88,19 +109,13 @@ public class GoldRushTask implements Listener {
                     player,
                     MoodStyle.MODULE,
                     MoodStyle.info("Ruée vers l'or lancée."),
-                    MoodStyle.detail("Objectif : mine un maximum de minerais."),
-                    MoodStyle.detail("Temps : §e" + remaining + " secondes"),
-                    MoodStyle.detail("C'est le moment d'en profiter."),
-                    MoodStyle.detail("Tu gardes les minerais récoltés."),
-                    MoodStyle.detail("La pioche event sera reprise à la fin.")
+                    MoodStyle.detail("Objectif : mine un maximum de minerais avant la fin du temps.")
             );
         }
         Bukkit.broadcastMessage("");
         Bukkit.broadcastMessage(MoodStyle.header(MoodStyle.MODULE));
         Bukkit.broadcastMessage(MoodStyle.info("Ruée vers l'or lancée."));
-        Bukkit.broadcastMessage(MoodStyle.detail("Durée : §e" + remaining + " secondes"));
-        Bukkit.broadcastMessage(MoodStyle.detail("Mine un maximum de minerais : c'est le moment d'en profiter."));
-        Bukkit.broadcastMessage(MoodStyle.detail("Les minerais minés sont la récompense."));
+        Bukkit.broadcastMessage(MoodStyle.detail("Objectif : mine un maximum de minerais avant la fin du temps."));
         Bukkit.broadcastMessage(MoodStyle.FRAME);
     }
 
@@ -115,10 +130,11 @@ public class GoldRushTask implements Listener {
     private void finishRound() {
         int sent = 0;
         Player closer = null;
+        roundActive = false;
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!EventManager.isParticipant(player)) continue;
             if (closer == null) closer = player;
-            removePickaxes(player);
+            removeEventPickaxes(player);
             WaitingRoomManager.teleport(player);
             player.sendTitle("§6Fin", "§fMinerais conservés", 0, 45, 10);
             player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
@@ -127,7 +143,6 @@ public class GoldRushTask implements Listener {
                     MoodStyle.MODULE,
                     "Ruée vers l'or terminée.",
                     MoodStyle.detail("Vous gardez les minerais récoltés."),
-                    MoodStyle.detail("Pioche événement reprise."),
                     MoodStyle.detail("Retour en salle d'attente."),
                     MoodStyle.detail("Clôture automatique en cours.")
             );
@@ -146,6 +161,7 @@ public class GoldRushTask implements Listener {
         finishedAwaitingStop = true;
         remaining = 0;
         equipped.clear();
+        cleanupAllOnlinePickaxes();
         scheduleAutoClose(closer);
     }
 
@@ -153,9 +169,11 @@ public class GoldRushTask implements Listener {
         if (autoCloseScheduled) return;
         autoCloseScheduled = true;
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
+            cleanupAllOnlinePickaxes();
             if (!EventManager.isRunning() || EventManager.getType() != EventType.RUEE_OR) return;
             Player actor = closer != null && closer.isOnline() ? closer : findEventPlayer();
             if (actor != null) EventManager.cancelEvent(actor);
+            cleanupAllOnlinePickaxes();
         }, 60L);
     }
 
@@ -167,8 +185,14 @@ public class GoldRushTask implements Listener {
         return null;
     }
 
+    private void cleanupAllOnlinePickaxes() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            removeEventPickaxes(player);
+        }
+    }
+
     private void givePickaxe(Player player) {
-        removePickaxes(player);
+        removeEventPickaxes(player);
         player.getInventory().addItem(createPickaxe());
     }
 
@@ -183,14 +207,5 @@ public class GoldRushTask implements Listener {
             pickaxe.setItemMeta(meta);
         }
         return pickaxe;
-    }
-
-    private void removePickaxes(Player player) {
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item == null || item.getType() != Material.DIAMOND_PICKAXE) continue;
-            ItemMeta meta = item.getItemMeta();
-            if (meta == null || !PICKAXE_NAME.equals(meta.getDisplayName())) continue;
-            item.setAmount(0);
-        }
     }
 }
