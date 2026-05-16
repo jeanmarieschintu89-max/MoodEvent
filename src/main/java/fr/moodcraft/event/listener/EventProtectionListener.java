@@ -38,7 +38,7 @@ public class EventProtectionListener implements Listener {
         ItemStack item = event.getItem();
         if (item == null || item.getType() != Material.ENDER_PEARL) return;
         event.setCancelled(true);
-        MoodStyle.errorMessage(player, MoodStyle.MODULE, "Ender Pearl interdite pendant l'événement.", MoodStyle.detail("Les parcours et la salle d'attente doivent rester équitables."));
+        MoodStyle.errorMessage(player, MoodStyle.MODULE, "Ender Pearl interdite pendant l'événement.", MoodStyle.detail("La salle d'attente et les épreuves doivent rester équitables."));
     }
 
     @EventHandler
@@ -49,7 +49,7 @@ public class EventProtectionListener implements Listener {
         if (!EventManager.isEventPlayer(victim) && !EventManager.isEventPlayer(damager)) return;
         if (!EventManager.isNonPvpEventRunning()) return;
         event.setCancelled(true);
-        MoodStyle.errorMessage(damager, MoodStyle.MODULE, "PvP désactivé pendant cet événement.", MoodStyle.detail("Seul le mode §cCombat PvP §7autorise les dégâts entre joueurs."));
+        MoodStyle.errorMessage(damager, MoodStyle.MODULE, "PvP désactivé pendant cet événement.", MoodStyle.detail("MoodEvent garde uniquement Mine en folie et Tour Infernale."));
     }
 
     @EventHandler
