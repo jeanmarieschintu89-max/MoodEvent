@@ -5,9 +5,9 @@ import org.bukkit.Material;
 public enum GeneratedGameSize {
 
     PETIT("Petit", Material.LIME_CONCRETE, 17, 12, 50, 30, 13, 4),
-    MOYEN("Moyen", Material.GOLD_BLOCK, 29, 24, 100, 60, 15, 6),
-    GRAND("Grand", Material.ORANGE_CONCRETE, 41, 36, 200, 100, 17, 8),
-    GEANT("Géant", Material.REDSTONE_BLOCK, 57, 52, 400, 150, 19, 10);
+    MOYEN("Moyen", Material.GOLD_BLOCK, 25, 20, 80, 50, 15, 5),
+    GRAND("Grand", Material.ORANGE_CONCRETE, 33, 28, 140, 80, 17, 6),
+    GEANT("Géant", Material.REDSTONE_BLOCK, 41, 36, 220, 110, 19, 7);
 
     private final String displayName;
     private final Material icon;
@@ -41,27 +41,27 @@ public enum GeneratedGameSize {
     public int getGoldRushWidth() {
         return switch (this) {
             case PETIT -> 15;
-            case MOYEN -> 23;
-            case GRAND -> 31;
-            case GEANT -> 41;
+            case MOYEN -> 21;
+            case GRAND -> 27;
+            case GEANT -> 31;
         };
     }
 
     public int getGoldRushHeight() {
         return switch (this) {
             case PETIT -> 9;
-            case MOYEN -> 11;
-            case GRAND -> 13;
-            case GEANT -> 15;
+            case MOYEN -> 10;
+            case GRAND -> 12;
+            case GEANT -> 13;
         };
     }
 
     public int getGoldRushDurationSeconds() {
         return switch (this) {
             case PETIT -> 60;
-            case MOYEN -> 120;
-            case GRAND -> 180;
-            case GEANT -> 240;
+            case MOYEN -> 100;
+            case GRAND -> 140;
+            case GEANT -> 180;
         };
     }
 
