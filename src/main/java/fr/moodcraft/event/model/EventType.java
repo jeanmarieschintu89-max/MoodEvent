@@ -3,11 +3,11 @@ package fr.moodcraft.event.model;
 public enum EventType {
 
     COURSE("§aCourse", "§a➜"),
-    JUMP("§eParcours Jump", "§e⬆"),
+    JUMP("§eTour Infernale", "§e⬆"),
     WATER_JUMP("§bWater Jump", "§b≈"),
     LABYRINTHE("§5Labyrinthe", "§5✦"),
     SURVIE_ETAGES("§dEffondrement", "§d▣"),
-    RUEE_OR("§6Ruée vers l'or", "§6⛏"),
+    RUEE_OR("§6Mine en folie", "§6⛏"),
     SPLEEF("§bSpleef", "§b❄"),
     KOTH("§6Roi de la Colline", "§6♛"),
     PVP("§cCombat PvP", "§c⚔"),
@@ -58,11 +58,11 @@ public enum EventType {
 
         return switch (clean) {
             case "course", "race", "running" -> COURSE;
-            case "jump", "parcours", "parkour", "parcours_jump", "saut" -> JUMP;
+            case "jump", "parcours", "parkour", "parcours_jump", "saut", "tour_infernale", "infernale" -> JUMP;
             case "waterjump", "water_jump", "water", "eau", "jump_eau", "saut_eau", "water_jumps" -> WATER_JUMP;
             case "labyrinthe", "maze", "labyrinth" -> LABYRINTHE;
             case "effondrement", "dernier_etage", "etage_final", "last_floor", "survie_etages", "survie_des_etages", "etages", "etage", "floor", "floors", "floor_survival" -> SURVIE_ETAGES;
-            case "ruee_or", "ruee_vers_lor", "ruee_vers_or", "or", "gold", "gold_rush", "mine", "minage", "mining" -> RUEE_OR;
+            case "mine_en_folie", "mine_folie", "ruee_or", "ruee_vers_lor", "ruee_vers_or", "or", "gold", "gold_rush", "mine", "minage", "mining" -> RUEE_OR;
             case "spleef" -> SPLEEF;
             case "koth", "roi_colline", "roi_de_la_colline", "king_of_the_hill" -> KOTH;
             case "pvp", "combat", "duel" -> PVP;
