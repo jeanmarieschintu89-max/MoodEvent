@@ -5,7 +5,6 @@ import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameSize;
 import fr.moodcraft.event.generator.GeneratedGameStyleManager;
 import fr.moodcraft.event.generator.GeneratedGameType;
-import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.gui.EventAdminGUI;
 import fr.moodcraft.event.gui.EventAdvancedGUI;
 import fr.moodcraft.event.gui.EventLootGUI;
@@ -123,19 +122,12 @@ public class EventAdminGUIListener implements Listener {
         switch (slot) {
             case 10 -> openSize(player, GeneratedGameType.SURVIE_ETAGES);
             case 12 -> openSize(player, GeneratedGameType.RUEE_OR);
-            case 25 -> {
-                click(player);
-                SquidPackManager.generate(player);
-                EventLogManager.log(player, SquidPackManager.GAME_NAME, "Pack spécial généré depuis le menu");
-                MiniGameGeneratorGUI.openMain(player);
-            }
             case 29 -> { click(player); EventLootGUI.open(player); }
             case 33 -> {
                 no(player);
                 if (WaitingRoomManager.hasRoom()) WaitingRoomManager.restore(player);
                 if (GeneratedGameManager.hasStructure()) GeneratedGameManager.restore(player);
-                if (SquidPackManager.hasPack()) SquidPackManager.restore(player);
-                EventLogManager.log(player, "Restauration", "Zone d'attente et structures restaurées depuis le menu");
+                EventLogManager.log(player, "Restauration", "Zone d'attente et structure restaurées depuis le menu");
                 MiniGameGeneratorGUI.openMain(player);
             }
             case 49 -> { click(player); EventAdminGUI.open(player); }
