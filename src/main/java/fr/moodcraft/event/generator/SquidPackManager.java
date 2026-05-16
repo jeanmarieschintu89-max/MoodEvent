@@ -21,7 +21,7 @@ import java.util.Random;
 
 public final class SquidPackManager {
 
-    public static final String GAME_NAME = "SquidMoodGame";
+    public static final String GAME_NAME = "SquidCraft";
 
     private static final Random RANDOM = new Random();
 
@@ -299,7 +299,7 @@ public final class SquidPackManager {
 
     private static void sendSquidMessage(Player player, String... lines) {
         if (player == null) return;
-        player.sendMessage("§8----- §c§l✦ SQUID MOOD GAME ✦ §8-----");
+        player.sendMessage("§8----- §c§l✦ SQUIDCRAFT ✦ §8-----");
         if (lines != null) for (String line : lines) player.sendMessage(line);
         player.sendMessage("§8-----------------------------");
     }
