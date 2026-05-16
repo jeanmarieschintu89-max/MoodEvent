@@ -100,10 +100,19 @@ public final class SquidPackManager {
     public static void generate(Player player) {
         ensureLoaded();
         if (player == null) return;
+
         if (hasPack()) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Un pack " + GAME_NAME + " existe déjà.", MoodStyle.detail("Restaure-le avant d'en créer un autre."));
-            return;
+            if (shouldAutoClearStalePack()) {
+                clearState();
+                MoodStyle.infoMessage(player, MoodStyle.MODULE,
+                        "Ancien état SquidCraft nettoyé.",
+                        MoodStyle.detail("Le pack précédent était incomplet ou fantôme."));
+            } else {
+                MoodStyle.errorMessage(player, MoodStyle.MODULE, "Un pack " + GAME_NAME + " existe déjà.", MoodStyle.detail("Restaure-le avant d'en créer un autre."));
+                return;
+            }
         }
+
         if (GeneratedGameManager.hasStructure()) {
             MoodStyle.errorMessage(player, MoodStyle.MODULE, "Une structure générée existe déjà.", MoodStyle.detail("Restaure-la avant de créer ce pack."));
             return;
@@ -191,6 +200,7 @@ public final class SquidPackManager {
         ConfigurationSection blocks = config.getConfigurationSection("backup.blocks");
         if (!hasPack() || blocks == null) {
             if (player != null) MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucun pack " + GAME_NAME + " à restaurer.");
+            clearState();
             return;
         }
 
@@ -210,18 +220,40 @@ public final class SquidPackManager {
             }
             restored++;
         }
-        config.set("active", false);
-        config.set("stage", null);
-        config.set("layout", null);
-        config.set("players", null);
-        config.set("backup", null);
-        save();
+        clearState();
         if (player != null) sendSquidMessage(player, "§a▶ §fPack §e" + GAME_NAME + " §frestauré.", "§b◆ §fBlocs originaux restaurés : §e" + restored);
     }
 
     public static Location location(String path) {
         ensureLoaded();
         return readLocation(path);
+    }
+
+    private static boolean shouldAutoClearStalePack() {
+        if (!hasPack()) return false;
+        if (!GAME_NAME.equalsIgnoreCase(EventManager.getName())) return true;
+        if (Bukkit.getWorld(config.getString("region.world", "")) == null) return true;
+        ConfigurationSection blocks = config.getConfigurationSection("backup.blocks");
+        return blocks == null || blocks.getKeys(false).isEmpty();
+    }
+
+    private static void clearState() {
+        config.set("active", false);
+        config.set("stage", null);
+        config.set("layout", null);
+        config.set("players", null);
+        config.set("red-green", null);
+        config.set("glass", null);
+        config.set("start", null);
+        config.set("lobby", null);
+        config.set("dormitory", null);
+        config.set("pre-sas", null);
+        config.set("return-sas", null);
+        config.set("bridge-start", null);
+        config.set("bridge-finish", null);
+        config.set("region", null);
+        config.set("backup", null);
+        save();
     }
 
     private static void backup(World world, int cx, int cy, int cz) {
