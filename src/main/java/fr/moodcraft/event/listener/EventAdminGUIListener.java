@@ -3,7 +3,6 @@ package fr.moodcraft.event.listener;
 import fr.moodcraft.event.generator.EventPackManager;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameSize;
-import fr.moodcraft.event.generator.GeneratedGameStyleManager;
 import fr.moodcraft.event.generator.GeneratedGameType;
 import fr.moodcraft.event.gui.EventAdminGUI;
 import fr.moodcraft.event.gui.EventAdvancedGUI;
@@ -17,6 +16,7 @@ import fr.moodcraft.event.manager.EventLogManager;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.manager.RewardManager;
 import fr.moodcraft.event.manager.WaitingRoomManager;
+import fr.moodcraft.event.manager.WaitingRoomTheme;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -26,6 +26,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 
 public class EventAdminGUIListener implements Listener {
+
+    private static final int[] THEME_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33};
 
     @EventHandler
     public void onClick(InventoryClickEvent event) {
@@ -37,7 +39,8 @@ public class EventAdminGUIListener implements Listener {
         if (title.equals("recompenses event")) { handleRewardClick(event, player); return; }
         if (title.equals("salle dattente")) { handleWaitingRoomClick(event, player); return; }
         if (title.equals("generateur de mini jeux")) { handleGeneratorMainClick(event, player); return; }
-        if (title.equals("taille mini jeu")) { handleGeneratorSizeClick(event, player); return; }
+        if (title.equals("style salle attente")) { handleGeneratorStyleClick(event, player); return; }
+        if (title.equals("taille pack event")) { handleGeneratorSizeClick(event, player); return; }
         if (title.equals("confirmation mini jeu")) { handleGeneratorConfirmClick(event, player); return; }
         if (title.equals("loot mini jeux")) { handleLootClick(event, player); }
     }
@@ -118,9 +121,9 @@ public class EventAdminGUIListener implements Listener {
         if (!top(event, slot)) return;
 
         switch (slot) {
-            case 10 -> openSize(player, GeneratedGameType.SURVIE_ETAGES);
-            case 12 -> openSize(player, GeneratedGameType.RUEE_OR);
-            case 14 -> openSize(player, GeneratedGameType.WATER_JUMP);
+            case 10 -> openStyle(player, GeneratedGameType.SURVIE_ETAGES);
+            case 12 -> openStyle(player, GeneratedGameType.RUEE_OR);
+            case 14 -> openStyle(player, GeneratedGameType.WATER_JUMP);
             case 29 -> { click(player); EventLootGUI.open(player); }
             case 33 -> {
                 no(player);
@@ -132,6 +135,26 @@ public class EventAdminGUIListener implements Listener {
             case 49 -> { click(player); EventAdminGUI.open(player); }
             default -> { }
         }
+    }
+
+    private void handleGeneratorStyleClick(InventoryClickEvent event, Player player) {
+        event.setCancelled(true);
+        int slot = event.getRawSlot();
+        if (!top(event, slot)) return;
+        GeneratedGameType type = MiniGameGeneratorGUI.getSelectedType(player);
+        if (type == null) { MiniGameGeneratorGUI.openMain(player); return; }
+
+        WaitingRoomTheme[] themes = WaitingRoomTheme.values();
+        for (int i = 0; i < THEME_SLOTS.length && i < themes.length; i++) {
+            if (slot == THEME_SLOTS[i]) {
+                click(player);
+                WaitingRoomManager.setSelectedStyle(player, themes[i].key());
+                MiniGameGeneratorGUI.openSize(player, type);
+                return;
+            }
+        }
+
+        if (slot == 49) { click(player); MiniGameGeneratorGUI.openMain(player); }
     }
 
     private void handleGeneratorSizeClick(InventoryClickEvent event, Player player) {
@@ -147,7 +170,7 @@ public class EventAdminGUIListener implements Listener {
             case 14 -> openConfirm(player, type, GeneratedGameSize.GRAND);
             case 16 -> openConfirm(player, type, GeneratedGameSize.GEANT);
             case 31 -> MoodStyle.errorMessage(player, MoodStyle.MODULE, "Taille personnalisée retirée.", MoodStyle.detail("Utilise Petit, Moyen, Grand ou Géant."));
-            case 49 -> { click(player); MiniGameGeneratorGUI.openMain(player); }
+            case 49 -> { click(player); MiniGameGeneratorGUI.openStyle(player, type); }
             default -> { }
         }
     }
@@ -164,7 +187,7 @@ public class EventAdminGUIListener implements Listener {
                 click(player);
                 if (pending.isCustom()) GeneratedGameManager.generateCustom(player, pending.type(), pending.customValue());
                 else EventPackManager.generatePack(player, pending.type(), pending.size());
-                EventLogManager.log(player, "Pack généré", pending.type().getDisplayName() + " - " + pending.describe() + " - style " + GeneratedGameStyleManager.get(player).getDisplayName());
+                EventLogManager.log(player, "Pack généré", pending.type().getDisplayName() + " - " + pending.describe() + " - salle " + WaitingRoomManager.getSelectedTheme(player).displayName());
                 MiniGameGeneratorGUI.clearPending(player);
                 MiniGameGeneratorGUI.openMain(player);
             }
@@ -183,6 +206,7 @@ public class EventAdminGUIListener implements Listener {
             case 12 -> buildRoom(player, "petite");
             case 14 -> buildRoom(player, "moyenne");
             case 16 -> buildRoom(player, "grande");
+            case 22 -> { click(player); WaitingRoomManager.cycleSelectedStyle(player); WaitingRoomGUI.open(player); }
             case 28 -> buildRoom(player, "tresgrande");
             case 30 -> buildRoom(player, "festival");
             case 33 -> { click(player); WaitingRoomManager.teleport(player); WaitingRoomGUI.open(player); }
@@ -234,9 +258,9 @@ public class EventAdminGUIListener implements Listener {
         WaitingRoomGUI.open(player);
     }
 
-    private void openSize(Player player, GeneratedGameType type) {
+    private void openStyle(Player player, GeneratedGameType type) {
         click(player);
-        MiniGameGeneratorGUI.openSize(player, type);
+        MiniGameGeneratorGUI.openStyle(player, type);
     }
 
     private void openConfirm(Player player, GeneratedGameType type, GeneratedGameSize size) {
