@@ -1,6 +1,5 @@
 package fr.moodcraft.event.listener;
 
-import fr.moodcraft.event.generator.EventGiveStructureManager;
 import fr.moodcraft.event.generator.EventPackManager;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameSize;
@@ -115,12 +114,6 @@ public class EventAdminGUIListener implements Listener {
                 EventLogManager.log(player, SquidPackManager.GAME_NAME, "Pack spécial généré depuis le menu");
                 MiniGameGeneratorGUI.openMain(player);
             }
-            case 26 -> {
-                click(player);
-                EventGiveStructureManager.generate(player);
-                EventLogManager.log(player, "Event Give", "Structure de distribution générée");
-                MiniGameGeneratorGUI.openMain(player);
-            }
             case 28 -> {
                 click(player);
                 GeneratedGameStyleManager.cycle(player);
@@ -130,7 +123,6 @@ public class EventAdminGUIListener implements Listener {
             case 33 -> {
                 no(player);
                 GeneratedGameManager.restore(player);
-                EventGiveStructureManager.restore(player);
                 SquidPackManager.restore(player);
                 EventLogManager.log(player, "Restauration", "Structures générées restaurées depuis le menu");
                 MiniGameGeneratorGUI.openMain(player);
