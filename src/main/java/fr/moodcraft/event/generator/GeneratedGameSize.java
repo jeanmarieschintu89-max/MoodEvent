@@ -4,27 +4,30 @@ import org.bukkit.Material;
 
 public enum GeneratedGameSize {
 
-    PETIT("Petit", Material.LIME_CONCRETE, 13, 7),
-    MOYEN("Moyen", Material.GOLD_BLOCK, 15, 8),
-    GRAND("Grand", Material.ORANGE_CONCRETE, 17, 9),
-    GEANT("Géant", Material.REDSTONE_BLOCK, 19, 10);
+    PETIT("Petit", Material.LIME_CONCRETE, 13, 7, 42),
+    MOYEN("Moyen", Material.GOLD_BLOCK, 15, 8, 64),
+    GRAND("Grand", Material.ORANGE_CONCRETE, 17, 9, 88),
+    GEANT("Géant", Material.REDSTONE_BLOCK, 19, 10, 116);
 
     private final String displayName;
     private final Material icon;
     private final int survivalWidth;
     private final int survivalFloors;
+    private final int waterLength;
 
-    GeneratedGameSize(String displayName, Material icon, int survivalWidth, int survivalFloors) {
+    GeneratedGameSize(String displayName, Material icon, int survivalWidth, int survivalFloors, int waterLength) {
         this.displayName = displayName;
         this.icon = icon;
         this.survivalWidth = survivalWidth;
         this.survivalFloors = survivalFloors;
+        this.waterLength = waterLength;
     }
 
     public String getDisplayName() { return displayName; }
     public Material getIcon() { return icon; }
     public int getSurvivalWidth() { return survivalWidth; }
     public int getSurvivalFloors() { return survivalFloors; }
+    public int getWaterLength() { return waterLength; }
 
     public int getGoldRushWidth() {
         return switch (this) {
@@ -58,6 +61,7 @@ public enum GeneratedGameSize {
         return switch (type) {
             case SURVIE_ETAGES -> survivalWidth + "x" + survivalWidth + " §8• §7" + survivalFloors + " étages";
             case RUEE_OR -> getGoldRushWidth() + "x" + getGoldRushHeight() + " §8• §7" + getGoldRushDurationSeconds() + "s";
+            case WATER_JUMP -> waterLength + " blocs §8• §7hauteur progressive";
         };
     }
 }
