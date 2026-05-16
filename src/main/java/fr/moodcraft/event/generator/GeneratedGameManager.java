@@ -297,6 +297,8 @@ public final class GeneratedGameManager {
             }
         }
 
+        buildWaterJumpWoolWall(world, cx - 9, cx + length + 11, cy, cz - 10, cz + 10, 4, Material.WHITE_WOOL);
+
         for (int x = cx - 4; x <= cx + 4; x++) {
             for (int z = cz - laneHalf; z <= cz + laneHalf; z++) {
                 world.getBlockAt(x, cy, z).setType(Material.LIME_CONCRETE, false);
@@ -361,6 +363,19 @@ public final class GeneratedGameManager {
     private static void buildPlatform(World world, int cx, int cy, int cz, int radius, Material material) {
         for (int x = cx - radius; x <= cx + radius; x++) {
             for (int z = cz - radius; z <= cz + radius; z++) world.getBlockAt(x, cy, z).setType(material, false);
+        }
+    }
+
+    private static void buildWaterJumpWoolWall(World world, int minX, int maxX, int baseY, int minZ, int maxZ, int height, Material material) {
+        for (int y = baseY; y < baseY + height; y++) {
+            for (int x = minX; x <= maxX; x++) {
+                world.getBlockAt(x, y, minZ).setType(material, false);
+                world.getBlockAt(x, y, maxZ).setType(material, false);
+            }
+            for (int z = minZ; z <= maxZ; z++) {
+                world.getBlockAt(minX, y, z).setType(material, false);
+                world.getBlockAt(maxX, y, z).setType(material, false);
+            }
         }
     }
 
