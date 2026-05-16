@@ -24,6 +24,7 @@ import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.manager.EventReturnSafety;
 import fr.moodcraft.event.manager.EventSecurityManager;
 import fr.moodcraft.event.manager.RewardManager;
+import fr.moodcraft.event.manager.SurvivalFloorLagGuard;
 import fr.moodcraft.event.manager.WaitingRoomManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -52,6 +53,7 @@ public class Main extends JavaPlugin {
         GeneratedGameplayEnhancer.start();
         GeneratedOpenPathTask.start();
         EventReturnSafety.start();
+        SurvivalFloorLagGuard.start();
 
         EventCommand eventCommand = new EventCommand();
         EventAdminCommand adminCommand = new EventAdminCommand();
