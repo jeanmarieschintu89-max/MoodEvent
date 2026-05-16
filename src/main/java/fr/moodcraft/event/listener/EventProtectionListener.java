@@ -14,11 +14,14 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Locale;
 import java.util.Set;
 
 public class EventProtectionListener implements Listener {
+
+    private static final String GOLD_RUSH_PICKAXE_NAME = "§6✦ §fPioche Ruée vers l'or §6✦";
 
     private static final Set<String> BLOCKED_COMMANDS = Set.of(
             "/spawn", "/home", "/homes", "/tpa", "/tpahere", "/warp", "/warps", "/rtp", "/tpr"
@@ -52,6 +55,19 @@ public class EventProtectionListener implements Listener {
         if (EventManager.getType().usesTimedMining()
                 && GeneratedGameManager.getActiveType() == GeneratedGameType.RUEE_OR
                 && isGoldRushMineBlock(event.getBlock().getType())) {
+
+            if (!hasGoldRushPickaxe(event.getPlayer())) {
+                event.setCancelled(true);
+                MoodStyle.errorMessage(
+                        event.getPlayer(),
+                        MoodStyle.MODULE,
+                        "Pioche événement obligatoire.",
+                        MoodStyle.detail("Utilise uniquement la §ePioche Ruée vers l'or§7."),
+                        MoodStyle.detail("Les autres pioches sont bloquées pour garder l'épreuve équitable.")
+                );
+                return;
+            }
+
             return;
         }
 
@@ -78,6 +94,14 @@ public class EventProtectionListener implements Listener {
                 return;
             }
         }
+    }
+
+    private boolean hasGoldRushPickaxe(Player player) {
+        if (player == null) return false;
+        ItemStack item = player.getInventory().getItemInMainHand();
+        if (item == null || item.getType() != Material.DIAMOND_PICKAXE) return false;
+        ItemMeta meta = item.getItemMeta();
+        return meta != null && GOLD_RUSH_PICKAXE_NAME.equals(meta.getDisplayName());
     }
 
     private boolean isGoldRushMineBlock(Material material) {
