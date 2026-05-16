@@ -45,7 +45,7 @@ public class SquidPackTask implements Listener {
     }
 
     private void runPackTick() {
-        if (!SquidPackManager.hasPack() || !EventManager.isRunning()) {
+        if (!shouldRunSquidCraft()) {
             resetRuntime();
             return;
         }
@@ -65,6 +65,11 @@ public class SquidPackTask implements Listener {
             case "GLASS_BRIDGE" -> glassBridgeTick();
             default -> { }
         }
+    }
+
+    private boolean shouldRunSquidCraft() {
+        if (!SquidPackManager.hasPack() || !EventManager.isRunning()) return false;
+        return SquidPackManager.GAME_NAME.equalsIgnoreCase(EventManager.getName());
     }
 
     private void startRedGreen() {
@@ -88,7 +93,7 @@ public class SquidPackTask implements Listener {
                 player.teleport(start);
                 player.sendTitle("§a§lFEU VERT", "§fLa poupée regarde ailleurs !", 0, 45, 10);
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.6f);
-                player.sendMessage("§8----- §c§l✦ SQUID MOOD GAME ✦ §8-----");
+                player.sendMessage("§8----- §c§l✦ SQUIDCRAFT ✦ §8-----");
                 player.sendMessage("§a▶ §fFEU VERT : §acours !");
                 player.sendMessage("§c■ §fFEU ROUGE : §cstop net quand la poupée se retourne.");
                 player.sendMessage("§e★ §fObjectif : §eatteindre la ligne rouge.");
@@ -300,7 +305,7 @@ public class SquidPackTask implements Listener {
         winner.sendTitle("§6§lVICTOIRE !", "§fDernier survivant", 0, 60, 15);
         winner.playSound(winner.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.1f);
         EventManager.stopEvent(winner);
-        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> SquidGameCinematic.flashyBroadcast("§6§lVICTOIRE SQUID MOOD GAME", "§e" + winnerName + " §fremporte le show. §a/event §fpour le prochain défi !"), 20L);
+        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> SquidGameCinematic.flashyBroadcast("§6§lVICTOIRE SQUIDCRAFT", "§e" + winnerName + " §fremporte le show. §a/event §fpour le prochain défi !"), 20L);
     }
 
     private void finishWithoutWinner(String reason) {
@@ -309,7 +314,7 @@ public class SquidPackTask implements Listener {
         SquidPackManager.setStage("FINISHED");
         Player anchor = findOnlineEventPlayer();
         if (anchor != null) EventManager.stopEvent(anchor);
-        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> SquidGameCinematic.flashyBroadcast("§c§lSQUID MOOD GAME TERMINÉ", "§f" + reason + " §e/event §fpour retenter !"), 20L);
+        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> SquidGameCinematic.flashyBroadcast("§c§lSQUIDCRAFT TERMINÉ", "§f" + reason + " §e/event §fpour retenter !"), 20L);
     }
 
     private void finishLastAliveOrNoWinner(String noWinnerReason) {
