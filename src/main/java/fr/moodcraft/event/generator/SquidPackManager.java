@@ -180,7 +180,7 @@ public final class SquidPackManager {
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
         sendSquidMessage(player,
                 "§a▶ §fPack §e" + GAME_NAME + " §fgénéré.",
-                "§b◆ §fPoupée, feux et messages synchronisés.",
+                "§b◆ §fBackup optimisé : moins de RAM utilisée.",
                 "§d➜ §fOuvre la file avec §e/eventouvrir§f."
         );
         EventLogManager.log(player, "Pack " + GAME_NAME, "Pack premium single builder généré");
@@ -193,6 +193,9 @@ public final class SquidPackManager {
             if (player != null) MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucun pack " + GAME_NAME + " à restaurer.");
             return;
         }
+
+        clearSavedRegionToAir();
+
         int restored = 0;
         for (String key : blocks.getKeys(false)) {
             ConfigurationSection section = blocks.getConfigurationSection(key);
@@ -213,7 +216,7 @@ public final class SquidPackManager {
         config.set("players", null);
         config.set("backup", null);
         save();
-        if (player != null) sendSquidMessage(player, "§a▶ §fPack §e" + GAME_NAME + " §frestauré.", "§b◆ §fBlocs restaurés : §e" + restored);
+        if (player != null) sendSquidMessage(player, "§a▶ §fPack §e" + GAME_NAME + " §frestauré.", "§b◆ §fBlocs originaux restaurés : §e" + restored);
     }
 
     public static Location location(String path) {
@@ -223,17 +226,47 @@ public final class SquidPackManager {
 
     private static void backup(World world, int cx, int cy, int cz) {
         config.set("backup", null);
+        config.set("backup.lightweight", true);
+        config.set("backup.region.world", world.getName());
+        config.set("backup.region.min-x", cx + REGION_MIN_X);
+        config.set("backup.region.max-x", cx + REGION_MAX_X);
+        config.set("backup.region.min-y", cy + REGION_MIN_Y);
+        config.set("backup.region.max-y", cy + REGION_MAX_Y);
+        config.set("backup.region.min-z", cz + REGION_MIN_Z);
+        config.set("backup.region.max-z", cz + REGION_MAX_Z);
+
         int index = 0;
         for (int x = cx + REGION_MIN_X; x <= cx + REGION_MAX_X; x++) {
             for (int y = cy + REGION_MIN_Y; y <= cy + REGION_MAX_Y; y++) {
                 for (int z = cz + REGION_MIN_Z; z <= cz + REGION_MAX_Z; z++) {
                     Block block = world.getBlockAt(x, y, z);
+                    if (block.getType().isAir()) continue;
                     String path = "backup.blocks." + index++;
                     config.set(path + ".world", world.getName());
                     config.set(path + ".x", x);
                     config.set(path + ".y", y);
                     config.set(path + ".z", z);
                     config.set(path + ".data", block.getBlockData().getAsString());
+                }
+            }
+        }
+        config.set("backup.saved-blocks", index);
+    }
+
+    private static void clearSavedRegionToAir() {
+        String worldName = config.getString("backup.region.world", config.getString("region.world", ""));
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) return;
+        int minX = config.getInt("backup.region.min-x", config.getInt("region.min-x"));
+        int maxX = config.getInt("backup.region.max-x", config.getInt("region.max-x"));
+        int minY = config.getInt("backup.region.min-y", config.getInt("region.min-y"));
+        int maxY = config.getInt("backup.region.max-y", config.getInt("region.max-y"));
+        int minZ = config.getInt("backup.region.min-z", config.getInt("region.min-z"));
+        int maxZ = config.getInt("backup.region.max-z", config.getInt("region.max-z"));
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    world.getBlockAt(x, y, z).setType(Material.AIR, false);
                 }
             }
         }
