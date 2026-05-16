@@ -36,6 +36,8 @@ public final class SquidPackManager {
     private static final int START_X = -34;
     private static final int PRE_SAS_X = -40;
     private static final int RED_GREEN_FINISH_X = 38;
+    private static final int DOLL_X = 46;
+    private static final int LIGHT_X = 42;
 
     private static final int BRIDGE_START_X = -24;
     private static final int BRIDGE_FIRST_GLASS_X = -21;
@@ -137,6 +139,10 @@ public final class SquidPackManager {
         config.set("layout", "PREMIUM_SINGLE_BUILDER_V2");
         config.set("red-green.green", true);
         config.set("red-green.timer", 0);
+        config.set("red-green.base-y", cy);
+        config.set("red-green.center-z", cz);
+        config.set("red-green.doll-x", cx + DOLL_X);
+        config.set("red-green.light-x", cx + LIGHT_X);
         config.set("region.world", world.getName());
         config.set("region.min-x", cx + REGION_MIN_X);
         config.set("region.max-x", cx + REGION_MAX_X);
@@ -162,6 +168,8 @@ public final class SquidPackManager {
         config.set("players", null);
         save();
 
+        SquidGameCinematic.updateDollAndLights(true);
+
         EventManager.createEvent(player, GAME_NAME);
         EventManager.setDescription(player, "Une suite d'épreuves show : dortoir, Feu Rouge / Feu Vert et Pont de Verre.");
         EventManager.setType(player, "custom");
@@ -172,7 +180,7 @@ public final class SquidPackManager {
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
         sendSquidMessage(player,
                 "§a▶ §fPack §e" + GAME_NAME + " §fgénéré.",
-                "§b◆ §fDortoir fermé, sas, arène et pont séparés.",
+                "§b◆ §fPoupée, feux et messages synchronisés.",
                 "§d➜ §fOuvre la file avec §e/eventouvrir§f."
         );
         EventLogManager.log(player, "Pack " + GAME_NAME, "Pack premium single builder généré");
