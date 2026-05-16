@@ -23,6 +23,7 @@ import java.util.UUID;
 public final class WaitingRoomManager {
 
     private static final Map<UUID, String> SELECTED_STYLE = new HashMap<>();
+    private static final String STYLE_KEY = "moodcraft";
 
     private static File file;
     private static FileConfiguration config;
@@ -66,16 +67,15 @@ public final class WaitingRoomManager {
 
     public static void setSelectedStyle(Player player, String style) {
         if (player == null) return;
-        SELECTED_STYLE.put(player.getUniqueId(), WaitingRoomTheme.key(style));
+        SELECTED_STYLE.put(player.getUniqueId(), STYLE_KEY);
     }
 
     public static String getSelectedStyle(Player player) {
-        if (player == null) return "sombre";
-        return SELECTED_STYLE.getOrDefault(player.getUniqueId(), "sombre");
+        return STYLE_KEY;
     }
 
     public static String formatStyle(String style) {
-        return WaitingRoomTheme.of(style).displayName();
+        return WaitingRoomTheme.MOODCRAFT.displayName();
     }
 
     public static void teleport(Player player) {
@@ -93,8 +93,7 @@ public final class WaitingRoomManager {
             return;
         }
 
-        String style = getSelectedStyle(player);
-        WaitingRoomTheme theme = WaitingRoomTheme.of(style);
+        WaitingRoomTheme theme = WaitingRoomTheme.MOODCRAFT;
         int radius = radius(rawSize);
         int height = height(radius);
         Location center = player.getLocation().getBlock().getLocation().add(0.5, 0, 0.5);
@@ -115,7 +114,7 @@ public final class WaitingRoomManager {
         config.set("active", true);
         config.set("radius", radius);
         config.set("height", height);
-        config.set("style", theme.key());
+        config.set("style", STYLE_KEY);
         config.set("size-name", rawSize == null ? "moyenne" : rawSize.toLowerCase(Locale.ROOT));
         writeLocation("spawn", spawn);
         save();
@@ -127,7 +126,7 @@ public final class WaitingRoomManager {
                 MoodStyle.MODULE,
                 "Salle d'attente générée.",
                 MoodStyle.detail("Taille : §e" + ((radius * 2) + 1) + "x" + ((radius * 2) + 1)),
-                MoodStyle.detail("Thème : §e" + theme.displayName()),
+                MoodStyle.detail("Style unique : §e" + theme.displayName()),
                 MoodStyle.detail("Zone sauvegardée avant construction."),
                 MoodStyle.detail("Restauration : §e/eventrestaurersalle")
         );
