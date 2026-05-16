@@ -15,6 +15,7 @@ public final class SquidMoodDecorBuilder {
             bedPod(world, x, cy + 1, cz - 10);
         }
         platform(world, cx - 43, cy, cz - 13, 2, Material.RED_CONCRETE);
+        openDoor(world, cx - 43, cy, cz - 8, true);
         world.getBlockAt(cx - 43, cy + 1, cz - 13).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
         world.getBlockAt(cx - 43, cy + 5, cz - 13).setType(Material.SEA_LANTERN, false);
     }
@@ -24,12 +25,16 @@ public final class SquidMoodDecorBuilder {
         line(world, cx - 54, cy + 1, cz - 3, cx - 50, cz - 3, Material.IRON_BARS);
         line(world, cx - 54, cy + 1, cz + 3, cx - 50, cz + 3, Material.IRON_BARS);
         platform(world, cx - 52, cy, cz, 2, Material.LIME_CONCRETE);
+        openDoor(world, cx - 49, cy, cz, false);
+        world.getBlockAt(cx - 48, cy, cz).setType(Material.LIME_CONCRETE, false);
         world.getBlockAt(cx - 52, cy + 5, cz).setType(Material.SEA_LANTERN, false);
     }
 
     public static void buildReturnSas(World world, int cx, int cy, int cz) {
         room(world, cx - 12, cx - 4, cy, cy + 6, cz + 8, cz + 15, Material.LIGHT_GRAY_CONCRETE, Material.WHITE_CONCRETE, Material.CYAN_STAINED_GLASS);
         platform(world, cx - 8, cy, cz + 11, 2, Material.ORANGE_CONCRETE);
+        openDoor(world, cx - 12, cy, cz + 11, false);
+        openDoor(world, cx - 4, cy, cz + 11, false);
         world.getBlockAt(cx - 8, cy + 5, cz + 11).setType(Material.SEA_LANTERN, false);
     }
 
@@ -46,6 +51,19 @@ public final class SquidMoodDecorBuilder {
                     else if (edge) world.getBlockAt(x, y, z).setType(wall, false);
                     else world.getBlockAt(x, y, z).setType(Material.AIR, false);
                 }
+            }
+        }
+    }
+
+    private static void openDoor(World world, int x, int y, int z, boolean alongZ) {
+        for (int dy = 1; dy <= 3; dy++) {
+            world.getBlockAt(x, y + dy, z).setType(Material.AIR, false);
+            if (alongZ) {
+                world.getBlockAt(x - 1, y + dy, z).setType(Material.AIR, false);
+                world.getBlockAt(x + 1, y + dy, z).setType(Material.AIR, false);
+            } else {
+                world.getBlockAt(x, y + dy, z - 1).setType(Material.AIR, false);
+                world.getBlockAt(x, y + dy, z + 1).setType(Material.AIR, false);
             }
         }
     }
