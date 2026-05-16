@@ -4,37 +4,25 @@ import org.bukkit.Material;
 
 public enum GeneratedGameSize {
 
-    PETIT("Petit", Material.LIME_CONCRETE, 29, 12, 50, 30, 13, 7),
-    MOYEN("Moyen", Material.GOLD_BLOCK, 41, 20, 80, 50, 15, 8),
-    GRAND("Grand", Material.ORANGE_CONCRETE, 53, 28, 140, 80, 17, 9),
-    GEANT("Géant", Material.REDSTONE_BLOCK, 65, 36, 220, 110, 19, 10);
+    PETIT("Petit", Material.LIME_CONCRETE, 13, 7),
+    MOYEN("Moyen", Material.GOLD_BLOCK, 15, 8),
+    GRAND("Grand", Material.ORANGE_CONCRETE, 17, 9),
+    GEANT("Géant", Material.REDSTONE_BLOCK, 19, 10);
 
     private final String displayName;
     private final Material icon;
-    private final int mazeWidth;
-    private final int jumpPlatforms;
-    private final int raceLength;
-    private final int waterLength;
     private final int survivalWidth;
     private final int survivalFloors;
 
-    GeneratedGameSize(String displayName, Material icon, int mazeWidth, int jumpPlatforms, int raceLength, int waterLength, int survivalWidth, int survivalFloors) {
+    GeneratedGameSize(String displayName, Material icon, int survivalWidth, int survivalFloors) {
         this.displayName = displayName;
         this.icon = icon;
-        this.mazeWidth = mazeWidth;
-        this.jumpPlatforms = jumpPlatforms;
-        this.raceLength = raceLength;
-        this.waterLength = waterLength;
         this.survivalWidth = survivalWidth;
         this.survivalFloors = survivalFloors;
     }
 
     public String getDisplayName() { return displayName; }
     public Material getIcon() { return icon; }
-    public int getMazeWidth() { return mazeWidth; }
-    public int getJumpPlatforms() { return jumpPlatforms; }
-    public int getRaceLength() { return raceLength; }
-    public int getWaterLength() { return waterLength; }
     public int getSurvivalWidth() { return survivalWidth; }
     public int getSurvivalFloors() { return survivalFloors; }
 
@@ -68,10 +56,6 @@ public enum GeneratedGameSize {
     public String describeFor(GeneratedGameType type) {
         if (type == null) return displayName;
         return switch (type) {
-            case LABYRINTHE -> mazeWidth + "x" + mazeWidth;
-            case JUMP -> jumpPlatforms + " plateformes";
-            case COURSE -> raceLength + " blocs";
-            case WATER_JUMP -> waterLength + " blocs";
             case SURVIE_ETAGES -> survivalWidth + "x" + survivalWidth + " §8• §7" + survivalFloors + " étages";
             case RUEE_OR -> getGoldRushWidth() + "x" + getGoldRushHeight() + " §8• §7" + getGoldRushDurationSeconds() + "s";
         };
