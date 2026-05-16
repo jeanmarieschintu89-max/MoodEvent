@@ -43,43 +43,54 @@ public final class GeneratedLineMarkerTask {
 
         switch (eventType) {
             case COURSE -> {
-                buildFlatStartZone(start, 2, Material.LIME_CONCRETE, Material.SMOOTH_STONE, true);
-                buildFlatStartZone(finish, 2, Material.RED_CONCRETE, Material.SMOOTH_STONE, false);
+                drawCleanFloorLine(start, 2, Material.LIME_CONCRETE);
+                drawCleanFloorLine(finish, 2, Material.RED_CONCRETE);
             }
             case JUMP -> {
-                buildFlatStartZone(start, 4, Material.LIME_WOOL, Material.BLUE_CONCRETE, true);
-                buildFlatStartZone(finish, 4, Material.RED_WOOL, Material.BLUE_CONCRETE, false);
+                drawCleanFloorLine(start, 4, Material.LIME_WOOL);
+                drawCleanFloorLine(finish, 4, Material.RED_WOOL);
             }
             case WATER_JUMP -> {
-                buildFlatStartZone(start, 4, Material.LIME_WOOL, Material.WATER, true);
-                buildFlatStartZone(finish, 4, Material.RED_WOOL, Material.WATER, false);
+                drawCleanFloorLine(start, 4, Material.LIME_WOOL);
+                drawCleanFloorLine(finish, 4, Material.RED_WOOL);
             }
             default -> { }
         }
     }
 
-    private static void buildFlatStartZone(Location location, int halfWidth, Material lineMaterial, Material baseMaterial, boolean start) {
-        if (location == null || location.getWorld() == null || lineMaterial == null || baseMaterial == null) return;
+    private static void drawCleanFloorLine(Location location, int halfWidth, Material lineMaterial) {
+        if (location == null || location.getWorld() == null || lineMaterial == null) return;
         World world = location.getWorld();
         int x = location.getBlockX();
         int y = Math.max(world.getMinHeight(), location.getBlockY() - 1);
         int z = location.getBlockZ();
 
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -halfWidth; dz <= halfWidth; dz++) {
-                Material floor = dx == 0 ? lineMaterial : baseMaterial;
-                world.getBlockAt(x + dx, y, z + dz).setType(floor, false);
-                world.getBlockAt(x + dx, y + 1, z + dz).setType(Material.AIR, false);
-                world.getBlockAt(x + dx, y + 2, z + dz).setType(Material.AIR, false);
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -halfWidth - 1; dz <= halfWidth + 1; dz++) {
+                removeMarkerGarbage(world, x + dx, y, z + dz);
             }
         }
 
-        Material pillar = start ? Material.EMERALD_BLOCK : Material.REDSTONE_BLOCK;
-        for (int dy = 1; dy <= 3; dy++) {
-            world.getBlockAt(x, y + dy, z - halfWidth).setType(pillar, false);
-            world.getBlockAt(x, y + dy, z + halfWidth).setType(pillar, false);
+        for (int dz = -halfWidth; dz <= halfWidth; dz++) {
+            world.getBlockAt(x, y, z + dz).setType(lineMaterial, false);
+            world.getBlockAt(x, y + 1, z + dz).setType(Material.AIR, false);
         }
-        world.getBlockAt(x, y + 4, z).setType(Material.SEA_LANTERN, false);
+    }
+
+    private static void removeMarkerGarbage(World world, int x, int y, int z) {
+        for (int dy = 1; dy <= 5; dy++) {
+            Material type = world.getBlockAt(x, y + dy, z).getType();
+            if (type == Material.EMERALD_BLOCK
+                    || type == Material.REDSTONE_BLOCK
+                    || type == Material.SEA_LANTERN
+                    || type == Material.LIME_STAINED_GLASS
+                    || type == Material.RED_STAINED_GLASS
+                    || type == Material.LIGHT_BLUE_STAINED_GLASS
+                    || type == Material.OAK_FENCE
+                    || type == Material.IRON_BARS) {
+                world.getBlockAt(x, y + dy, z).setType(Material.AIR, false);
+            }
+        }
     }
 
     private static Location readLocation(FileConfiguration config, String path) {
