@@ -1,7 +1,6 @@
 package fr.moodcraft.event.command;
 
 import fr.moodcraft.event.manager.EventManager;
-import fr.moodcraft.event.manager.EventReturnSafety;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -24,7 +23,6 @@ public class EventCommand implements CommandExecutor {
             return true;
         }
 
-        EventReturnSafety.remember(player);
         EventManager.joinQueue(player);
         return true;
     }
