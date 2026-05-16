@@ -12,9 +12,11 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -31,6 +33,8 @@ public final class EventManager {
     private static final Set<UUID> queue = new LinkedHashSet<>();
     private static final Set<UUID> participants = new LinkedHashSet<>();
     private static final Set<UUID> eliminated = new HashSet<>();
+    private static final List<UUID> eliminationOrder = new ArrayList<>();
+    private static final List<UUID> finalRanking = new ArrayList<>();
     private static final Map<UUID, Location> returnLocations = new HashMap<>();
     private static BukkitTask survivalTask;
 
@@ -48,6 +52,8 @@ public final class EventManager {
         queue.clear();
         participants.clear();
         eliminated.clear();
+        eliminationOrder.clear();
+        finalRanking.clear();
         returnLocations.clear();
         cancelSurvivalTask();
         startLocation = readLocation(config, "event.location");
@@ -171,6 +177,8 @@ public final class EventManager {
         autoClosing = false;
         participants.clear();
         eliminated.clear();
+        eliminationOrder.clear();
+        finalRanking.clear();
         returnLocations.clear();
         cancelSurvivalTask();
         save();
@@ -208,13 +216,17 @@ public final class EventManager {
         Player actor = resolveActor(player);
         if (actor == null || !ensureEvent(actor)) return;
         autoClosing = false;
+        if (getType().usesSurvivalRanking()) finalizeInfernalRanking();
+        if (getType().usesSurvivalRanking()) announceAndRewardTopPlayers();
         int returned = returnParticipants(true);
         restoreGeneratedZones(actor);
         broadcastEvent(
                 MoodStyle.success("Événement terminé."),
                 MoodStyle.detail("Participants renvoyés : §e" + returned),
-                MoodStyle.detail("Récompenses de participation distribuées."),
-                MoodStyle.detail("Aucun podium ni Top 3 n'est utilisé.")
+                getType().usesSurvivalRanking() ? MoodStyle.detail("Top 3 Tour Infernale distribué.") : MoodStyle.detail("Récompenses de participation distribuées."),
+                getType().usesSurvivalRanking() ? rankLine(1) : MoodStyle.detail("Mode : §eMine en folie"),
+                getType().usesSurvivalRanking() ? rankLine(2) : MoodStyle.detail("Minerais conservés par les joueurs."),
+                getType().usesSurvivalRanking() ? rankLine(3) : MoodStyle.detail("Fin du minage.")
         );
         clearEvent();
         save();
@@ -252,6 +264,7 @@ public final class EventManager {
                 MoodStyle.detail("Type : " + getType().getDisplayName()),
                 MoodStyle.detail("Départ : " + (hasLocation() ? "§adéfini" : "§cnon défini")),
                 MoodStyle.detail("Arrivée : §7non utilisée"),
+                getType().usesSurvivalRanking() ? MoodStyle.detail("Classement : §eTop 3 dernier survivant") : MoodStyle.detail("Classement : §7non utilisé"),
                 MoodStyle.detail("Salle d'attente : " + (WaitingRoomManager.hasRoom() ? "§agénérée" : "§cnon générée")),
                 queueOpen ? MoodStyle.info("Faites §e/event §fpour rejoindre") : MoodStyle.detail("Attendez l'ouverture par le staff"));
     }
@@ -275,6 +288,8 @@ public final class EventManager {
         autoClosing = false;
         participants.clear();
         eliminated.clear();
+        eliminationOrder.clear();
+        finalRanking.clear();
         save();
         broadcastEvent(MoodStyle.success("L'événement va commencer."), MoodStyle.detail("Événement : §e" + name), MoodStyle.detail("Participants : §e" + queue.size()), MoodStyle.detail("Départ depuis la salle d'attente."));
         countdown(3);
@@ -291,6 +306,7 @@ public final class EventManager {
         if (!GeneratedGameManager.isSurvivalFall(player.getLocation())) return;
         participants.remove(uuid);
         eliminated.add(uuid);
+        eliminationOrder.add(uuid);
         WaitingRoomManager.teleport(player);
         int remaining = participants.size();
         MoodStyle.errorMessage(player, MoodStyle.MODULE, "Vous êtes éliminé.", MoodStyle.detail("Vous êtes renvoyé en salle d'attente."), MoodStyle.detail("Joueurs encore en jeu : §e" + remaining));
@@ -300,7 +316,9 @@ public final class EventManager {
                 Player survivorPlayer = Bukkit.getPlayer(survivor);
                 if (survivorPlayer != null && survivorPlayer.isOnline()) {
                     WaitingRoomManager.teleport(survivorPlayer);
-                    MoodStyle.successMessage(survivorPlayer, MoodStyle.MODULE, "Vous êtes le dernier survivant.", MoodStyle.detail("Retour en salle d'attente."));
+                    survivorPlayer.sendTitle("§6Victoire", "§fDernier survivant", 0, 55, 12);
+                    survivorPlayer.playSound(survivorPlayer.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.15f);
+                    MoodStyle.successMessage(survivorPlayer, MoodStyle.MODULE, "Vous gagnez la Tour Infernale.", MoodStyle.detail("Vous êtes le dernier survivant."), MoodStyle.detail("Top 3 calculé à la clôture."));
                 }
             }
             cancelSurvivalTask();
@@ -364,15 +382,15 @@ public final class EventManager {
             sendLaunchInstructions(player);
             teleported++;
         }
-        broadcastEvent(MoodStyle.success("Événement lancé."), MoodStyle.detail("Participants téléportés : §e" + teleported), getType().usesSurvivalRanking() ? MoodStyle.detail("Restez le dernier survivant.") : MoodStyle.detail("Minez un maximum avant la fin."));
+        broadcastEvent(MoodStyle.success("Événement lancé."), MoodStyle.detail("Participants téléportés : §e" + teleported), getType().usesSurvivalRanking() ? MoodStyle.detail("Dernier survivant gagnant §8• §7Top 3 récompensé.") : MoodStyle.detail("Minez un maximum avant la fin."));
         queue.clear();
         if (getType().usesSurvivalRanking()) startSurvivalFloorTask();
     }
 
     private static void sendLaunchInstructions(Player player) {
         switch (getType()) {
-            case SURVIE_ETAGES -> MoodStyle.send(player, MoodStyle.MODULE, MoodStyle.info("Tour Infernale lancée."), MoodStyle.detail("Objectif : restez en jeu le plus longtemps possible."), MoodStyle.detail("Les étages disparaissent progressivement."), MoodStyle.detail("Pas de podium : participation uniquement."));
-            case RUEE_OR -> MoodStyle.send(player, MoodStyle.MODULE, MoodStyle.info("Mine en folie lancée."), MoodStyle.detail("Objectif : minez un maximum de minerais."), MoodStyle.detail("Vous gardez les minerais obtenus."), MoodStyle.detail("Pas de podium : participation uniquement."));
+            case SURVIE_ETAGES -> MoodStyle.send(player, MoodStyle.MODULE, MoodStyle.info("Tour Infernale lancée."), MoodStyle.detail("Objectif : rester le dernier survivant."), MoodStyle.detail("Les étages disparaissent progressivement."), MoodStyle.detail("Le Top 3 final sera récompensé."));
+            case RUEE_OR -> MoodStyle.send(player, MoodStyle.MODULE, MoodStyle.info("Mine en folie lancée."), MoodStyle.detail("Objectif : minez un maximum de minerais."), MoodStyle.detail("Vous gardez les minerais obtenus."), MoodStyle.detail("Pas de podium pour ce mode."));
             default -> MoodStyle.infoMessage(player, MoodStyle.MODULE, "Vous êtes entré dans l'événement.");
         }
     }
@@ -387,6 +405,45 @@ public final class EventManager {
                 if (player != null && player.isOnline()) checkSurvivalFloorElimination(player);
             }
         }, 40L, 35L);
+    }
+
+    private static void finalizeInfernalRanking() {
+        if (!getType().usesSurvivalRanking()) return;
+        finalRanking.clear();
+        for (UUID survivor : participants) if (!finalRanking.contains(survivor)) finalRanking.add(survivor);
+        for (int i = eliminationOrder.size() - 1; i >= 0; i--) {
+            UUID uuid = eliminationOrder.get(i);
+            if (!finalRanking.contains(uuid)) finalRanking.add(uuid);
+        }
+    }
+
+    private static void announceAndRewardTopPlayers() {
+        for (int index = 0; index < Math.min(3, finalRanking.size()); index++) {
+            Player player = Bukkit.getPlayer(finalRanking.get(index));
+            if (player == null || !player.isOnline()) continue;
+            int place = index + 1;
+            player.sendTitle(place == 1 ? "§6Victoire" : "§6Top " + place, "§fTour Infernale", 0, 50, 10);
+            MoodStyle.successMessage(player, MoodStyle.MODULE,
+                    place == 1 ? "Vous gagnez la Tour Infernale." : "Vous terminez dans le Top 3.",
+                    MoodStyle.detail("Place : §e" + formatPlace(place)),
+                    MoodStyle.detail("Récompense Top 3 distribuée."));
+            RewardManager.giveTopReward(player, place);
+        }
+    }
+
+    private static String rankLine(int place) {
+        if (finalRanking.size() < place) return MoodStyle.detail("Top " + place + " : §7Aucun joueur");
+        Player player = Bukkit.getPlayer(finalRanking.get(place - 1));
+        return MoodStyle.detail("§e" + formatPlace(place) + " §8- §a" + (player == null ? "Joueur hors ligne" : player.getName()));
+    }
+
+    private static String formatPlace(int place) {
+        return switch (place) {
+            case 1 -> "Top 1";
+            case 2 -> "Top 2";
+            case 3 -> "Top 3";
+            default -> "Top " + place;
+        };
     }
 
     private static int returnParticipants(boolean giveParticipation) {
@@ -469,6 +526,8 @@ public final class EventManager {
         queue.clear();
         participants.clear();
         eliminated.clear();
+        eliminationOrder.clear();
+        finalRanking.clear();
         returnLocations.clear();
         cancelSurvivalTask();
     }
