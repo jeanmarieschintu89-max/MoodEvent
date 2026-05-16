@@ -120,6 +120,7 @@ public class EventAdminGUIListener implements Listener {
         switch (slot) {
             case 10 -> openSize(player, GeneratedGameType.SURVIE_ETAGES);
             case 12 -> openSize(player, GeneratedGameType.RUEE_OR);
+            case 14 -> openSize(player, GeneratedGameType.WATER_JUMP);
             case 29 -> { click(player); EventLootGUI.open(player); }
             case 33 -> {
                 no(player);
