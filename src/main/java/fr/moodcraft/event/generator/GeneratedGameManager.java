@@ -148,25 +148,33 @@ public final class GeneratedGameManager {
 
     public static void restore(Player player) {
         ensureLoaded();
-        ConfigurationSection blocks = config.getConfigurationSection("backup.blocks");
-        if (!active || blocks == null) {
+        if (!active) {
             if (player != null) MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucune structure générée à restaurer.");
             return;
         }
+
+        Region restoreRegion = readRegion("backup.region");
+        if (restoreRegion == null) restoreRegion = activeRegion;
+        if (restoreRegion != null) clearRegionToAir(restoreRegion);
+
+        ConfigurationSection blocks = config.getConfigurationSection("backup.blocks");
         int restored = 0;
-        for (String key : blocks.getKeys(false)) {
-            ConfigurationSection section = blocks.getConfigurationSection(key);
-            if (section == null) continue;
-            World world = Bukkit.getWorld(section.getString("world", ""));
-            if (world == null) continue;
-            Block block = world.getBlockAt(section.getInt("x"), section.getInt("y"), section.getInt("z"));
-            try {
-                block.setBlockData(Bukkit.createBlockData(section.getString("data", "minecraft:air")), false);
-            } catch (IllegalArgumentException exception) {
-                block.setType(Material.AIR, false);
+        if (blocks != null) {
+            for (String key : blocks.getKeys(false)) {
+                ConfigurationSection section = blocks.getConfigurationSection(key);
+                if (section == null) continue;
+                World world = Bukkit.getWorld(section.getString("world", ""));
+                if (world == null) continue;
+                Block block = world.getBlockAt(section.getInt("x"), section.getInt("y"), section.getInt("z"));
+                try {
+                    block.setBlockData(Bukkit.createBlockData(section.getString("data", "minecraft:air")), false);
+                } catch (IllegalArgumentException exception) {
+                    block.setType(Material.AIR, false);
+                }
+                restored++;
             }
-            restored++;
         }
+
         config.set("active", false);
         config.set("type", null);
         config.set("size", null);
@@ -184,7 +192,7 @@ public final class GeneratedGameManager {
         save();
         if (player != null) {
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.1f);
-            MoodStyle.successMessage(player, MoodStyle.MODULE, "Structure restaurée.", MoodStyle.detail("Blocs restaurés : §e" + restored));
+            MoodStyle.successMessage(player, MoodStyle.MODULE, "Structure restaurée.", MoodStyle.detail("Blocs originaux restaurés : §e" + restored));
         }
     }
 
@@ -392,11 +400,14 @@ public final class GeneratedGameManager {
 
     private static void backup(Region region) {
         config.set("backup", null);
+        config.set("backup.lightweight", true);
+        writeRegion("backup.region", region);
         World world = Bukkit.getWorld(region.worldName);
         if (world == null) return;
         int index = 0;
         for (int x = region.minX; x <= region.maxX; x++) for (int y = region.minY; y <= region.maxY; y++) for (int z = region.minZ; z <= region.maxZ; z++) {
             Block block = world.getBlockAt(x, y, z);
+            if (block.getType().isAir()) continue;
             String path = "backup.blocks." + index++;
             config.set(path + ".world", world.getName());
             config.set(path + ".x", x);
@@ -404,6 +415,14 @@ public final class GeneratedGameManager {
             config.set(path + ".z", z);
             config.set(path + ".data", block.getBlockData().getAsString());
         }
+        config.set("backup.saved-blocks", index);
+    }
+
+    private static void clearRegionToAir(Region region) {
+        if (region == null) return;
+        World world = Bukkit.getWorld(region.worldName);
+        if (world == null) return;
+        for (int x = region.minX; x <= region.maxX; x++) for (int y = region.minY; y <= region.maxY; y++) for (int z = region.minZ; z <= region.maxZ; z++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
     }
 
     private static void clearWorkArea(World world, Region region) {
@@ -497,6 +516,7 @@ public final class GeneratedGameManager {
     }
 
     private static void writeRegion(String path, Region region) {
+        if (region == null) { config.set(path, null); return; }
         config.set(path + ".world", region.worldName);
         config.set(path + ".min-x", region.minX);
         config.set(path + ".min-y", region.minY);
