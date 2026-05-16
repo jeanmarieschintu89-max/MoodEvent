@@ -207,6 +207,7 @@ public final class GeneratedGameManager {
         }
 
         Region region = regionFor(center, type, spec);
+        purgeOldDebris(center, type, region);
         backup(region);
         clearRegionToAir(region);
         EventLootManager.clearGeneratedLoot();
@@ -244,6 +245,13 @@ public final class GeneratedGameManager {
                 "Mini-jeu généré.",
                 MoodStyle.detail("Type : §e" + type.getDisplayName()),
                 MoodStyle.detail("Taille : §e" + spec.describe(type)));
+    }
+
+    private static void purgeOldDebris(Location center, GeneratedGameType type, Region region) {
+        int radius = Math.max(region.maxX - region.minX, region.maxZ - region.minZ) / 2 + 8;
+        int down = 6;
+        int up = Math.max(20, region.maxY - region.minY + 10);
+        GeneratedDebrisCleaner.purgeGeneratedDebris(center, radius, down, up);
     }
 
     private static Points routeMaze(Location center, Spec spec) {
