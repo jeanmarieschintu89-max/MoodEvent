@@ -18,13 +18,6 @@ public final class EventPackManager {
     public static void generatePack(Player player, GeneratedGameType type, GeneratedGameSize size) {
         if (player == null || type == null || size == null) return;
 
-        if (SquidPackManager.hasPack()) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE,
-                    "Un pack spécial est encore actif.",
-                    MoodStyle.detail("Restaure §e" + SquidPackManager.GAME_NAME + " §7avant de générer un autre mini-jeu."));
-            return;
-        }
-
         if (GeneratedGameManager.hasStructure()) {
             MoodStyle.errorMessage(player, MoodStyle.MODULE, "Une structure de mini-jeu existe déjà.", MoodStyle.detail("Restaure-la avant de créer un nouveau pack."));
             return;
