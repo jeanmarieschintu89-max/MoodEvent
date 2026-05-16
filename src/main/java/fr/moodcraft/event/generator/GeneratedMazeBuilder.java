@@ -45,24 +45,29 @@ public final class GeneratedMazeBuilder {
         buildMazeBlocks(world, minX, cy, minZ, width, open);
         decorate(world, minX, maxX, cy, minZ, maxZ);
 
-        int startX = minX - 5;
+        int startSasMinX = minX - 10;
+        int startSasMaxX = minX - 3;
         int startZ = minZ + 1;
-        int entryX = minX + 1;
         int entryZ = minZ + 1;
-        int finishX = maxX + 5;
+
+        int finishSasMinX = maxX + 3;
+        int finishSasMaxX = maxX + 10;
         int finishZ = maxZ - 1;
-        int exitX = maxX - 1;
         int exitZ = maxZ - 1;
 
-        clearInternalOldMarker(world, entryX, cy, entryZ);
-        clearInternalOldMarker(world, exitX, cy, exitZ);
-        buildClosedSas(world, startX, entryX, cy, startZ, true);
-        buildClosedSas(world, exitX, finishX, cy, finishZ, false);
+        clearInternalOldMarker(world, minX + 1, cy, entryZ);
+        clearInternalOldMarker(world, maxX - 1, cy, exitZ);
+
+        buildClosedSas(world, startSasMinX, startSasMaxX, cy, startZ, true);
+        buildClosedSas(world, finishSasMinX, finishSasMaxX, cy, finishZ, false);
+
+        carveConnector(world, startSasMaxX, minX + 1, cy, entryZ);
+        carveConnector(world, maxX - 1, finishSasMinX, cy, exitZ);
         openMazeDoor(world, minX - 2, cy, entryZ);
         openMazeDoor(world, maxX + 2, cy, exitZ);
 
-        Location start = new Location(world, startX + 0.5, cy + 1, startZ + 0.5, 90f, 0f);
-        Location finish = new Location(world, finishX + 0.5, cy + 1, finishZ + 0.5, -90f, 0f);
+        Location start = new Location(world, startSasMinX + 2.5, cy + 1, startZ + 0.5, 90f, 0f);
+        Location finish = new Location(world, finishSasMaxX - 2.5, cy + 1, finishZ + 0.5, -90f, 0f);
 
         placeLoot(world, LootTier.COMMUN, cx, cy + 1, minZ + Math.max(4, width / 4));
         placeLoot(world, LootTier.RARE, minX + Math.max(4, width / 3), cy + 1, cz);
@@ -146,6 +151,17 @@ public final class GeneratedMazeBuilder {
                 for (int y = cy + 1; y <= cy + WALL_HEIGHT + 1; y++) {
                     world.getBlockAt(x, y, z).setType(Material.AIR, false);
                 }
+            }
+        }
+    }
+
+    private static void carveConnector(World world, int fromX, int toX, int cy, int centerZ) {
+        int minX = Math.min(fromX, toX);
+        int maxX = Math.max(fromX, toX);
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = centerZ - 1; z <= centerZ + 1; z++) {
+                world.getBlockAt(x, cy, z).setType(Material.POLISHED_ANDESITE, false);
+                for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
             }
         }
     }
