@@ -6,7 +6,8 @@ import org.bukkit.Material;
 public enum GeneratedGameType {
 
     SURVIE_ETAGES("Tour Infernale", Material.MAGENTA_WOOL, EventType.SURVIE_ETAGES),
-    RUEE_OR("Mine en folie", Material.GOLDEN_PICKAXE, EventType.RUEE_OR);
+    RUEE_OR("Mine en folie", Material.GOLDEN_PICKAXE, EventType.RUEE_OR),
+    WATER_JUMP("Water Jump", Material.WATER_BUCKET, EventType.WATER_JUMP);
 
     private final String displayName;
     private final Material icon;
