@@ -3,7 +3,9 @@ package fr.moodcraft.event.listener;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameType;
 import fr.moodcraft.event.manager.EventManager;
+import fr.moodcraft.event.manager.WaitingRoomManager;
 import fr.moodcraft.event.util.MoodStyle;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,6 +24,8 @@ import java.util.Set;
 public class EventProtectionListener implements Listener {
 
     private static final String GOLD_RUSH_PICKAXE_NAME = "§6✦ §fPioche Ruée vers l'or §6✦";
+    private static final int WAITING_ROOM_PROTECTION_RADIUS = 13;
+    private static final int WAITING_ROOM_PROTECTION_HEIGHT = 13;
 
     private static final Set<String> BLOCKED_COMMANDS = Set.of(
             "/spawn", "/home", "/homes", "/tpa", "/tpahere", "/warp", "/warps", "/rtp", "/tpr"
@@ -50,6 +54,12 @@ public class EventProtectionListener implements Listener {
 
     @EventHandler
     public void onBreak(BlockBreakEvent event) {
+        if (isInsideWaitingRoom(event.getBlock().getLocation())) {
+            event.setCancelled(true);
+            MoodStyle.errorMessage(event.getPlayer(), MoodStyle.MODULE, "Casse interdite en salle d'attente.", MoodStyle.detail("La zone doit rester propre jusqu'au lancement."));
+            return;
+        }
+
         if (!GeneratedGameManager.isInsideStructure(event.getBlock().getLocation())) return;
 
         if (EventManager.getType().usesTimedMining()
@@ -62,7 +72,7 @@ public class EventProtectionListener implements Listener {
                         event.getPlayer(),
                         MoodStyle.MODULE,
                         "Pioche événement obligatoire.",
-                        MoodStyle.detail("Utilise uniquement la §ePioche Ruée vers l'or§7."),
+                        MoodStyle.detail("Utilise uniquement la §ePioche Mine en folie§7."),
                         MoodStyle.detail("Les autres pioches sont bloquées pour garder l'épreuve équitable.")
                 );
                 return;
@@ -77,6 +87,12 @@ public class EventProtectionListener implements Listener {
 
     @EventHandler
     public void onPlace(BlockPlaceEvent event) {
+        if (isInsideWaitingRoom(event.getBlockPlaced().getLocation())) {
+            event.setCancelled(true);
+            MoodStyle.errorMessage(event.getPlayer(), MoodStyle.MODULE, "Pose interdite en salle d'attente.", MoodStyle.detail("La zone doit rester propre jusqu'au lancement."));
+            return;
+        }
+
         if (!GeneratedGameManager.isInsideStructure(event.getBlockPlaced().getLocation())) return;
         event.setCancelled(true);
         MoodStyle.errorMessage(event.getPlayer(), MoodStyle.MODULE, "Pose interdite dans la structure générée.", MoodStyle.detail("Garde le mini-jeu propre et équitable."));
@@ -94,6 +110,21 @@ public class EventProtectionListener implements Listener {
                 return;
             }
         }
+    }
+
+    private boolean isInsideWaitingRoom(Location location) {
+        Location spawn = WaitingRoomManager.getSpawn();
+        if (location == null || location.getWorld() == null || spawn == null || spawn.getWorld() == null) return false;
+        if (!location.getWorld().equals(spawn.getWorld())) return false;
+
+        int dx = Math.abs(location.getBlockX() - spawn.getBlockX());
+        int dz = Math.abs(location.getBlockZ() - spawn.getBlockZ());
+        int dy = location.getBlockY() - (spawn.getBlockY() - 1);
+
+        return dx <= WAITING_ROOM_PROTECTION_RADIUS
+                && dz <= WAITING_ROOM_PROTECTION_RADIUS
+                && dy >= -1
+                && dy <= WAITING_ROOM_PROTECTION_HEIGHT;
     }
 
     private boolean hasGoldRushPickaxe(Player player) {
