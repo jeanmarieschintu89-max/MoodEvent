@@ -203,12 +203,6 @@ public class EventAdminGUIListener implements Listener {
             case 16 -> buildRoom(player, "grande");
             case 28 -> buildRoom(player, "tresgrande");
             case 30 -> buildRoom(player, "festival");
-            case 19 -> selectStyle(player, "sombre");
-            case 20 -> selectStyle(player, "lumineux");
-            case 21 -> selectStyle(player, "joyeux");
-            case 23 -> selectStyle(player, "royal");
-            case 24 -> selectStyle(player, "nature");
-            case 25 -> selectStyle(player, "neige");
             case 33 -> { click(player); WaitingRoomManager.teleport(player); WaitingRoomGUI.open(player); }
             case 35 -> { no(player); WaitingRoomManager.restore(player); WaitingRoomGUI.open(player); }
             case 49 -> { click(player); EventAdvancedGUI.open(player); }
@@ -255,13 +249,6 @@ public class EventAdminGUIListener implements Listener {
     private void buildRoom(Player player, String size) {
         click(player);
         WaitingRoomManager.build(player, size);
-        WaitingRoomGUI.open(player);
-    }
-
-    private void selectStyle(Player player, String style) {
-        click(player);
-        WaitingRoomManager.setSelectedStyle(player, style);
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Style de salle sélectionné.", MoodStyle.detail("Style : §e" + WaitingRoomManager.formatStyle(style)));
         WaitingRoomGUI.open(player);
     }
 
