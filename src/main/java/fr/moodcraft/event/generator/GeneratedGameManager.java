@@ -176,6 +176,8 @@ public final class GeneratedGameManager {
         config.set("active", false);
         config.set("type", null);
         config.set("size", null);
+        config.set("style", null);
+        config.set("generation-profile", null);
         config.set("region", null);
         config.set("backup", null);
         config.set("start", null);
@@ -222,7 +224,8 @@ public final class GeneratedGameManager {
             case RUEE_OR -> routeMine(center, spec);
         };
 
-        config.set("style", type == GeneratedGameType.LABYRINTHE ? "LABYRINTHE_PREMIUM" : type == GeneratedGameType.JUMP || type == GeneratedGameType.WATER_JUMP ? "LAINE_CONSTANTE" : "BUILDER_DEDIE");
+        config.set("style", null);
+        config.set("generation-profile", generationProfile(type));
         active = true;
         activeType = type;
         activeRegion = region;
@@ -244,7 +247,19 @@ public final class GeneratedGameManager {
         MoodStyle.successMessage(player, MoodStyle.MODULE,
                 "Mini-jeu généré.",
                 MoodStyle.detail("Type : §e" + type.getDisplayName()),
-                MoodStyle.detail("Taille : §e" + spec.describe(type)));
+                MoodStyle.detail("Taille : §e" + spec.describe(type)),
+                MoodStyle.detail("Profil : §e" + generationProfile(type)));
+    }
+
+    private static String generationProfile(GeneratedGameType type) {
+        return switch (type) {
+            case LABYRINTHE -> "labyrinthe";
+            case JUMP -> "jump";
+            case COURSE -> "course";
+            case WATER_JUMP -> "water_jump";
+            case SURVIE_ETAGES -> "survie_etages";
+            case RUEE_OR -> "ruee_or";
+        };
     }
 
     private static void purgeOldDebris(Location center, GeneratedGameType type, Region region) {
