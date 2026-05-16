@@ -142,7 +142,7 @@ public final class EventLootManager {
 
     public static void registerLootChest(Location location, GeneratedGameType type, LootTier tier) {
         if (location == null || location.getWorld() == null || type == null || tier == null) return;
-        if (type != GeneratedGameType.LABYRINTHE && type != GeneratedGameType.JUMP && type != GeneratedGameType.WATER_JUMP) return;
+        if (type != GeneratedGameType.WATER_JUMP) return;
         String id = key(location);
         claimConfig.set("chests." + id + ".tier", tier.name());
         claimConfig.set("chests." + id + ".type", type.name());
