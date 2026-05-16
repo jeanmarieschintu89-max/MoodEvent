@@ -54,6 +54,8 @@ public final class GeneratedMazeBuilder {
         int exitX = maxX - 1;
         int exitZ = maxZ - 1;
 
+        clearInternalOldMarker(world, entryX, cy, entryZ);
+        clearInternalOldMarker(world, exitX, cy, exitZ);
         buildClosedSas(world, startX, entryX, cy, startZ, true);
         buildClosedSas(world, exitX, finishX, cy, finishZ, false);
         openMazeDoor(world, minX - 2, cy, entryZ);
@@ -132,6 +134,17 @@ public final class GeneratedMazeBuilder {
                         Material material = y == cy + WALL_HEIGHT ? Material.CHISELED_DEEPSLATE : Material.MOSSY_STONE_BRICKS;
                         world.getBlockAt(x, y, z).setType(material, false);
                     }
+                }
+            }
+        }
+    }
+
+    private static void clearInternalOldMarker(World world, int cx, int cy, int cz) {
+        for (int x = cx - 3; x <= cx + 3; x++) {
+            for (int z = cz - 3; z <= cz + 3; z++) {
+                world.getBlockAt(x, cy, z).setType(Material.POLISHED_ANDESITE, false);
+                for (int y = cy + 1; y <= cy + WALL_HEIGHT + 1; y++) {
+                    world.getBlockAt(x, y, z).setType(Material.AIR, false);
                 }
             }
         }
