@@ -212,6 +212,7 @@ public class SquidPackTask implements Listener {
         tick++;
         FileConfiguration config = SquidPackManager.config();
         Location bridgeStart = SquidPackManager.location("bridge-start");
+        Location bridgeFinish = SquidPackManager.location("bridge-finish");
         if (bridgeStart == null || bridgeStart.getWorld() == null) {
             finishLastAliveOrNoWinner("Pont de verre introuvable.");
             return;
@@ -219,25 +220,35 @@ public class SquidPackTask implements Listener {
         int finishX = config.getInt("glass.finish-x");
         int stepStartX = config.getInt("glass.step-start-x", bridgeStart.getBlockX() + 3);
         int glassSteps = Math.max(1, config.getInt("glass.steps", 12));
+        int lastGlassX = stepStartX + ((glassSteps - 1) * 3);
         int zLeft = config.getInt("glass.z-left");
         int zRight = config.getInt("glass.z-right");
         for (UUID uuid : new HashSet<>(qualified)) {
             Player player = Bukkit.getPlayer(uuid);
-            if (player == null || !player.isOnline() || eliminated.contains(uuid) || falling.contains(uuid)) continue;
+            if (player == null || !player.isOnline() || eliminated.contains(uuid)) continue;
             Location loc = player.getLocation();
-            if (!loc.getWorld().equals(bridgeStart.getWorld())) continue;
+            if (loc.getWorld() == null || !loc.getWorld().equals(bridgeStart.getWorld())) continue;
+
+            if (hasReachedBridgeFinish(loc, bridgeFinish, finishX)) {
+                falling.remove(uuid);
+                finishPack(player);
+                return;
+            }
+
+            if (falling.contains(uuid)) continue;
+
             if (loc.getBlockY() < bridgeStart.getBlockY() - 3) {
                 delayedGlassEliminate(player, "Chute du pont");
                 continue;
             }
-            if (loc.getBlockX() >= finishX) {
-                finishPack(player);
-                return;
-            }
-            int step = Math.max(0, Math.min(glassSteps - 1, (loc.getBlockX() - stepStartX) / 3));
-            String safe = config.getString("glass.safe." + step, "LEFT");
+
             boolean onLeft = Math.abs(loc.getBlockZ() - zLeft) <= 1;
             boolean onRight = Math.abs(loc.getBlockZ() - zRight) <= 1;
+            boolean onGlassArea = loc.getBlockX() >= stepStartX - 1 && loc.getBlockX() <= lastGlassX + 1 && (onLeft || onRight);
+            if (!onGlassArea) continue;
+
+            int step = Math.max(0, Math.min(glassSteps - 1, (loc.getBlockX() - stepStartX) / 3));
+            String safe = config.getString("glass.safe." + step, "LEFT");
             if ((onLeft && safe.equals("RIGHT")) || (onRight && safe.equals("LEFT"))) {
                 breakGlassThenDormitory(player, loc, "Mauvaise vitre");
             }
@@ -251,6 +262,15 @@ public class SquidPackTask implements Listener {
         }
     }
 
+    private boolean hasReachedBridgeFinish(Location location, Location finish, int finishX) {
+        if (location == null || location.getWorld() == null) return false;
+        if (location.getBlockX() >= finishX) return true;
+        if (finish == null || finish.getWorld() == null || !finish.getWorld().equals(location.getWorld())) return false;
+        return Math.abs(location.getX() - finish.getX()) <= 5.5
+                && Math.abs(location.getZ() - finish.getZ()) <= 6.5
+                && Math.abs(location.getY() - finish.getY()) <= 4.0;
+    }
+
     private void breakGlassThenDormitory(Player player, Location glassLocation, String reason) {
         UUID uuid = player.getUniqueId();
         if (!falling.add(uuid)) return;
@@ -260,12 +280,20 @@ public class SquidPackTask implements Listener {
 
     private void delayedGlassEliminate(Player player, String reason) {
         if (player == null || !player.isOnline()) return;
+        FileConfiguration config = SquidPackManager.config();
+        Location finish = SquidPackManager.location("bridge-finish");
+        if (hasReachedBridgeFinish(player.getLocation(), finish, config.getInt("glass.finish-x"))) {
+            falling.remove(player.getUniqueId());
+            finishPack(player);
+            return;
+        }
         falling.remove(player.getUniqueId());
         eliminate(player, reason);
     }
 
     private void finishPack(Player winner) {
         if (finished || winner == null) return;
+        falling.remove(winner.getUniqueId());
         finished = true;
         SquidPackManager.setStage("FINISHED");
         String winnerName = winner.getName();
