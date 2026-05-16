@@ -21,6 +21,7 @@ public final class GeneratedRaceBuilder {
 
         buildArena(world, cx - 6, finishX + 8, cz - 4, cz + 4, cy, cy + 4);
         buildTrack(world, cx, finishX, cy, cz);
+        buildObstacles(world, cx + 8, finishX - 8, cy, cz);
         drawLine(world, cx, cy, cz, 2, Material.LIME_CONCRETE);
         drawLine(world, finishX, cy, cz, 2, Material.RED_CONCRETE);
 
@@ -51,12 +52,60 @@ public final class GeneratedRaceBuilder {
                 world.getBlockAt(x, y, z).setType((x + z) % 2 == 0 ? Material.SMOOTH_STONE : Material.POLISHED_ANDESITE, false);
                 world.getBlockAt(x, y + 1, z).setType(Material.AIR, false);
                 world.getBlockAt(x, y + 2, z).setType(Material.AIR, false);
-            }
-            if (x % 18 == 0) {
-                world.getBlockAt(x, y + 1, cz - 1).setType(Material.HAY_BLOCK, false);
-                world.getBlockAt(x, y + 1, cz + 1).setType(Material.HAY_BLOCK, false);
+                world.getBlockAt(x, y + 3, z).setType(Material.AIR, false);
             }
         }
+    }
+
+    private static void buildObstacles(World world, int minX, int maxX, int y, int cz) {
+        int index = 0;
+        for (int x = minX; x <= maxX; x += 12) {
+            switch (index % 6) {
+                case 0 -> buildHayHurdles(world, x, y, cz);
+                case 1 -> buildSlabWave(world, x, y, cz);
+                case 2 -> buildFenceGate(world, x, y, cz);
+                case 3 -> buildZigZagBlocks(world, x, y, cz);
+                case 4 -> buildLowWall(world, x, y, cz);
+                default -> buildSpeedBumps(world, x, y, cz);
+            }
+            index++;
+        }
+    }
+
+    private static void buildHayHurdles(World world, int x, int y, int cz) {
+        world.getBlockAt(x, y + 1, cz - 2).setType(Material.HAY_BLOCK, false);
+        world.getBlockAt(x, y + 1, cz + 2).setType(Material.HAY_BLOCK, false);
+    }
+
+    private static void buildSlabWave(World world, int x, int y, int cz) {
+        world.getBlockAt(x, y + 1, cz - 1).setType(Material.OAK_SLAB, false);
+        world.getBlockAt(x + 1, y + 1, cz).setType(Material.OAK_SLAB, false);
+        world.getBlockAt(x + 2, y + 1, cz + 1).setType(Material.OAK_SLAB, false);
+    }
+
+    private static void buildFenceGate(World world, int x, int y, int cz) {
+        for (int z = cz - 2; z <= cz + 2; z++) {
+            if (z == cz) continue;
+            world.getBlockAt(x, y + 1, z).setType(Material.OAK_FENCE, false);
+        }
+    }
+
+    private static void buildZigZagBlocks(World world, int x, int y, int cz) {
+        world.getBlockAt(x, y + 1, cz - 2).setType(Material.COBBLESTONE, false);
+        world.getBlockAt(x + 2, y + 1, cz).setType(Material.COBBLESTONE, false);
+        world.getBlockAt(x + 4, y + 1, cz + 2).setType(Material.COBBLESTONE, false);
+    }
+
+    private static void buildLowWall(World world, int x, int y, int cz) {
+        world.getBlockAt(x, y + 1, cz - 1).setType(Material.SMOOTH_STONE_SLAB, false);
+        world.getBlockAt(x, y + 1, cz).setType(Material.SMOOTH_STONE_SLAB, false);
+        world.getBlockAt(x, y + 1, cz + 1).setType(Material.SMOOTH_STONE_SLAB, false);
+    }
+
+    private static void buildSpeedBumps(World world, int x, int y, int cz) {
+        world.getBlockAt(x, y + 1, cz - 2).setType(Material.YELLOW_CARPET, false);
+        world.getBlockAt(x, y + 1, cz).setType(Material.YELLOW_CARPET, false);
+        world.getBlockAt(x, y + 1, cz + 2).setType(Material.YELLOW_CARPET, false);
     }
 
     private static void drawLine(World world, int x, int y, int cz, int halfWidth, Material material) {
@@ -64,6 +113,7 @@ public final class GeneratedRaceBuilder {
             world.getBlockAt(x, y, z).setType(material, false);
             world.getBlockAt(x, y + 1, z).setType(Material.AIR, false);
             world.getBlockAt(x, y + 2, z).setType(Material.AIR, false);
+            world.getBlockAt(x, y + 3, z).setType(Material.AIR, false);
         }
     }
 
