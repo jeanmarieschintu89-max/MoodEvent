@@ -2,7 +2,6 @@ package fr.moodcraft.event.generator;
 
 import fr.moodcraft.event.Main;
 import fr.moodcraft.event.loot.EventLootManager;
-import fr.moodcraft.event.loot.LootTier;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Bukkit;
@@ -215,8 +214,13 @@ public final class GeneratedGameManager {
             case RUEE_OR -> generateGoldRush(center, spec);
         };
 
-        GeneratedGameStyle style = GeneratedGameStyleManager.get(player);
-        GeneratedGameThemePainter.paint(world, region.minX, region.maxX, region.minY, region.maxY, region.minZ, region.maxZ, style);
+        if (type != GeneratedGameType.LABYRINTHE) {
+            GeneratedGameStyle style = GeneratedGameStyleManager.get(player);
+            GeneratedGameThemePainter.paint(world, region.minX, region.maxX, region.minY, region.maxY, region.minZ, region.maxZ, style);
+            config.set("style", style.name());
+        } else {
+            config.set("style", "LABYRINTHE_PREMIUM");
+        }
 
         active = true;
         activeType = type;
@@ -224,7 +228,6 @@ public final class GeneratedGameManager {
         config.set("active", true);
         config.set("type", type.name());
         config.set("size", sizeName);
-        config.set("style", style.name());
         writeRegion("region", region);
         writeLocation("start", points.start());
         writeLocation("finish", points.finish());
@@ -237,7 +240,10 @@ public final class GeneratedGameManager {
 
         configureEvent(player, type, points);
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.15f);
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Mini-jeu généré.", MoodStyle.detail("Type : §e" + type.getDisplayName()), MoodStyle.detail("Taille : §e" + spec.describe(type)), MoodStyle.detail("Thème : §e" + style.getDisplayName()), type == GeneratedGameType.RUEE_OR ? MoodStyle.detail("Mine bedrock prête. Aucun reward, les minerais sont le gain.") : MoodStyle.detail("Structure temporaire restaurable."));
+        MoodStyle.successMessage(player, MoodStyle.MODULE,
+                "Mini-jeu généré.",
+                MoodStyle.detail("Type : §e" + type.getDisplayName()),
+                MoodStyle.detail("Taille : §e" + spec.describe(type)));
     }
 
     private static void configureEvent(Player player, GeneratedGameType type, Points points) {
@@ -266,27 +272,8 @@ public final class GeneratedGameManager {
     }
 
     private static Points generateMaze(Location center, Spec spec) {
-        World world = center.getWorld();
-        int cx = center.getBlockX(), cy = center.getBlockY(), cz = center.getBlockZ();
-        int half = spec.width / 2;
-        buildBoundary(world, cx - half - 1, cx + half + 1, cz - half - 1, cz + half + 1, cy, cy + 4, Material.CRACKED_STONE_BRICKS, Material.CHISELED_STONE_BRICKS);
-        for (int x = cx - half; x <= cx + half; x++) {
-            for (int z = cz - half; z <= cz + half; z++) {
-                boolean border = x == cx - half || x == cx + half || z == cz - half || z == cz + half;
-                boolean wall = border || (x % 4 == 0 && z % 3 != 0) || (z % 5 == 0 && x % 3 != 0);
-                world.getBlockAt(x, cy, z).setType(Material.STONE_BRICKS, false);
-                world.getBlockAt(x, cy + 1, z).setType(wall ? Material.MOSSY_STONE_BRICKS : Material.AIR, false);
-                world.getBlockAt(x, cy + 2, z).setType(wall ? Material.STONE_BRICKS : Material.AIR, false);
-            }
-        }
-        Location start = new Location(world, cx - half + 1.5, cy + 1, cz - half + 1.5, -45f, 0f);
-        Location finish = new Location(world, cx + half - 1.5, cy + 1, cz + half - 1.5, 135f, 0f);
-        platform(world, start.getBlockX(), cy, start.getBlockZ(), 2, Material.LIME_CONCRETE);
-        platform(world, finish.getBlockX(), cy, finish.getBlockZ(), 2, Material.RED_CONCRETE);
-        startGate(world, start.getBlockX(), cy, start.getBlockZ(), false);
-        finishGate(world, finish.getBlockX(), cy, finish.getBlockZ(), false);
-        addLoot(world, GeneratedGameType.LABYRINTHE, cx, cy + 1, cz, Math.max(8, spec.width - 4));
-        return new Points(start, finish);
+        GeneratedMazeBuilder.Layout layout = GeneratedMazeBuilder.build(center, spec.width);
+        return new Points(layout.start(), layout.finish());
     }
 
     private static Points generateJump(Location center, Spec spec) {
@@ -390,23 +377,11 @@ public final class GeneratedGameManager {
         return RANDOM.nextBoolean() ? Material.STONE : Material.DEEPSLATE;
     }
 
-    private static void addLoot(World world, GeneratedGameType type, int cx, int cy, int cz, int spread) {
-        placeLoot(world, type, LootTier.COMMUN, cx, cy, cz + Math.max(3, spread / 3));
-        placeLoot(world, type, LootTier.RARE, cx + Math.max(3, spread / 3), cy, cz);
-        placeLoot(world, type, LootTier.EPIQUE, cx, cy, cz - Math.max(3, spread / 3));
-    }
-
-    private static void placeLoot(World world, GeneratedGameType type, LootTier tier, int x, int y, int z) {
-        Location location = new Location(world, x, y, z);
-        location.getBlock().setType(Material.CHEST, false);
-        EventLootManager.registerLootChest(location, type, tier);
-    }
-
     private static Region regionFor(Location center, GeneratedGameType type, Spec spec) {
         String world = center.getWorld().getName();
         int cx = center.getBlockX(), cy = center.getBlockY(), cz = center.getBlockZ();
         return switch (type) {
-            case LABYRINTHE -> new Region(world, cx - spec.width / 2 - 4, cy - 1, cz - spec.width / 2 - 4, cx + spec.width / 2 + 4, cy + 7, cz + spec.width / 2 + 4);
+            case LABYRINTHE -> new Region(world, cx - spec.width / 2 - 5, cy - 1, cz - spec.width / 2 - 5, cx + spec.width / 2 + 5, cy + 9, cz + spec.width / 2 + 5);
             case JUMP -> new Region(world, cx - 8, cy - 2, cz - 10, cx + spec.length + 20, cy + 11, cz + 10);
             case COURSE -> new Region(world, cx - 8, cy - 1, cz - 6, cx + spec.length + 10, cy + 6, cz + 6);
             case WATER_JUMP -> new Region(world, cx - 8, cy - 2, cz - 8, cx + spec.length + 10, cy + 7, cz + 8);
