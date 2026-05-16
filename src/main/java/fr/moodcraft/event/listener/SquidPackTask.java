@@ -1,6 +1,7 @@
 package fr.moodcraft.event.listener;
 
 import fr.moodcraft.event.Main;
+import fr.moodcraft.event.generator.SquidGameCinematic;
 import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.manager.EventManager;
 import org.bukkit.Bukkit;
@@ -20,13 +21,19 @@ import java.util.UUID;
 
 public class SquidPackTask implements Listener {
 
+    private static final int RED_GRACE_SECONDS = 2;
+    private static final int DORMITORY_DELAY_SECONDS = 10;
+    private static final int PRIZE_PER_ELIMINATION = 2500;
+
     private int tick;
+    private int redGrace;
     private boolean green = true;
     private boolean runtimeStarted;
     private boolean finished;
     private final Map<UUID, Location> lastRedPositions = new HashMap<>();
     private final Set<UUID> qualified = new HashSet<>();
     private final Set<UUID> eliminated = new HashSet<>();
+    private final Set<UUID> falling = new HashSet<>();
 
     public SquidPackTask() {
         new BukkitRunnable() {
@@ -42,58 +49,52 @@ public class SquidPackTask implements Listener {
             resetRuntime();
             return;
         }
-
         if (EventManager.getParticipantSize() <= 0) {
             tick = 0;
             green = true;
             return;
         }
-
         if (!runtimeStarted) {
             startRedGreen();
             return;
         }
-
-        String stage = SquidPackManager.getStage();
-        if (stage.equals("WAITING")) {
-            startRedGreen();
-            return;
-        }
-        if (stage.equals("RED_GREEN")) {
-            redGreenTick();
-            return;
-        }
-        if (stage.equals("GLASS_BRIDGE")) {
-            glassBridgeTick();
+        switch (SquidPackManager.getStage()) {
+            case "WAITING" -> startRedGreen();
+            case "RED_GREEN" -> redGreenTick();
+            case "DORMITORY_BRIDGE" -> dormitoryBeforeBridgeTick();
+            case "GLASS_BRIDGE" -> glassBridgeTick();
+            default -> { }
         }
     }
 
     private void startRedGreen() {
         tick = 0;
+        redGrace = 0;
         green = true;
         runtimeStarted = true;
         finished = false;
         lastRedPositions.clear();
         qualified.clear();
         eliminated.clear();
+        falling.clear();
         SquidPackManager.setStage("RED_GREEN");
+        SquidGameCinematic.updateDollAndLights(true);
 
         Location start = SquidPackManager.location("start");
         if (start != null) {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!EventManager.isParticipant(player)) continue;
                 player.teleport(start);
-                player.sendTitle("§a§lFEU VERT", "§fCours jusqu'à la ligne rouge !", 0, 45, 10);
+                player.sendTitle("§a§lFEU VERT", "§fLa poupée regarde ailleurs !", 0, 45, 10);
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.6f);
                 player.sendMessage("§8----- §c§l✦ SQUID MOOD GAME ✦ §8-----");
                 player.sendMessage("§a▶ §fFEU VERT : §acours !");
-                player.sendMessage("§c■ §fFEU ROUGE : §cstop net, sinon dortoir.");
+                player.sendMessage("§c■ §fFEU ROUGE : §cstop après le délai de grâce.");
                 player.sendMessage("§e★ §fObjectif : §eatteindre la ligne rouge.");
                 player.sendMessage("§8-----------------------------");
             }
         }
-
-        flashyBroadcast("§c§lSQUID MOOD GAME", "§aFEU VERT ! §fCours quand c'est vert, fige-toi quand c'est rouge !");
+        SquidGameCinematic.flashyBroadcast("§a§lFEU VERT", "§fLa poupée est tournée. §aCours !");
     }
 
     private void redGreenTick() {
@@ -103,14 +104,26 @@ public class SquidPackTask implements Listener {
 
         if (tick % 5 == 0) {
             green = !green;
+            SquidGameCinematic.updateDollAndLights(green);
             if (!green) {
+                redGrace = RED_GRACE_SECONDS;
                 lastRedPositions.clear();
-                forEachAlive(player -> lastRedPositions.put(player.getUniqueId(), player.getLocation().clone()));
             }
             forEachAlive(player -> {
-                player.sendTitle(green ? "§a§lFEU VERT" : "§c§lFEU ROUGE", green ? "§fGO GO GO !" : "§fSTOP !", 0, 25, 5);
+                player.sendTitle(green ? "§a§lFEU VERT" : "§c§lFEU ROUGE", green ? "§fGO GO GO !" : "§fLa poupée tourne...", 0, 25, 5);
                 player.playSound(player.getLocation(), green ? Sound.BLOCK_NOTE_BLOCK_PLING : Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, green ? 1.5f : 0.6f);
             });
+        }
+
+        if (!green && redGrace > 0) {
+            redGrace--;
+            forEachAlive(player -> player.sendTitle("§c§lFEU ROUGE", "§eGrace : " + redGrace + "s", 0, 20, 5));
+            if (redGrace == 0) {
+                lastRedPositions.clear();
+                forEachAlive(player -> lastRedPositions.put(player.getUniqueId(), player.getLocation().clone()));
+                forEachAlive(player -> player.sendTitle("§c§lSTOP !", "§fPlus un mouvement", 0, 20, 5));
+            }
+            return;
         }
 
         forEachAlive(player -> {
@@ -121,36 +134,54 @@ public class SquidPackTask implements Listener {
                     return;
                 }
             }
-            if (player.getLocation().getBlockX() >= finishX) {
-                qualifyRedGreen(player);
-            }
+            if (player.getLocation().getBlockX() >= finishX) qualifyRedGreen(player);
         });
 
         if (tryFinishLastSurvivor()) return;
-
-        int aliveNotQualified = countAliveNotQualified();
         if (tick >= 90) {
             if (qualified.isEmpty()) finishLastAliveOrNoWinner("Temps écoulé : aucun joueur qualifié.");
-            else startGlassBridge();
+            else startDormitoryBeforeBridge();
             return;
         }
-
-        if (aliveNotQualified <= 0) {
+        if (countAliveNotQualified() <= 0) {
             if (qualified.isEmpty()) finishLastAliveOrNoWinner("Tous les joueurs non qualifiés ont été éliminés.");
-            else startGlassBridge();
+            else startDormitoryBeforeBridge();
         }
     }
 
     private void qualifyRedGreen(Player player) {
         if (!qualified.add(player.getUniqueId())) return;
-        Location bridge = SquidPackManager.location("bridge-start");
-        if (bridge != null) player.teleport(bridge);
-        player.sendTitle("§e§lQUALIFIÉ !", "§bPont de verre", 0, 45, 10);
+        SquidGameCinematic.teleportDormitory(player);
+        player.sendTitle("§e§lQUALIFIÉ !", "§dRetour dortoir", 0, 45, 10);
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.9f, 1.25f);
         player.sendMessage("§8----- §e§l★ QUALIFICATION ★ §8-----");
-        player.sendMessage("§a✔ §fTu passes au §bPont de Verre§f.");
-        player.sendMessage("§7Patiente sur la plateforme verte, le show continue.");
+        player.sendMessage("§a✔ §fTu es qualifié pour le §bPont de Verre§f.");
+        player.sendMessage("§d⌂ §fRetour au dortoir : annonce de la cagnotte.");
         player.sendMessage("§8-----------------------------");
+    }
+
+    private void startDormitoryBeforeBridge() {
+        tick = 0;
+        SquidPackManager.setStage("DORMITORY_BRIDGE");
+        for (UUID uuid : new HashSet<>(qualified)) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player == null || !player.isOnline() || eliminated.contains(uuid)) continue;
+            SquidGameCinematic.teleportDormitory(player);
+            player.sendTitle("§d§lDORTOIR", "§fProchaine épreuve dans " + DORMITORY_DELAY_SECONDS + "s", 0, 60, 10);
+            player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.25f);
+        }
+        SquidGameCinematic.announcePrize("§eFin de l'épreuve 1", "§fLa cagnotte monte. Prochaine épreuve : §bPont de Verre§f.", eliminated.size(), PRIZE_PER_ELIMINATION);
+    }
+
+    private void dormitoryBeforeBridgeTick() {
+        tick++;
+        int remaining = DORMITORY_DELAY_SECONDS - tick;
+        for (UUID uuid : new HashSet<>(qualified)) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player == null || !player.isOnline() || eliminated.contains(uuid)) continue;
+            player.sendTitle("§d§lDORTOIR", "§bPont de Verre dans §e" + Math.max(0, remaining) + "s", 0, 25, 5);
+        }
+        if (tick >= DORMITORY_DELAY_SECONDS) startGlassBridge();
     }
 
     private void startGlassBridge() {
@@ -158,7 +189,6 @@ public class SquidPackTask implements Listener {
             finishLastAliveOrNoWinner("Aucun joueur qualifié pour le Pont de Verre.");
             return;
         }
-
         tick = 0;
         SquidPackManager.setStage("GLASS_BRIDGE");
         Location bridge = SquidPackManager.location("bridge-start");
@@ -171,7 +201,7 @@ public class SquidPackTask implements Listener {
                 player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1.0f, 1.25f);
             }
         }
-        flashyBroadcast("§b§lPONT DE VERRE", "§fChoisis bien. §cUne mauvaise vitre, et retour dortoir !");
+        SquidGameCinematic.flashyBroadcast("§b§lPONT DE VERRE", "§fChoisis bien. §cUne mauvaise vitre, tu tombes puis retour dortoir !");
     }
 
     private void glassBridgeTick() {
@@ -182,47 +212,32 @@ public class SquidPackTask implements Listener {
             finishLastAliveOrNoWinner("Pont de verre introuvable.");
             return;
         }
-
         int finishX = config.getInt("glass.finish-x");
         int zLeft = config.getInt("glass.z-left");
         int zRight = config.getInt("glass.z-right");
-
         for (UUID uuid : new HashSet<>(qualified)) {
             Player player = Bukkit.getPlayer(uuid);
-            if (player == null || !player.isOnline() || eliminated.contains(uuid)) continue;
-
+            if (player == null || !player.isOnline() || eliminated.contains(uuid) || falling.contains(uuid)) continue;
             Location loc = player.getLocation();
             if (!loc.getWorld().equals(bridgeStart.getWorld())) continue;
-
             if (loc.getBlockY() < bridgeStart.getBlockY() - 3) {
-                eliminate(player, "Chute du pont");
+                delayedGlassEliminate(player, "Chute du pont");
                 continue;
             }
             if (loc.getBlockX() >= finishX) {
                 finishPack(player);
                 return;
             }
-
             int step = Math.max(0, Math.min(9, (loc.getBlockX() - (bridgeStart.getBlockX() + 3)) / 3));
             String safe = config.getString("glass.safe." + step, "LEFT");
             boolean onLeft = Math.abs(loc.getBlockZ() - zLeft) <= 1;
             boolean onRight = Math.abs(loc.getBlockZ() - zRight) <= 1;
-            boolean wrongLeft = onLeft && safe.equals("RIGHT");
-            boolean wrongRight = onRight && safe.equals("LEFT");
-
-            if (wrongLeft || wrongRight) {
-                loc.getBlock().setType(Material.AIR, false);
-                eliminate(player, "Mauvaise vitre");
+            if ((onLeft && safe.equals("RIGHT")) || (onRight && safe.equals("LEFT"))) {
+                breakGlassThenDormitory(player, loc, "Mauvaise vitre");
             }
         }
-
         if (tryFinishLastSurvivor()) return;
-
-        if (countQualifiedAlive() <= 0) {
-            finishLastAliveOrNoWinner("Tous les qualifiés ont été éliminés.");
-            return;
-        }
-
+        if (countQualifiedAlive() <= 0 && falling.isEmpty()) finishLastAliveOrNoWinner("Tous les qualifiés ont été éliminés.");
         if (tick >= 120) {
             Player winner = findAliveQualifiedPlayer();
             if (winner != null) finishPack(winner);
@@ -230,15 +245,29 @@ public class SquidPackTask implements Listener {
         }
     }
 
+    private void breakGlassThenDormitory(Player player, Location glassLocation, String reason) {
+        UUID uuid = player.getUniqueId();
+        if (!falling.add(uuid)) return;
+        SquidGameCinematic.breakGlass(player, glassLocation);
+        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> delayedGlassEliminate(player, reason), 45L);
+    }
+
+    private void delayedGlassEliminate(Player player, String reason) {
+        if (player == null || !player.isOnline()) return;
+        falling.remove(player.getUniqueId());
+        eliminate(player, reason);
+    }
+
     private void finishPack(Player winner) {
         if (finished || winner == null) return;
         finished = true;
         SquidPackManager.setStage("FINISHED");
         String winnerName = winner.getName();
-        winner.sendTitle("§6§lVICTOIRE !", "§fSquid Mood Game", 0, 60, 15);
+        int prize = Math.max(PRIZE_PER_ELIMINATION, eliminated.size() * PRIZE_PER_ELIMINATION);
+        winner.sendTitle("§6§lVICTOIRE !", "§fCagnotte : §a" + prize + "€", 0, 60, 15);
         winner.playSound(winner.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.1f);
         EventManager.stopEvent(winner);
-        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> flashyBroadcast("§6§lVICTOIRE SQUID MOOD GAME", "§e" + winnerName + " §fremporte la partie ! §a/event §fpour le prochain show !"), 20L);
+        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> SquidGameCinematic.flashyBroadcast("§6§lVICTOIRE SQUID MOOD GAME", "§e" + winnerName + " §fremporte la partie et une cagnotte de §a" + prize + "€ §8• §a/event §fpour le prochain show !"), 20L);
     }
 
     private void finishWithoutWinner(String reason) {
@@ -246,10 +275,8 @@ public class SquidPackTask implements Listener {
         finished = true;
         SquidPackManager.setStage("FINISHED");
         Player anchor = findOnlineEventPlayer();
-        if (anchor != null) {
-            EventManager.stopEvent(anchor);
-        }
-        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> flashyBroadcast("§c§lSQUID MOOD GAME TERMINÉ", "§f" + reason + " §e/event §fpour retenter !"), 20L);
+        if (anchor != null) EventManager.stopEvent(anchor);
+        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> SquidGameCinematic.flashyBroadcast("§c§lSQUID MOOD GAME TERMINÉ", "§f" + reason + " §e/event §fpour retenter !"), 20L);
     }
 
     private void finishLastAliveOrNoWinner(String noWinnerReason) {
@@ -259,6 +286,7 @@ public class SquidPackTask implements Listener {
     }
 
     private boolean tryFinishLastSurvivor() {
+        if (!falling.isEmpty()) return false;
         Player survivor = findLastAlivePlayer();
         if (survivor != null && countAliveAll() == 1) {
             finishPack(survivor);
@@ -269,7 +297,8 @@ public class SquidPackTask implements Listener {
 
     private void eliminate(Player player, String reason) {
         if (!eliminated.add(player.getUniqueId())) return;
-        teleportToDormitory(player);
+        falling.remove(player.getUniqueId());
+        SquidGameCinematic.teleportDormitory(player);
         player.sendTitle("§c§lÉLIMINÉ", "§fRetour dortoir", 0, 45, 10);
         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.9f, 0.65f);
         player.sendMessage("§8----- §c§l✖ ÉLIMINATION ✖ §8-----");
@@ -279,42 +308,23 @@ public class SquidPackTask implements Listener {
         Bukkit.broadcastMessage("§c✖ §e" + player.getName() + " §fest éliminé §8• §7" + reason);
     }
 
-    private void teleportToDormitory(Player player) {
-        Location dormitory = SquidPackManager.location("dormitory");
-        if (dormitory != null && dormitory.getWorld() != null) {
-            player.teleport(dormitory);
-            return;
-        }
-        Location lobby = SquidPackManager.location("lobby");
-        if (lobby != null && lobby.getWorld() != null) player.teleport(lobby);
-    }
-
     private void forEachAlive(PlayerAction action) {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!EventManager.isParticipant(player)) continue;
-            if (eliminated.contains(player.getUniqueId())) continue;
+            if (eliminated.contains(player.getUniqueId()) || falling.contains(player.getUniqueId())) continue;
             action.accept(player);
         }
     }
 
     private int countAliveAll() {
         int count = 0;
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!EventManager.isParticipant(player)) continue;
-            if (eliminated.contains(player.getUniqueId())) continue;
-            count++;
-        }
+        for (Player player : Bukkit.getOnlinePlayers()) if (EventManager.isParticipant(player) && !eliminated.contains(player.getUniqueId()) && !falling.contains(player.getUniqueId())) count++;
         return count;
     }
 
     private int countAliveNotQualified() {
         int count = 0;
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!EventManager.isParticipant(player)) continue;
-            if (eliminated.contains(player.getUniqueId())) continue;
-            if (qualified.contains(player.getUniqueId())) continue;
-            count++;
-        }
+        for (Player player : Bukkit.getOnlinePlayers()) if (EventManager.isParticipant(player) && !eliminated.contains(player.getUniqueId()) && !falling.contains(player.getUniqueId()) && !qualified.contains(player.getUniqueId())) count++;
         return count;
     }
 
@@ -322,9 +332,7 @@ public class SquidPackTask implements Listener {
         int count = 0;
         for (UUID uuid : qualified) {
             Player player = Bukkit.getPlayer(uuid);
-            if (player == null || !player.isOnline()) continue;
-            if (eliminated.contains(uuid)) continue;
-            count++;
+            if (player != null && player.isOnline() && !eliminated.contains(uuid) && !falling.contains(uuid)) count++;
         }
         return count;
     }
@@ -333,8 +341,7 @@ public class SquidPackTask implements Listener {
         Player survivor = null;
         int count = 0;
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!EventManager.isParticipant(player)) continue;
-            if (eliminated.contains(player.getUniqueId())) continue;
+            if (!EventManager.isParticipant(player) || eliminated.contains(player.getUniqueId()) || falling.contains(player.getUniqueId())) continue;
             survivor = player;
             count++;
         }
@@ -344,7 +351,7 @@ public class SquidPackTask implements Listener {
     private Player findAliveQualifiedPlayer() {
         for (UUID uuid : qualified) {
             Player player = Bukkit.getPlayer(uuid);
-            if (player != null && player.isOnline() && !eliminated.contains(uuid)) return player;
+            if (player != null && player.isOnline() && !eliminated.contains(uuid) && !falling.contains(uuid)) return player;
         }
         return null;
     }
@@ -356,35 +363,21 @@ public class SquidPackTask implements Listener {
     }
 
     private Player findOnlineEventPlayer() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (EventManager.isEventPlayer(player)) return player;
-        }
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            return player;
-        }
+        for (Player player : Bukkit.getOnlinePlayers()) if (EventManager.isEventPlayer(player)) return player;
+        for (Player player : Bukkit.getOnlinePlayers()) return player;
         return null;
     }
 
     private void resetRuntime() {
         tick = 0;
+        redGrace = 0;
         green = true;
         runtimeStarted = false;
         finished = false;
         lastRedPositions.clear();
         qualified.clear();
         eliminated.clear();
-    }
-
-    private void flashyBroadcast(String title, String detail) {
-        Bukkit.broadcastMessage("");
-        Bukkit.broadcastMessage("§8----- §c§l✦ SQUID MOOD GAME ✦ §8-----");
-        Bukkit.broadcastMessage("§e★ §f" + title);
-        Bukkit.broadcastMessage("§d➜ §f" + detail);
-        Bukkit.broadcastMessage("§a▶ §fTape §e/event §fpour rejoindre le prochain jeu !");
-        Bukkit.broadcastMessage("§8-----------------------------");
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.5f, 1.2f);
-        }
+        falling.clear();
     }
 
     @FunctionalInterface
