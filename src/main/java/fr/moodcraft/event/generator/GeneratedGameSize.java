@@ -4,10 +4,10 @@ import org.bukkit.Material;
 
 public enum GeneratedGameSize {
 
-    PETIT("Petit", Material.LIME_CONCRETE, 35, 12, 50, 30, 13, 7),
-    MOYEN("Moyen", Material.GOLD_BLOCK, 51, 20, 80, 50, 15, 8),
-    GRAND("Grand", Material.ORANGE_CONCRETE, 67, 28, 140, 80, 17, 9),
-    GEANT("Géant", Material.REDSTONE_BLOCK, 83, 36, 220, 110, 19, 10);
+    PETIT("Petit", Material.LIME_CONCRETE, 29, 12, 50, 30, 13, 7),
+    MOYEN("Moyen", Material.GOLD_BLOCK, 41, 20, 80, 50, 15, 8),
+    GRAND("Grand", Material.ORANGE_CONCRETE, 53, 28, 140, 80, 17, 9),
+    GEANT("Géant", Material.REDSTONE_BLOCK, 65, 36, 220, 110, 19, 10);
 
     private final String displayName;
     private final Material icon;
