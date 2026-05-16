@@ -2,7 +2,6 @@ package fr.moodcraft.event.manager;
 
 import fr.moodcraft.event.Main;
 import fr.moodcraft.event.generator.GeneratedGameManager;
-import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.model.EventType;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Bukkit;
@@ -26,18 +25,16 @@ public final class GoldRushClosure {
         int returned = returnPlayers();
         boolean restoredRoom = WaitingRoomManager.hasRoom();
         boolean restoredGenerated = GeneratedGameManager.hasStructure();
-        boolean restoredSquid = SquidPackManager.hasPack();
 
         if (restoredRoom && actor != null) WaitingRoomManager.restore(actor);
         if (restoredGenerated && actor != null) GeneratedGameManager.restore(actor);
-        if (restoredSquid && actor != null) SquidPackManager.restore(actor);
 
         clearEventManagerRuntime();
         EventManager.save();
 
         Bukkit.broadcastMessage("");
         Bukkit.broadcastMessage(MoodStyle.header(MoodStyle.MODULE));
-        Bukkit.broadcastMessage(MoodStyle.success("Ruée vers l'or clôturée."));
+        Bukkit.broadcastMessage(MoodStyle.success("Mine en folie clôturée."));
         Bukkit.broadcastMessage(MoodStyle.detail("Joueurs renvoyés : §e" + returned));
         Bukkit.broadcastMessage(MoodStyle.detail("Les minerais récoltés restent aux joueurs."));
         Bukkit.broadcastMessage(MoodStyle.detail(restoredGenerated ? "Mine restaurée automatiquement." : "Aucune mine à restaurer."));
@@ -79,9 +76,10 @@ public final class GoldRushClosure {
             set("autoClosing", false);
             clearCollection("queue");
             clearCollection("participants");
+            clearCollection("eliminated");
             clearCollection("finishedPlayers");
-            clearCollection("ranking");
-            clearCollection("survivalEliminated");
+            clearCollection("eliminationOrder");
+            clearCollection("finalRanking");
             clearMap("returnLocations");
         } catch (ReflectiveOperationException exception) {
             Main.getInstance().getLogger().warning("GoldRushClosure reset failed: " + exception.getMessage());
