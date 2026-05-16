@@ -59,7 +59,7 @@ public final class EventAutoStartTask {
 
     private static void announceCountdown() {
         int remaining = AUTO_START_SECONDS - closedSeconds;
-        if (remaining != 45 && remaining != 30 && remaining != 15 && remaining != 5 && remaining != 4 && remaining != 3 && remaining != 2 && remaining != 1) {
+        if (remaining != 45 && remaining != 30 && remaining != 15 && remaining != 10 && remaining != 5 && remaining != 4 && remaining != 3 && remaining != 2 && remaining != 1) {
             return;
         }
 
