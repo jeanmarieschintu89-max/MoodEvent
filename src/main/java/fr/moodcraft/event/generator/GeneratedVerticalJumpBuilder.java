@@ -28,17 +28,18 @@ public final class GeneratedVerticalJumpBuilder {
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
         int safePlatforms = Math.max(12, Math.min(44, platforms));
-        int topY = cy + 4 + safePlatforms;
+        int topY = cy + 3 + safePlatforms;
 
         buildSafetyTower(world, cx, cy, cz, topY);
         drawGroundLine(world, cx, cy, cz, 4, Material.LIME_WOOL);
         buildStartMark(world, cx, cy, cz);
+        buildStarterPath(world, cx, cy, cz);
 
-        int x = cx;
+        int x = cx + 2;
         int z = cz;
-        int y = cy + 2;
+        int y = cy + 1;
         for (int i = 1; i <= safePlatforms; i++) {
-            Step step = nextStep(cx, cz, x, z, cy + 2 + i, i);
+            Step step = nextStep(cx, cz, x, z, cy + i, i);
             x = step.x();
             z = step.z();
             y = step.y();
@@ -51,10 +52,17 @@ public final class GeneratedVerticalJumpBuilder {
         return new Layout(new Location(world, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f), new Location(world, cx + 0.5, finishY + 1, cz + 0.5, 180f, 0f));
     }
 
+    private static void buildStarterPath(World world, int cx, int cy, int cz) {
+        platform(world, cx + 1, cy, cz, 1, Material.LIME_WOOL);
+        platform(world, cx + 2, cy + 1, cz, 1, Material.WHITE_WOOL);
+        world.getBlockAt(cx + 1, cy + 1, cz).setType(Material.AIR, false);
+        world.getBlockAt(cx + 2, cy + 2, cz).setType(Material.AIR, false);
+    }
+
     private static Step nextStep(int cx, int cz, int previousX, int previousZ, int y, int index) {
         int[][] pattern = {
-                {2, 1}, {2, -1}, {1, 2}, {-1, 2}, {-2, 1}, {-2, -1}, {-1, -2}, {1, -2},
-                {3, 0}, {0, 3}, {-3, 0}, {0, -3}
+                {1, 1}, {2, 0}, {1, -1}, {0, -2}, {-1, -1}, {-2, 0}, {-1, 1}, {0, 2},
+                {2, 1}, {-2, 1}, {-2, -1}, {2, -1}
         };
         int[] delta = pattern[index % pattern.length];
         int x = clamp(previousX + delta[0], cx - 6, cx + 6);
@@ -63,6 +71,10 @@ public final class GeneratedVerticalJumpBuilder {
     }
 
     private static void buildChallengePlatform(World world, int x, int y, int z, int index) {
+        if (index <= 2) {
+            platform(world, x, y, z, 1, WOOL[index % WOOL.length]);
+            return;
+        }
         if (index % 12 == 0) {
             platform(world, x, y, z, 2, Material.OAK_PLANKS);
             addFenceRails(world, x, y, z, 2);
