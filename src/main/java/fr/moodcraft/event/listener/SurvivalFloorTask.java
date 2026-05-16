@@ -21,7 +21,7 @@ import java.io.File;
 
 public class SurvivalFloorTask implements Listener {
 
-    private static final int START_DELAY_SECONDS = 8;
+    private static final int START_DELAY_SECONDS = 10;
 
     private int tick = 0;
     private int wave = 0;
@@ -65,20 +65,19 @@ public class SurvivalFloorTask implements Listener {
 
         wave++;
         int players = Math.max(1, countSurvivors());
-        int acceleration = Math.min(90, wave * 3);
-        int amount = Math.max(18, 14 + players * 5 + acceleration);
+        int acceleration = Math.min(45, wave);
+        int amount = Math.max(8, 6 + players * 2 + acceleration);
         int destroyed = GeneratedGameManager.destroySurvivalBlocks(amount);
 
-        destroyed += breakLooseSurvivalBlocks(Math.max(10, wave + players * 3));
-        if (wave >= 6) destroyed += breakLooseSurvivalBlocks(Math.max(24, wave * 3));
-        if (wave >= 12) destroyed += breakLooseSurvivalBlocks(Math.max(50, wave * 4));
-        if (wave >= 20) destroyed += breakLooseSurvivalBlocks(180);
+        if (wave >= 5) destroyed += breakLooseSurvivalBlocks(Math.max(4, players + wave / 2));
+        if (wave >= 12 && wave % 2 == 0) destroyed += breakLooseSurvivalBlocks(Math.max(10, wave));
+        if (wave >= 24 && wave % 3 == 0) destroyed += breakLooseSurvivalBlocks(35);
 
         int finalDestroyed = destroyed;
         forEachSurvivor(player -> {
-            player.playSound(player.getLocation(), Sound.BLOCK_GRAVEL_BREAK, 0.55f, 0.85f + Math.min(0.45f, wave * 0.015f));
+            player.playSound(player.getLocation(), Sound.BLOCK_GRAVEL_BREAK, 0.45f, 0.85f + Math.min(0.35f, wave * 0.01f));
             player.sendActionBar("§d▣ §fSol instable §8• §e" + finalDestroyed + " §7blocs retirés");
-            if (wave % 10 == 0) player.sendTitle("§d▣", "§fLes étages s'effondrent", 0, 18, 6);
+            if (wave % 12 == 0) player.sendTitle("§d▣", "§fLes étages s'effondrent", 0, 18, 6);
         });
 
         forEachSurvivor(EventManager::checkSurvivalFloorElimination);
