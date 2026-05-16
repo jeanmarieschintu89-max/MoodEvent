@@ -113,12 +113,18 @@ public final class SquidPackManager {
         int cz = game.getBlockZ();
         backup(world, cx, cy, cz);
         clear(world, cx, cy, cz);
+        SquidMoodDecorBuilder.buildDormitory(world, cx, cy, cz);
+        SquidMoodDecorBuilder.buildPreGameSas(world, cx, cy, cz);
         buildRedGreen(world, cx, cy, cz);
+        SquidMoodDecorBuilder.buildReturnSas(world, cx, cy, cz);
         buildGlassBridge(world, cx, cy, cz);
 
-        Location start = new Location(world, cx - 45 + 0.5, cy + 1, cz + 0.5, 90f, 0f);
+        Location start = new Location(world, cx - 52 + 0.5, cy + 1, cz + 0.5, 90f, 0f);
         Location bridge = new Location(world, cx - 4 + 0.5, cy + 2, cz + 11.5, 90f, 0f);
         Location lobby = new Location(world, cx - 47 + 0.5, cy + 1, cz + 13.5, 90f, 0f);
+        Location dormitory = new Location(world, cx - 43 + 0.5, cy + 1, cz - 13.5, 0f, 0f);
+        Location preSas = new Location(world, cx - 52 + 0.5, cy + 1, cz + 0.5, 90f, 0f);
+        Location returnSas = new Location(world, cx - 8 + 0.5, cy + 1, cz + 11.5, 90f, 0f);
         Location finish = new Location(world, cx + 27 + 0.5, cy + 2, cz + 11.5, 90f, 0f);
 
         config.set("active", true);
@@ -134,6 +140,9 @@ public final class SquidPackManager {
         config.set("region.max-z", cz + 18);
         writeLocation("start", start);
         writeLocation("lobby", lobby);
+        writeLocation("dormitory", dormitory);
+        writeLocation("pre-sas", preSas);
+        writeLocation("return-sas", returnSas);
         writeLocation("bridge-start", bridge);
         writeLocation("bridge-finish", finish);
         config.set("red-green.finish-x", cx - 10);
@@ -147,15 +156,15 @@ public final class SquidPackManager {
         save();
 
         EventManager.createEvent(player, GAME_NAME);
-        EventManager.setDescription(player, "Une suite d'épreuves Minecraft : feu rouge et pont de verre.");
+        EventManager.setDescription(player, "Une suite d'épreuves Minecraft : sas, feu rouge, dortoir et pont de verre.");
         EventManager.setType(player, "custom");
         player.teleport(start);
         EventManager.setLocation(player);
         player.teleport(origin);
 
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack " + GAME_NAME + " généré.", MoodStyle.detail("Salle d'attente + arènes créées."), MoodStyle.detail("Épreuves : Feu Rouge puis Pont de Verre."), MoodStyle.info("Ouvre la file avec §e/eventouvrir"));
-        EventLogManager.log(player, "Pack " + GAME_NAME, "Pack spécial généré");
+        MoodStyle.successMessage(player, MoodStyle.MODULE, "Pack " + GAME_NAME + " généré.", MoodStyle.detail("Salle d'attente + sas + dortoir + arènes."), MoodStyle.detail("Épreuves : Feu Rouge puis Pont de Verre."), MoodStyle.detail("Dortoir à lits ajouté au pack."), MoodStyle.info("Ouvre la file avec §e/eventouvrir"));
+        EventLogManager.log(player, "Pack " + GAME_NAME, "Pack spécial généré avec sas et dortoir");
     }
 
     public static void restore(Player player) {
