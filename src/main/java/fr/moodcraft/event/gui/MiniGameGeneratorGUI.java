@@ -36,8 +36,8 @@ public final class MiniGameGeneratorGUI {
                 Material.COMPASS,
                 "§6✦ §fGénérateur de mini-jeux §6✦",
                 MoodStyle.detail("Choisis un mini-jeu."),
-                MoodStyle.detail("Chaque mode a un objectif simple."),
-                MoodStyle.detail("Style : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
+                MoodStyle.detail("Chaque mode est indépendant."),
+                MoodStyle.detail("Style unique : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
                 "",
                 MoodStyle.info("Sélectionne une épreuve")
         )));
@@ -60,12 +60,13 @@ public final class MiniGameGeneratorGUI {
         )));
 
         inv.setItem(28, EventItem.item(
-                GeneratedGameStyleManager.get(player).getPrimary(),
-                "§6✦ §fStyle §6✦",
+                Material.DEEPSLATE_TILES,
+                "§6✦ §fStyle unique §6✦",
                 MoodStyle.detail("Actuel : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
-                MoodStyle.detail("Appliqué aux prochaines générations."),
+                MoodStyle.detail("Les 20 thèmes ont été retirés."),
+                MoodStyle.detail("Chaque jeu garde sa logique indépendante."),
                 "",
-                MoodStyle.info("Changer")
+                MoodStyle.success("Stable")
         ));
 
         inv.setItem(29, EventItem.item(
@@ -101,7 +102,7 @@ public final class MiniGameGeneratorGUI {
                 "§6✦ §f" + type.getDisplayName() + " §6✦",
                 MoodStyle.detail("Choisis une taille."),
                 type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Modèles plus hauts, moins étalés.") : MoodStyle.detail("Géant disponible."),
-                MoodStyle.detail("Style : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
+                MoodStyle.detail("Style unique : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
                 "",
                 MoodStyle.info("Taille de génération")
         )));
@@ -156,7 +157,7 @@ public final class MiniGameGeneratorGUI {
                 "§6✦ §fConfirmation §6✦",
                 MoodStyle.detail("Type : §e" + pending.type().getDisplayName()),
                 MoodStyle.detail("Taille : §e" + pending.describe()),
-                MoodStyle.detail("Style : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
+                MoodStyle.detail("Style unique : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
                 pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : génération plus haute.") : MoodStyle.detail("Restauration possible avec /eventstop."),
                 "",
                 MoodStyle.info("Confirmer la génération")
