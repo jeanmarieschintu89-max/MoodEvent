@@ -2,6 +2,7 @@ package fr.moodcraft.event.listener;
 
 import fr.moodcraft.event.Main;
 import fr.moodcraft.event.generator.GeneratedGameManager;
+import fr.moodcraft.event.generator.GeneratedGameType;
 import fr.moodcraft.event.generator.SquidPackManager;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.model.EventType;
@@ -35,11 +36,11 @@ public class SurvivalFloorTask implements Listener {
     }
 
     private void runSurvivalTick() {
-        if (SquidPackManager.hasPack()
+        if (isSquidCraftRunning()
                 || !EventManager.isRunning()
                 || EventManager.getType() != EventType.SURVIE_ETAGES
                 || !GeneratedGameManager.hasStructure()
-                || GeneratedGameManager.getActiveType() != fr.moodcraft.event.generator.GeneratedGameType.SURVIE_ETAGES) {
+                || GeneratedGameManager.getActiveType() != GeneratedGameType.SURVIE_ETAGES) {
             tick = 0;
             wave = 0;
             return;
@@ -84,7 +85,7 @@ public class SurvivalFloorTask implements Listener {
     }
 
     private int breakLooseSurvivalBlocks(int maxRemoved) {
-        if (SquidPackManager.hasPack()) return 0;
+        if (isSquidCraftRunning()) return 0;
         File file = new File(Main.getInstance().getDataFolder(), "generated-game.yml");
         if (!file.exists()) return 0;
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);
@@ -134,6 +135,12 @@ public class SurvivalFloorTask implements Listener {
                 || material == Material.SEA_LANTERN
                 || material == Material.LIGHT_WEIGHTED_PRESSURE_PLATE
                 || material == Material.HEAVY_WEIGHTED_PRESSURE_PLATE;
+    }
+
+    private boolean isSquidCraftRunning() {
+        return SquidPackManager.hasPack()
+                && EventManager.isRunning()
+                && SquidPackManager.GAME_NAME.equalsIgnoreCase(EventManager.getName());
     }
 
     private void forEachSurvivor(PlayerAction action) {
