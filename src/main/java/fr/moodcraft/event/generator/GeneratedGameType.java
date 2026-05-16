@@ -6,7 +6,7 @@ import org.bukkit.Material;
 public enum GeneratedGameType {
 
     LABYRINTHE("Labyrinthe", Material.MOSSY_STONE_BRICKS, EventType.LABYRINTHE),
-    JUMP("Parcours Jump", Material.WHITE_WOOL, EventType.JUMP),
+    JUMP("Tour Infernale", Material.MAGMA_BLOCK, EventType.JUMP),
     COURSE("Course", Material.RAIL, EventType.COURSE),
     WATER_JUMP("Water Jump", Material.WATER_BUCKET, EventType.WATER_JUMP),
     SURVIE_ETAGES("Effondrement", Material.MAGENTA_WOOL, EventType.SURVIE_ETAGES),
