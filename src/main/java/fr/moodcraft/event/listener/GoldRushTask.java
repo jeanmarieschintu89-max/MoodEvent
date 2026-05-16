@@ -27,6 +27,7 @@ public class GoldRushTask implements Listener {
 
     private boolean active;
     private boolean finishedAwaitingStop;
+    private boolean autoCloseScheduled;
     private int remaining;
     private final Set<UUID> equipped = new HashSet<>();
 
@@ -43,6 +44,7 @@ public class GoldRushTask implements Listener {
         if (!EventManager.isRunning() || EventManager.getType() != EventType.RUEE_OR) {
             active = false;
             finishedAwaitingStop = false;
+            autoCloseScheduled = false;
             remaining = 0;
             equipped.clear();
             return;
@@ -51,13 +53,14 @@ public class GoldRushTask implements Listener {
         if (finishedAwaitingStop) {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!EventManager.isEventPlayer(player)) continue;
-                player.sendActionBar("§6⛏ §fRuée vers l'or terminée §8• §7Attente de clôture staff");
+                player.sendActionBar("§6⛏ §fRuée vers l'or terminée §8• §7Clôture automatique");
             }
             return;
         }
 
         if (!active) {
             active = true;
+            autoCloseScheduled = false;
             remaining = Math.max(30, GeneratedGameManager.getGoldRushDurationSeconds());
             startRound();
             return;
@@ -111,8 +114,10 @@ public class GoldRushTask implements Listener {
 
     private void finishRound() {
         int sent = 0;
+        Player closer = null;
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!EventManager.isParticipant(player)) continue;
+            if (closer == null) closer = player;
             removePickaxes(player);
             WaitingRoomManager.teleport(player);
             player.sendTitle("§6Fin", "§fMinerais conservés", 0, 45, 10);
@@ -124,7 +129,7 @@ public class GoldRushTask implements Listener {
                     MoodStyle.detail("Vous gardez les minerais récoltés."),
                     MoodStyle.detail("Pioche événement reprise."),
                     MoodStyle.detail("Retour en salle d'attente."),
-                    MoodStyle.detail("/eventstop renverra chacun à son ancienne position.")
+                    MoodStyle.detail("Clôture automatique en cours.")
             );
             sent++;
         }
@@ -134,13 +139,32 @@ public class GoldRushTask implements Listener {
         Bukkit.broadcastMessage(MoodStyle.success("Ruée vers l'or terminée."));
         Bukkit.broadcastMessage(MoodStyle.detail("Joueurs envoyés en salle : §e" + sent));
         Bukkit.broadcastMessage(MoodStyle.detail("Aucune récompense ajoutée : les minerais sont le gain."));
-        Bukkit.broadcastMessage(MoodStyle.info("Clôture finale avec §e/eventstop §fpour retour ancienne position + restauration."));
+        Bukkit.broadcastMessage(MoodStyle.info("Clôture automatique dans §e3 secondes"));
         Bukkit.broadcastMessage(MoodStyle.FRAME);
 
         active = false;
         finishedAwaitingStop = true;
         remaining = 0;
         equipped.clear();
+        scheduleAutoClose(closer);
+    }
+
+    private void scheduleAutoClose(Player closer) {
+        if (autoCloseScheduled) return;
+        autoCloseScheduled = true;
+        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
+            if (!EventManager.isRunning() || EventManager.getType() != EventType.RUEE_OR) return;
+            Player actor = closer != null && closer.isOnline() ? closer : findEventPlayer();
+            if (actor != null) EventManager.cancelEvent(actor);
+        }, 60L);
+    }
+
+    private Player findEventPlayer() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (EventManager.isEventPlayer(player)) return player;
+        }
+        for (Player player : Bukkit.getOnlinePlayers()) return player;
+        return null;
     }
 
     private void givePickaxe(Player player) {
