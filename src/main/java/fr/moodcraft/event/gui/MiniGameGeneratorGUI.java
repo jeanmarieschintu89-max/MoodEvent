@@ -35,45 +35,34 @@ public final class MiniGameGeneratorGUI {
         inv.setItem(4, EventItem.glow(EventItem.item(
                 Material.COMPASS,
                 "§6✦ §fGénérateur de mini-jeux §6✦",
-                MoodStyle.detail("Petit, Moyen, Grand ou Géant."),
-                MoodStyle.detail("Personnalisé retiré."),
+                MoodStyle.detail("Choisis un mini-jeu."),
+                MoodStyle.detail("Chaque mode a un objectif simple."),
                 MoodStyle.detail("Style : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
                 "",
-                MoodStyle.info("Choisis un mini-jeu")
+                MoodStyle.info("Sélectionne une épreuve")
         )));
 
-        addType(inv, 10, GeneratedGameType.LABYRINTHE, "Murs texturés et sortie rouge.");
-        addType(inv, 12, GeneratedGameType.JUMP, "Plateformes en laine colorée.");
-        addType(inv, 14, GeneratedGameType.COURSE, "Piste décorée avec obstacles.");
-        addType(inv, 16, GeneratedGameType.WATER_JUMP, "Laine colorée au-dessus de l'eau.");
-        addType(inv, 22, GeneratedGameType.SURVIE_ETAGES, "Étages progressifs.");
-        addType(inv, 24, GeneratedGameType.RUEE_OR, "Mine bedrock, minerais, temps limité.");
+        addType(inv, 10, GeneratedGameType.LABYRINTHE, "Objectif : trouver la sortie rouge.");
+        addType(inv, 12, GeneratedGameType.JUMP, "Objectif : terminer le parcours.");
+        addType(inv, 14, GeneratedGameType.COURSE, "Objectif : atteindre la ligne rouge.");
+        addType(inv, 16, GeneratedGameType.WATER_JUMP, "Objectif : traverser au-dessus de l'eau.");
+        addType(inv, 22, GeneratedGameType.SURVIE_ETAGES, "Objectif : rester le dernier en jeu.");
+        addType(inv, 24, GeneratedGameType.RUEE_OR, "Objectif : miner le plus de minerais.");
 
         inv.setItem(25, EventItem.glow(EventItem.item(
                 Material.REDSTONE_TORCH,
                 "§6✦ §f" + SquidPackManager.GAME_NAME + " §6✦",
-                MoodStyle.detail("Feu rouge / Feu vert."),
+                MoodStyle.detail("Objectif : réussir les épreuves."),
+                MoodStyle.detail("Feu Rouge / Feu Vert."),
                 MoodStyle.detail("Pont de verre."),
-                MoodStyle.detail("Éliminations + salle liée."),
                 "",
                 MoodStyle.success("Créer le pack")
         )));
-
-        inv.setItem(26, EventItem.item(
-                Material.DROPPER,
-                "§6✦ §fEvent Give §6✦",
-                MoodStyle.detail("Structure légère de distribution."),
-                MoodStyle.detail("Coffres/barils pour poser les items."),
-                MoodStyle.detail("Idéal cadeaux, lots, annonces."),
-                "",
-                MoodStyle.info("Générer")
-        ));
 
         inv.setItem(28, EventItem.item(
                 GeneratedGameStyleManager.get(player).getPrimary(),
                 "§6✦ §fStyle §6✦",
                 MoodStyle.detail("Actuel : §e" + GeneratedGameStyleManager.get(player).getDisplayName()),
-                MoodStyle.detail("Classique, Royal, Nature, Neige..."),
                 MoodStyle.detail("Appliqué aux prochaines générations."),
                 "",
                 MoodStyle.info("Changer")
