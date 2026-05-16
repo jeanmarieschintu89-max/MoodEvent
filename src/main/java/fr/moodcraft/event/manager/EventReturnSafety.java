@@ -29,6 +29,20 @@ public final class EventReturnSafety {
         if (player != null) ORIGINAL_LOCATIONS.remove(player.getUniqueId());
     }
 
+    public static boolean rescue(Player player) {
+        if (player == null || !player.isOnline()) return false;
+        Location location = ORIGINAL_LOCATIONS.get(player.getUniqueId());
+        if (location == null || location.getWorld() == null) return false;
+        Location safe = safe(location);
+        if (safe == null || safe.getWorld() == null) return false;
+        player.setFallDistance(0f);
+        player.setFireTicks(0);
+        player.teleport(safe);
+        player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.2f);
+        ORIGINAL_LOCATIONS.remove(player.getUniqueId());
+        return true;
+    }
+
     public static void start() {
         if (started) return;
         started = true;
@@ -37,7 +51,7 @@ public final class EventReturnSafety {
             public void run() {
                 flushIfEventClosed();
             }
-        }.runTaskTimer(Main.getInstance(), 40L, 40L);
+        }.runTaskTimer(Main.getInstance(), 5L, 5L);
     }
 
     private static void flushIfEventClosed() {
@@ -48,6 +62,8 @@ public final class EventReturnSafety {
             Player player = Main.getInstance().getServer().getPlayer(entry.getKey());
             Location location = safe(entry.getValue());
             if (player == null || !player.isOnline() || location == null || location.getWorld() == null) continue;
+            player.setFallDistance(0f);
+            player.setFireTicks(0);
             player.teleport(location);
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.2f);
         }
@@ -70,8 +86,7 @@ public final class EventReturnSafety {
                         int ny = y + dy;
                         if (ny <= world.getMinHeight() + 1 || ny >= world.getMaxHeight() - 2) continue;
                         if (isSafe(world, x + dx, ny, z + dz)) {
-                            Location safe = new Location(world, x + dx + 0.5, ny, z + dz + 0.5, location.getYaw(), location.getPitch());
-                            return safe;
+                            return new Location(world, x + dx + 0.5, ny, z + dz + 0.5, location.getYaw(), location.getPitch());
                         }
                     }
                 }
