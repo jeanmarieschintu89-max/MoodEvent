@@ -2,7 +2,6 @@ package fr.moodcraft.event.gui;
 
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameSize;
-import fr.moodcraft.event.generator.GeneratedGameStyleManager;
 import fr.moodcraft.event.generator.GeneratedGameType;
 import fr.moodcraft.event.manager.WaitingRoomManager;
 import fr.moodcraft.event.manager.WaitingRoomTheme;
@@ -22,7 +21,7 @@ public final class MiniGameGeneratorGUI {
     public static final String MAIN_TITLE = MoodStyle.guiTitle("Générateur de mini jeux");
     public static final String STYLE_TITLE = MoodStyle.guiTitle("Style salle attente");
     public static final String SIZE_TITLE = MoodStyle.guiTitle("Taille pack event");
-    public static final String CONFIRM_TITLE = MoodStyle.guiTitle("Confirmation mini jeu");
+    public static final String CONFIRM_TITLE = MoodStyle.guiTitle("Confirmation pack event");
 
     private static final Map<UUID, GeneratedGameType> SELECTED_TYPE = new HashMap<>();
     private static final Map<UUID, PendingGeneration> PENDING = new HashMap<>();
@@ -35,28 +34,17 @@ public final class MiniGameGeneratorGUI {
 
         inv.setItem(4, EventItem.glow(EventItem.item(
                 Material.COMPASS,
-                "§6✦ §fGénérateur de packs §6✦",
-                MoodStyle.detail("Étape 1 : §echoisir le mini-jeu"),
-                MoodStyle.detail("Étape 2 : §echoisir le style de salle"),
-                MoodStyle.detail("Étape 3 : §echoisir la taille du pack"),
-                MoodStyle.detail("Style salle actuel : §e" + WaitingRoomManager.getSelectedTheme(player).displayName()),
+                "§6✦ §fCréation de pack événement §6✦",
+                MoodStyle.detail("Parcours clair : §ejeu §8→ §estyle salle §8→ §etaille §8→ §econfirmation"),
+                MoodStyle.detail("Le style de salle se choisit après le mini-jeu."),
+                MoodStyle.detail("Aucun bouton de thème ici pour éviter la confusion."),
                 "",
-                MoodStyle.info("Sélectionne une épreuve")
+                MoodStyle.info("Sélectionne d'abord une épreuve")
         )));
 
-        addType(inv, 10, GeneratedGameType.SURVIE_ETAGES, "Pack avec salle d'attente + Tour Infernale.");
-        addType(inv, 12, GeneratedGameType.RUEE_OR, "Pack avec salle d'attente + Mine en folie.");
-        addType(inv, 14, GeneratedGameType.WATER_JUMP, "Pack avec salle d'attente + Water Jump.");
-
-        inv.setItem(28, EventItem.item(
-                Material.DEEPSLATE_TILES,
-                "§6✦ §fStyle de salle §6✦",
-                MoodStyle.detail("Actuel : §e" + WaitingRoomManager.getSelectedTheme(player).displayName()),
-                MoodStyle.detail("Les styles touchent uniquement la salle."),
-                MoodStyle.detail("Les mini-jeux restent stables."),
-                "",
-                MoodStyle.success("Choix avant génération")
-        ));
+        addType(inv, 10, GeneratedGameType.SURVIE_ETAGES, "Salle d'attente + Tour Infernale.");
+        addType(inv, 12, GeneratedGameType.RUEE_OR, "Salle d'attente + Mine en folie.");
+        addType(inv, 14, GeneratedGameType.WATER_JUMP, "Salle d'attente + Water Jump.");
 
         inv.setItem(29, EventItem.item(
                 Material.CHEST,
@@ -65,14 +53,14 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Items + argent Vault."),
                 MoodStyle.detail("Anti double-récupération."),
                 "",
-                MoodStyle.info("Configurer")
+                MoodStyle.info("Configurer les récompenses")
         ));
 
         inv.setItem(33, EventItem.item(
                 GeneratedGameManager.hasStructure() ? Material.MAGMA_BLOCK : Material.GRAY_DYE,
                 GeneratedGameManager.hasStructure() ? "§c✦ §fRestaurer structure §c✦" : "§6✦ §fAucune structure §6✦",
                 GeneratedGameManager.hasStructure() ? MoodStyle.detail("Une structure auto est active.") : MoodStyle.detail("Rien à restaurer."),
-                MoodStyle.detail("La zone sauvegardée sera remise."),
+                MoodStyle.detail("La salle et le mini-jeu peuvent être restaurés depuis ici."),
                 "",
                 GeneratedGameManager.hasStructure() ? MoodStyle.error("Restaurer") : MoodStyle.detail("Indisponible")
         ));
@@ -90,6 +78,7 @@ public final class MiniGameGeneratorGUI {
                 type.getIcon(),
                 "§6✦ §fStyle de salle d'attente §6✦",
                 MoodStyle.detail("Mini-jeu choisi : §e" + type.getDisplayName()),
+                MoodStyle.detail("Choix 2/4 : §ele thème de la salle"),
                 MoodStyle.detail("Le style sera appliqué seulement à la salle."),
                 MoodStyle.detail("Aucun style ne modifie les jeux."),
                 "",
@@ -115,9 +104,9 @@ public final class MiniGameGeneratorGUI {
                 type.getIcon(),
                 "§6✦ §fTaille du pack §6✦",
                 MoodStyle.detail("Mini-jeu : §e" + type.getDisplayName()),
-                MoodStyle.detail("Salle : §e" + WaitingRoomManager.getSelectedTheme(player).displayName()),
+                MoodStyle.detail("Style salle : §e" + WaitingRoomManager.getSelectedTheme(player).displayName()),
+                MoodStyle.detail("Choix 3/4 : §etaille du pack"),
                 type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Jeu : modèles plus hauts, moins étalés.") : type == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Jeu : plateformes au-dessus de l'eau.") : MoodStyle.detail("Jeu : durée calculée automatiquement."),
-                MoodStyle.detail("Le style ne touche que la salle d'attente."),
                 "",
                 MoodStyle.info("Choisis la taille")
         )));
@@ -162,37 +151,54 @@ public final class MiniGameGeneratorGUI {
         inv.setItem(13, EventItem.glow(EventItem.item(
                 pending.type().getIcon(),
                 "§6✦ §fConfirmation du pack §6✦",
+                MoodStyle.detail("Choix 4/4 : §evalider la génération"),
                 MoodStyle.detail("Mini-jeu : §e" + pending.type().getDisplayName()),
                 MoodStyle.detail("Taille jeu : §e" + pending.describe()),
                 MoodStyle.detail("Style salle : §e" + WaitingRoomManager.getSelectedTheme(player).displayName()),
                 MoodStyle.detail("Le style sera appliqué uniquement à la salle."),
                 pending.type() == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Water Jump : départ, eau, plateformes, arrivée.") : pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : prudence.") : MoodStyle.detail("Restauration possible avec /eventstop."),
                 "",
-                MoodStyle.info("Confirmer la génération")
+                MoodStyle.info("Vérifie avant de générer")
         )));
 
-        inv.setItem(11, EventItem.item(Material.EMERALD_BLOCK, "§6✦ §fConfirmer §6✦", MoodStyle.detail("Génère salle + mini-jeu."), MoodStyle.detail("Configure l'événement automatiquement."), "", MoodStyle.success("Générer le pack")));
-        inv.setItem(15, EventItem.item(Material.BARRIER, "§c✦ §fAnnuler §c✦", MoodStyle.detail("Ne génère rien."), "", MoodStyle.error("Retour")));
+        inv.setItem(10, EventItem.item(Material.EMERALD_BLOCK, "§a✦ §fConfirmer §a✦", MoodStyle.detail("Génère salle + mini-jeu."), MoodStyle.detail("Configure l'événement automatiquement."), "", MoodStyle.success("Générer le pack")));
+        inv.setItem(16, EventItem.item(Material.ARROW, "§6✦ §fRetour taille §6✦", MoodStyle.detail("Modifier la taille avant de générer."), "", MoodStyle.info("Revenir")));
+        inv.setItem(22, EventItem.item(Material.BARRIER, "§c✦ §fAnnuler §c✦", MoodStyle.detail("Ne génère rien."), MoodStyle.detail("Retour au générateur."), "", MoodStyle.error("Annuler")));
         player.openInventory(inv);
     }
 
     private static void addType(Inventory inv, int slot, GeneratedGameType type, String detail) {
-        inv.setItem(slot, EventItem.item(type.getIcon(), "§6✦ §f" + type.getDisplayName() + " §6✦", MoodStyle.detail(detail), MoodStyle.detail("Ensuite : choix du style de salle."), "", MoodStyle.info("Choisir")));
+        inv.setItem(slot, EventItem.item(
+                type.getIcon(),
+                "§6✦ §f" + type.getDisplayName() + " §6✦",
+                MoodStyle.detail(detail),
+                MoodStyle.detail("Étape suivante : §estyle de salle."),
+                "",
+                MoodStyle.info("Choisir ce jeu")
+        ));
     }
 
     private static void addTheme(Inventory inv, int slot, WaitingRoomTheme theme, boolean selected) {
         inv.setItem(slot, EventItem.item(
                 selected ? Material.EMERALD_BLOCK : theme.accent(),
                 (selected ? "§a✔ §f" : "§6✦ §f") + theme.displayName() + " §6✦",
-                MoodStyle.detail("Clé : §e" + theme.key()),
                 MoodStyle.detail("Salle uniquement."),
+                MoodStyle.detail("Après ce choix : §etaille du pack."),
                 "",
-                selected ? MoodStyle.success("Sélectionné") : MoodStyle.info("Choisir ce style")
+                selected ? MoodStyle.success("Sélectionné, continuer") : MoodStyle.info("Choisir ce style")
         ));
     }
 
     private static void addSize(Inventory inv, int slot, GeneratedGameType type, GeneratedGameSize size) {
-        inv.setItem(slot, EventItem.item(size.getIcon(), "§6✦ §f" + size.getDisplayName() + " §6✦", MoodStyle.detail("Jeu : §e" + size.describeFor(type)), MoodStyle.detail("Salle liée : §e" + waitingSizeLabel(size)), size == GeneratedGameSize.GEANT ? MoodStyle.detail("Très lourd : prudence.") : size == GeneratedGameSize.GRAND ? MoodStyle.detail("Plus lourd : prudence.") : MoodStyle.detail("Taille sûre."), "", MoodStyle.info("Préparer")));
+        inv.setItem(slot, EventItem.item(
+                size.getIcon(),
+                "§6✦ §f" + size.getDisplayName() + " §6✦",
+                MoodStyle.detail("Jeu : §e" + size.describeFor(type)),
+                MoodStyle.detail("Salle liée : §e" + waitingSizeLabel(size)),
+                size == GeneratedGameSize.GEANT ? MoodStyle.detail("Très lourd : prudence.") : size == GeneratedGameSize.GRAND ? MoodStyle.detail("Plus lourd : prudence.") : MoodStyle.detail("Taille sûre."),
+                "",
+                MoodStyle.info("Préparer la confirmation")
+        ));
     }
 
     private static String waitingSizeLabel(GeneratedGameSize size) {
