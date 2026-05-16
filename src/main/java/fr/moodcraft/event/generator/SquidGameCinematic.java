@@ -1,6 +1,5 @@
 package fr.moodcraft.event.generator;
 
-import fr.moodcraft.event.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -28,27 +27,34 @@ public final class SquidGameCinematic {
     public static void updateDollAndLights(boolean green) {
         Location start = SquidPackManager.location("start");
         if (start == null || start.getWorld() == null) return;
-        int finishX = SquidPackManager.config().getInt("red-green.finish-x");
+
         World world = start.getWorld();
-        int x = finishX + 5;
-        int y = start.getBlockY();
-        int z = start.getBlockZ();
+        int fallbackFinishX = SquidPackManager.config().getInt("red-green.finish-x");
+        int x = SquidPackManager.config().getInt("red-green.doll-x", fallbackFinishX + 8);
+        int lightX = SquidPackManager.config().getInt("red-green.light-x", fallbackFinishX + 4);
+        int y = SquidPackManager.config().getInt("red-green.base-y", start.getBlockY() - 1);
+        int z = SquidPackManager.config().getInt("red-green.center-z", start.getBlockZ());
 
         Material lamp = green ? Material.LIME_CONCRETE : Material.RED_CONCRETE;
         Material glass = green ? Material.LIME_STAINED_GLASS : Material.RED_STAINED_GLASS;
         Material face = green ? Material.YELLOW_CONCRETE : Material.REDSTONE_BLOCK;
         int faceZ = green ? z - 1 : z + 1;
+        int backFaceZ = green ? z + 1 : z - 1;
 
-        for (int dx = -1; dx <= 1; dx++) {
-            world.getBlockAt(x, y + 1, z + dx).setType(Material.PINK_CONCRETE, false);
-            world.getBlockAt(x, y + 2, z + dx).setType(Material.YELLOW_CONCRETE, false);
-        }
-        world.getBlockAt(x, y + 3, z).setType(face, false);
-        world.getBlockAt(x, y + 3, faceZ).setType(Material.BLACK_CONCRETE, false);
-        world.getBlockAt(x - 2, y + 3, z).setType(lamp, false);
-        world.getBlockAt(x - 3, y + 3, z).setType(lamp, false);
-        world.getBlockAt(x - 2, y + 4, z).setType(glass, false);
-        world.getBlockAt(x - 3, y + 4, z).setType(glass, false);
+        for (int dy = 1; dy <= 4; dy++) world.getBlockAt(x, y + dy, z).setType(Material.ORANGE_CONCRETE, false);
+        world.getBlockAt(x, y + 5, z).setType(face, false);
+        world.getBlockAt(x, y + 6, z).setType(Material.BLACK_CONCRETE, false);
+        world.getBlockAt(x, y + 5, faceZ).setType(Material.BLACK_CONCRETE, false);
+        world.getBlockAt(x, y + 5, backFaceZ).setType(Material.YELLOW_CONCRETE, false);
+        world.getBlockAt(x - 1, y + 3, z).setType(Material.YELLOW_CONCRETE, false);
+        world.getBlockAt(x + 1, y + 3, z).setType(Material.YELLOW_CONCRETE, false);
+        world.getBlockAt(x, y, z).setType(Material.OAK_LOG, false);
+
+        for (int dy = 1; dy <= 5; dy++) world.getBlockAt(lightX, y + dy, z).setType(Material.BLACK_CONCRETE, false);
+        world.getBlockAt(lightX, y + 6, z - 1).setType(green ? Material.LIME_CONCRETE : Material.GRAY_CONCRETE, false);
+        world.getBlockAt(lightX, y + 6, z + 1).setType(green ? Material.GRAY_CONCRETE : Material.RED_CONCRETE, false);
+        world.getBlockAt(lightX, y + 7, z).setType(glass, false);
+        world.getBlockAt(lightX, y + 8, z).setType(lamp, false);
     }
 
     public static void announcePrize(String title, String detail, int eliminated, int prizeEach) {
