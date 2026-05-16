@@ -22,7 +22,7 @@ import java.util.UUID;
 public class SquidPackTask implements Listener {
 
     private static final int RED_REACTION_SECONDS = 1;
-    private static final int DORMITORY_DELAY_SECONDS = 10;
+    private static final int DORMITORY_DELAY_SECONDS = 60;
 
     private int tick;
     private int redReaction;
@@ -167,19 +167,23 @@ public class SquidPackTask implements Listener {
             Player player = Bukkit.getPlayer(uuid);
             if (player == null || !player.isOnline() || eliminated.contains(uuid)) continue;
             SquidGameCinematic.teleportDormitory(player);
-            player.sendTitle("§d§lDORTOIR", "§fProchaine épreuve dans " + DORMITORY_DELAY_SECONDS + "s", 0, 60, 10);
+            player.sendTitle("§d§lDORTOIR", "§fPont de Verre dans 1 minute", 0, 60, 10);
             player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.25f);
         }
-        SquidGameCinematic.announcePrize("§eFin de l'épreuve 1", "§fLes survivants avancent. Prochaine scène : §bPont de Verre§f.", eliminated.size(), 0);
+        SquidGameCinematic.announcePrize("§eFin de l'épreuve 1", "§fPause dortoir : §e1 minute §favant le §bPont de Verre§f.", eliminated.size(), 0);
     }
 
     private void dormitoryBeforeBridgeTick() {
         tick++;
-        int remaining = DORMITORY_DELAY_SECONDS - tick;
+        int remaining = Math.max(0, DORMITORY_DELAY_SECONDS - tick);
         for (UUID uuid : new HashSet<>(qualified)) {
             Player player = Bukkit.getPlayer(uuid);
             if (player == null || !player.isOnline() || eliminated.contains(uuid)) continue;
-            player.sendTitle("§d§lDORTOIR", "§bPont de Verre dans §e" + Math.max(0, remaining) + "s", 0, 25, 5);
+            player.sendActionBar("§d⌂ §fDortoir §8• §bPont de Verre dans §e" + remaining + "s");
+            if (remaining == 30 || remaining == 10 || remaining <= 5 && remaining > 0) {
+                player.sendTitle("§d§lDORTOIR", "§bPont de Verre dans §e" + remaining + "s", 0, 25, 5);
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.6f, 1.2f);
+            }
         }
         if (tick >= DORMITORY_DELAY_SECONDS) startGlassBridge();
     }
@@ -213,6 +217,8 @@ public class SquidPackTask implements Listener {
             return;
         }
         int finishX = config.getInt("glass.finish-x");
+        int stepStartX = config.getInt("glass.step-start-x", bridgeStart.getBlockX() + 3);
+        int glassSteps = Math.max(1, config.getInt("glass.steps", 12));
         int zLeft = config.getInt("glass.z-left");
         int zRight = config.getInt("glass.z-right");
         for (UUID uuid : new HashSet<>(qualified)) {
@@ -228,7 +234,7 @@ public class SquidPackTask implements Listener {
                 finishPack(player);
                 return;
             }
-            int step = Math.max(0, Math.min(9, (loc.getBlockX() - (bridgeStart.getBlockX() + 3)) / 3));
+            int step = Math.max(0, Math.min(glassSteps - 1, (loc.getBlockX() - stepStartX) / 3));
             String safe = config.getString("glass.safe." + step, "LEFT");
             boolean onLeft = Math.abs(loc.getBlockZ() - zLeft) <= 1;
             boolean onRight = Math.abs(loc.getBlockZ() - zRight) <= 1;
