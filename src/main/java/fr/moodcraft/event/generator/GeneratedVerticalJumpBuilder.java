@@ -10,8 +10,8 @@ public final class GeneratedVerticalJumpBuilder {
 
     private static final Random RANDOM = new Random();
     private static final Material[] WOOL = {
-            Material.WHITE_WOOL, Material.YELLOW_WOOL, Material.ORANGE_WOOL, Material.LIME_WOOL,
-            Material.LIGHT_BLUE_WOOL, Material.CYAN_WOOL, Material.MAGENTA_WOOL, Material.PINK_WOOL
+            Material.WHITE_WOOL, Material.YELLOW_WOOL, Material.ORANGE_WOOL, Material.LIGHT_BLUE_WOOL,
+            Material.CYAN_WOOL, Material.MAGENTA_WOOL, Material.PINK_WOOL
     };
 
     private GeneratedVerticalJumpBuilder() {
@@ -24,7 +24,7 @@ public final class GeneratedVerticalJumpBuilder {
         int cx = center.getBlockX();
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
-        int safePlatforms = Math.max(8, Math.min(42, platforms));
+        int safePlatforms = Math.max(10, Math.min(42, platforms));
         int topY = cy + 4 + safePlatforms;
 
         buildSafetyTower(world, cx, cy, cz, topY);
@@ -43,13 +43,43 @@ public final class GeneratedVerticalJumpBuilder {
             x = clamp(x, cx - 6, cx + 6);
             z = clamp(z, cz - 6, cz + 6);
             y = cy + 2 + i;
-            platform(world, x, y, z, i % 6 == 0 ? 2 : 1, WOOL[i % WOOL.length]);
+            buildChallengePlatform(world, x, y, z, i);
         }
 
         int finishY = y + 1;
         drawGroundLine(world, cx, finishY, cz, 4, Material.RED_WOOL);
         buildFinishMark(world, cx, finishY, cz);
         return new Layout(new Location(world, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f), new Location(world, cx + 0.5, finishY + 1, cz + 0.5, 180f, 0f));
+    }
+
+    private static void buildChallengePlatform(World world, int x, int y, int z, int index) {
+        if (index % 9 == 0) {
+            platform(world, x, y, z, 1, Material.BLUE_ICE);
+            world.getBlockAt(x, y + 1, z).setType(Material.AIR, false);
+            return;
+        }
+        if (index % 8 == 0) {
+            platform(world, x, y, z, 1, Material.SLIME_BLOCK);
+            world.getBlockAt(x, y + 2, z).setType(Material.IRON_TRAPDOOR, false);
+            return;
+        }
+        if (index % 7 == 0) {
+            platform(world, x, y, z, 1, Material.SOUL_SAND);
+            world.getBlockAt(x, y + 1, z + 1).setType(Material.IRON_BARS, false);
+            return;
+        }
+        if (index % 6 == 0) {
+            platform(world, x, y, z, 2, Material.ORANGE_WOOL);
+            world.getBlockAt(x - 1, y + 1, z).setType(Material.IRON_BARS, false);
+            world.getBlockAt(x + 1, y + 1, z).setType(Material.IRON_BARS, false);
+            return;
+        }
+        if (index % 5 == 0) {
+            platform(world, x, y, z, 0, Material.MAGMA_BLOCK);
+            world.getBlockAt(x, y + 1, z).setType(Material.AIR, false);
+            return;
+        }
+        platform(world, x, y, z, 1, WOOL[index % WOOL.length]);
     }
 
     private static void buildSafetyTower(World world, int cx, int cy, int cz, int topY) {
