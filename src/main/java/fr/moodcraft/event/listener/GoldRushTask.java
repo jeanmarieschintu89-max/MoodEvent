@@ -25,7 +25,7 @@ import java.util.UUID;
 
 public class GoldRushTask implements Listener {
 
-    public static final String PICKAXE_NAME = "§6✦ §fPioche Ruée vers l'or §6✦";
+    public static final String PICKAXE_NAME = "§6✦ §fPioche Mine en folie §6✦";
 
     private static boolean roundActive;
 
@@ -80,7 +80,7 @@ public class GoldRushTask implements Listener {
             clearNightVision();
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!EventManager.isEventPlayer(player)) continue;
-                player.sendActionBar("§6⛏ §fRuée vers l'or terminée §8• §7Retour imminent");
+                player.sendActionBar("§6⛏ §fMine en folie terminée §8• §7Retour imminent");
             }
             return;
         }
@@ -111,21 +111,21 @@ public class GoldRushTask implements Listener {
             givePickaxe(player);
             giveNightVision(player);
             equipped.add(player.getUniqueId());
-            player.sendTitle("§6§lRUÉE VERS L'OR", "§fMine vite, garde tout !", 0, 45, 10);
+            player.sendTitle("§6§lMINE EN FOLIE", "§fMine vite, garde tout !", 0, 45, 10);
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.2f);
             MoodStyle.send(
                     player,
                     MoodStyle.MODULE,
-                    MoodStyle.hype("Ruée vers l'or lancée !"),
-                    MoodStyle.detail("Objectif : mine un maximum de minerais avant la fin."),
-                    MoodStyle.detail("Vision nocturne activée."),
-                    MoodStyle.detail("La pioche événement disparaît à la fin.")
+                    MoodStyle.info("Mine en folie lancée."),
+                    MoodStyle.detail("Mine un maximum de minerais."),
+                    MoodStyle.detail("Tu gardes tout ce que tu récoltes."),
+                    MoodStyle.detail("Une pioche spéciale t'est donnée.")
             );
         }
         Bukkit.broadcastMessage("");
         Bukkit.broadcastMessage(MoodStyle.header(MoodStyle.MODULE));
-        Bukkit.broadcastMessage(MoodStyle.hype("Ruée vers l'or lancée !"));
-        Bukkit.broadcastMessage(MoodStyle.detail("Mine le plus possible avant la fin du chrono."));
+        Bukkit.broadcastMessage(MoodStyle.hype("Mine en folie lancée !"));
+        Bukkit.broadcastMessage(MoodStyle.detail("Mine un maximum de minerais pendant le chrono."));
         Bukkit.broadcastMessage(MoodStyle.FRAME);
     }
 
@@ -133,7 +133,7 @@ public class GoldRushTask implements Listener {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!EventManager.isParticipant(player)) continue;
             giveNightVision(player);
-            player.sendActionBar("§6⛏ §fRuée vers l'or §8• §e" + remaining + "s");
+            player.sendActionBar("§6⛏ §fMine en folie §8• §e" + remaining + "s");
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.55f, 1.15f);
         }
     }
@@ -151,9 +151,9 @@ public class GoldRushTask implements Listener {
             MoodStyle.send(
                     player,
                     MoodStyle.MODULE,
-                    MoodStyle.hype("Ruée vers l'or terminée !"),
+                    MoodStyle.success("Mine en folie terminée !"),
                     MoodStyle.detail("Tu gardes les minerais récoltés."),
-                    MoodStyle.detail("Retour à ta position d'avant événement.")
+                    MoodStyle.info("Merci d'avoir participé.")
             );
         }
 
