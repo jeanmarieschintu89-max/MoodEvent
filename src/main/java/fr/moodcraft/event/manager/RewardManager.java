@@ -179,22 +179,29 @@ public final class RewardManager {
 
         if (money > 0) moneyGiven = VaultHook.deposit(player, money);
 
-        if (items <= 0 && money <= 0) {
-            if (!participation) {
-                MoodStyle.infoMessage(player, MoodStyle.MODULE, "Aucune récompense définie pour cette place.", MoodStyle.detail("Récompense : §e" + formatReward(place)));
-            }
-            return;
-        }
+        if (items <= 0 && money <= 0) return;
 
-        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.9f, 1.25f);
-        MoodStyle.successMessage(
-                player,
-                MoodStyle.MODULE,
-                participation ? "Récompense de participation reçue." : "Récompense Top 3 reçue.",
-                MoodStyle.detail("Récompense : §e" + formatReward(place)),
-                items > 0 ? MoodStyle.detail("Items : §e" + items) : MoodStyle.detail("Items : §7aucun"),
-                money > 0 && moneyGiven ? MoodStyle.detail("Argent : §a" + formatMoney(money)) : money > 0 ? MoodStyle.detail("Argent : §cVault indisponible") : MoodStyle.detail("Argent : §7aucun")
-        );
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.65f, 1.25f);
+        player.sendActionBar("§a+ §f" + compactReward(place, items, money, moneyGiven));
+        if (!participation && place <= 3) {
+            player.sendTitle("§6" + formatReward(place), "§fRécompense reçue", 0, 30, 8);
+        }
+    }
+
+    private static String compactReward(int place, int items, double money, boolean moneyGiven) {
+        StringBuilder builder = new StringBuilder(formatReward(place)).append(" §8• §f");
+        boolean hasPart = false;
+        if (money > 0) {
+            builder.append(moneyGiven ? "§a" : "§c").append(formatMoney(money));
+            hasPart = true;
+        }
+        if (items > 0) {
+            if (hasPart) builder.append(" §7+ ");
+            builder.append("§e").append(items).append(" item(s)");
+            hasPart = true;
+        }
+        if (!hasPart) builder.append("§7récompense reçue");
+        return builder.toString();
     }
 
     private static int giveItems(Player player, int place) {
