@@ -46,8 +46,9 @@ public final class MiniGameGeneratorGUI {
         addType(inv, 10, GeneratedGameType.SURVIE_ETAGES, "Salle d'attente + Tour Infernale.");
         addType(inv, 12, GeneratedGameType.RUEE_OR, "Salle d'attente + Mine en folie avec durée au choix.");
         addType(inv, 14, GeneratedGameType.WATER_JUMP, "Salle d'attente + Water Jump.");
-        addType(inv, 16, GeneratedGameType.LABYRINTHE, "Labyrinthe carré avec sas opposés.");
-        inv.setItem(22, EventItem.item(
+        addType(inv, 16, GeneratedGameType.JUMP, "Salle d'attente + Jump en hauteur validé.");
+        addType(inv, 22, GeneratedGameType.LABYRINTHE, "Labyrinthe carré avec sas opposés.");
+        inv.setItem(24, EventItem.item(
                 Material.GRAY_DYE,
                 "§8✦ §fLabyrinthe rond §8✦",
                 MoodStyle.detail("Mode mis en attente."),
@@ -116,7 +117,7 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Mini-jeu : §e" + type.getDisplayName()),
                 MoodStyle.detail("Style salle : §e" + WaitingRoomManager.getSelectedTheme(player).displayName()),
                 MoodStyle.detail("Choix 3/4 : §etaille du pack"),
-                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Jeu : modèles plus hauts, moins étalés.") : type == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Jeu : plateformes au-dessus de l'eau.") : type == GeneratedGameType.LABYRINTHE ? MoodStyle.detail("Jeu : forme carrée avec sas opposés.") : type == GeneratedGameType.LABYRINTHE_ROND ? MoodStyle.detail("Jeu : forme ronde, départ au centre.") : MoodStyle.detail("Jeu : durée choisie à l'étape suivante."),
+                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Jeu : modèles plus hauts, moins étalés.") : type == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Jeu : plateformes au-dessus de l'eau.") : type == GeneratedGameType.JUMP ? MoodStyle.detail("Jeu : montée progressive sur toute la zone.") : type == GeneratedGameType.LABYRINTHE ? MoodStyle.detail("Jeu : forme carrée avec sas opposés.") : type == GeneratedGameType.LABYRINTHE_ROND ? MoodStyle.detail("Jeu : forme ronde, départ au centre.") : MoodStyle.detail("Jeu : durée choisie à l'étape suivante."),
                 "",
                 MoodStyle.info("Choisis la taille")
         )));
@@ -224,6 +225,7 @@ public final class MiniGameGeneratorGUI {
     private static String confirmDetail(PendingGeneration pending) {
         return switch (pending.type()) {
             case WATER_JUMP -> MoodStyle.detail("Water Jump : départ, eau, plateformes, arrivée.");
+            case JUMP -> MoodStyle.detail("Jump : départ bas, montée validée, arrivée haute.");
             case LABYRINTHE -> MoodStyle.detail("Labyrinthe carré : sas opposés.");
             case LABYRINTHE_ROND -> MoodStyle.detail("Labyrinthe rond : centre vers sortie rouge.");
             case RUEE_OR -> MoodStyle.detail("Mine en folie : chrono choisi dans le menu.");
@@ -258,7 +260,7 @@ public final class MiniGameGeneratorGUI {
                 size.getIcon(),
                 "§6✦ §f" + size.getDisplayName() + " §6✦",
                 MoodStyle.detail("Jeu : §e" + size.describeFor(type)),
-                MoodStyle.detail("Salle liée : §e" + waitingSizeLabel(size)),
+                MoodStyle.detail("Salle liée : §e" + waitingSizeLabel(size, type)),
                 size == GeneratedGameSize.GEANT ? MoodStyle.detail("Très lourd : prudence.") : size == GeneratedGameSize.GRAND ? MoodStyle.detail("Plus lourd : prudence.") : MoodStyle.detail("Taille sûre."),
                 type == GeneratedGameType.RUEE_OR ? MoodStyle.detail("Étape suivante : §edurée") : "",
                 "",
@@ -277,7 +279,8 @@ public final class MiniGameGeneratorGUI {
         ));
     }
 
-    private static String waitingSizeLabel(GeneratedGameSize size) {
+    private static String waitingSizeLabel(GeneratedGameSize size, GeneratedGameType type) {
+        if (type == GeneratedGameType.JUMP && size == GeneratedGameSize.GEANT) return "Festival 23x23";
         return switch (size) {
             case PETIT -> "Petite 9x9";
             case MOYEN -> "Moyenne 11x11";
