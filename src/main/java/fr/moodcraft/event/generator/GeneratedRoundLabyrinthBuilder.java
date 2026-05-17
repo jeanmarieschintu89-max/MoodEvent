@@ -17,7 +17,7 @@ public final class GeneratedRoundLabyrinthBuilder {
     private static final Random RANDOM = new Random();
     private static final int WALL_HEIGHT = 3;
     private static final int CENTER_RADIUS = 2;
-    private static final int RING_STEP = 2;
+    private static final int RING_STEP = 3;
 
     private GeneratedRoundLabyrinthBuilder() {}
 
@@ -27,17 +27,19 @@ public final class GeneratedRoundLabyrinthBuilder {
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
         int diameter = rawSize % 2 == 1 ? rawSize : rawSize + 1;
-        int outerRadius = Math.max(10, diameter / 2);
-        int rings = Math.max(4, (outerRadius - CENTER_RADIUS - 2) / RING_STEP);
+        int targetRadius = Math.max(10, diameter / 2);
+        int rings = Math.max(3, Math.min(8, (targetRadius - CENTER_RADIUS - 1) / RING_STEP));
         int segments = segmentsFor(diameter);
+        int outerRadius = boundaryRadius(rings);
         int startSegment = RANDOM.nextInt(segments);
-        int exitSegment = (startSegment + segments / 2 + RANDOM.nextInt(Math.max(1, segments / 4))) % segments;
+        int exitSegment = (startSegment + segments / 2 + RANDOM.nextInt(Math.max(1, segments / 5))) % segments;
 
         Set<Edge> passages = carveTopology(rings, segments, startSegment);
         clearRoundArea(world, cx, cy, cz, outerRadius);
-        carveStart(world, cx, cy, cz);
-        carveRoundMaze(world, cx, cy, cz, rings, segments, startSegment, passages);
-        carveExit(world, cx, cy, cz, outerRadius, rings, segments, exitSegment);
+        drawWalls(world, cx, cy, cz, rings, segments, passages);
+        openCenter(world, cx, cy, cz, startSegment, segments);
+        openRingPassages(world, cx, cy, cz, passages, segments);
+        openExit(world, cx, cy, cz, rings, segments, exitSegment);
         decorate(world, cx, cy, cz, outerRadius, rings, segments, startSegment, exitSegment);
 
         Location start = new Location(world, cx + 0.5, cy + 1, cz + 0.5, yawForSegment(startSegment, segments), 0f);
@@ -87,89 +89,100 @@ public final class GeneratedRoundLabyrinthBuilder {
     }
 
     private static void clearRoundArea(World world, int cx, int cy, int cz, int outerRadius) {
-        int clearRadius = outerRadius + 5;
+        int clearRadius = outerRadius + 4;
         for (int x = cx - clearRadius; x <= cx + clearRadius; x++) {
             for (int z = cz - clearRadius; z <= cz + clearRadius; z++) {
                 double distance = distance(cx, cz, x, z);
                 world.getBlockAt(x, cy - 1, z).setType(distance <= outerRadius + 2 ? Material.SMOOTH_STONE : Material.AIR, false);
                 for (int y = cy; y <= cy + 5; y++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
-                if (distance <= outerRadius) {
-                    for (int y = cy; y < cy + WALL_HEIGHT; y++) world.getBlockAt(x, y, z).setType(Material.POLISHED_BLACKSTONE_BRICKS, false);
-                }
             }
         }
     }
 
-    private static void carveStart(World world, int cx, int cy, int cz) {
-        carveDisk(world, cx, cy, cz, CENTER_RADIUS);
+    private static void drawWalls(World world, int cx, int cy, int cz, int rings, int segments, Set<Edge> passages) {
+        for (int boundary = 0; boundary <= rings; boundary++) drawCircleWall(world, cx, cy, cz, boundaryRadius(boundary));
+
+        for (int ring = 0; ring < rings; ring++) {
+            int fromRadius = boundaryRadius(ring) + 1;
+            int toRadius = boundaryRadius(ring + 1) - 1;
+            for (int segment = 0; segment < segments; segment++) {
+                int next = wrap(segment + 1, segments);
+                if (passages.contains(new Edge(new Cell(ring, segment), new Cell(ring, next)))) continue;
+                drawRadialWall(world, cx, cy, cz, fromRadius, toRadius, boundaryAngle(segment, segments));
+            }
+        }
+    }
+
+    private static void openRingPassages(World world, int cx, int cy, int cz, Set<Edge> passages, int segments) {
+        for (Edge edge : passages) {
+            if (edge.a().ring() == edge.b().ring()) continue;
+            Cell outer = edge.a().ring() > edge.b().ring() ? edge.a() : edge.b();
+            clearGap(world, cx, cy, cz, boundaryRadius(outer.ring()), outer.segment(), segments, 1);
+        }
+    }
+
+    private static void openCenter(World world, int cx, int cy, int cz, int startSegment, int segments) {
+        clearDisk(world, cx, cy, cz, CENTER_RADIUS);
+        clearRadial(world, cx, cy, cz, 0, boundaryRadius(0) + 2, startSegment, segments, 1);
+        clearGap(world, cx, cy, cz, boundaryRadius(0), startSegment, segments, 2);
         world.getBlockAt(cx, cy - 1, cz).setType(Material.LIME_CONCRETE, false);
         world.getBlockAt(cx, cy, cz).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
     }
 
-    private static void carveRoundMaze(World world, int cx, int cy, int cz, int rings, int segments, int startSegment, Set<Edge> passages) {
-        carveRadial(world, cx, cy, cz, CENTER_RADIUS, radiusForRing(0), startSegment, segments);
-        carveCell(world, cx, cy, cz, new Cell(0, startSegment), segments);
-        for (Edge edge : passages) {
-            carveCell(world, cx, cy, cz, edge.a(), segments);
-            carveCell(world, cx, cy, cz, edge.b(), segments);
-            if (edge.a().ring() == edge.b().ring()) carveArc(world, cx, cy, cz, edge.a(), edge.b(), segments);
-            else carveRadialBetween(world, cx, cy, cz, edge.a(), edge.b(), segments);
-        }
-    }
-
-    private static void carveCell(World world, int cx, int cy, int cz, Cell cell, int segments) {
-        int radius = radiusForRing(cell.ring());
-        carveDisk(world, cx + pointX(cell.segment(), segments, radius), cy, cz + pointZ(cell.segment(), segments, radius), 1);
-    }
-
-    private static void carveRadialBetween(World world, int cx, int cy, int cz, Cell first, Cell second, int segments) {
-        Cell inner = first.ring() <= second.ring() ? first : second;
-        Cell outer = first.ring() <= second.ring() ? second : first;
-        carveRadial(world, cx, cy, cz, radiusForRing(inner.ring()), radiusForRing(outer.ring()), inner.segment(), segments);
-    }
-
-    private static void carveRadial(World world, int cx, int cy, int cz, int fromRadius, int toRadius, int segment, int segments) {
-        for (int radius = Math.min(fromRadius, toRadius); radius <= Math.max(fromRadius, toRadius); radius++) {
-            carveDisk(world, cx + pointX(segment, segments, radius), cy, cz + pointZ(segment, segments, radius), 1);
-        }
-    }
-
-    private static void carveArc(World world, int cx, int cy, int cz, Cell first, Cell second, int segments) {
-        int radius = radiusForRing(first.ring());
-        int direction = wrap(second.segment() - first.segment(), segments) == 1 ? 1 : -1;
-        int steps = Math.max(5, (int) Math.ceil((2 * Math.PI * radius) / segments));
-        double start = angleForSegment(first.segment(), segments);
-        double end = angleForSegment(first.segment() + direction, segments);
-        for (int i = 0; i <= steps; i++) {
-            double angle = start + ((end - start) * i / steps);
-            carveDisk(world, cx + (int) Math.round(Math.cos(angle) * radius), cy, cz + (int) Math.round(Math.sin(angle) * radius), 1);
-        }
-    }
-
-    private static void carveExit(World world, int cx, int cy, int cz, int outerRadius, int rings, int segments, int exitSegment) {
-        for (int radius = radiusForRing(rings - 1); radius <= outerRadius + 2; radius++) {
-            int x = cx + pointX(exitSegment, segments, radius);
-            int z = cz + pointZ(exitSegment, segments, radius);
-            carveDisk(world, x, cy, z, 1);
-            world.getBlockAt(x, cy - 1, z).setType(Material.SMOOTH_STONE, false);
-        }
+    private static void openExit(World world, int cx, int cy, int cz, int rings, int segments, int exitSegment) {
+        int outerRadius = boundaryRadius(rings);
+        clearGap(world, cx, cy, cz, outerRadius, exitSegment, segments, 2);
+        clearRadial(world, cx, cy, cz, boundaryRadius(rings - 1), outerRadius + 2, exitSegment, segments, 1);
         int finishX = cx + pointX(exitSegment, segments, outerRadius + 2);
         int finishZ = cz + pointZ(exitSegment, segments, outerRadius + 2);
+        clearDisk(world, finishX, cy, finishZ, 1);
         world.getBlockAt(finishX, cy - 1, finishZ).setType(Material.RED_CONCRETE, false);
         world.getBlockAt(finishX, cy, finishZ).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
     }
 
     private static void decorate(World world, int cx, int cy, int cz, int outerRadius, int rings, int segments, int startSegment, int exitSegment) {
         for (int segment = 0; segment < segments; segment += Math.max(4, segments / 8)) {
-            int x = cx + (int) Math.round(Math.cos(angleForSegment(segment, segments)) * outerRadius * 0.96);
-            int z = cz + (int) Math.round(Math.sin(angleForSegment(segment, segments)) * outerRadius * 0.96);
+            int x = cx + pointX(segment, segments, outerRadius);
+            int z = cz + pointZ(segment, segments, outerRadius);
             world.getBlockAt(x, cy + WALL_HEIGHT, z).setType(Material.SEA_LANTERN, false);
         }
-        world.getBlockAt(cx + pointX(startSegment, segments, radiusForRing(0)), cy - 1, cz + pointZ(startSegment, segments, radiusForRing(0))).setType(Material.LIME_CONCRETE, false);
-        world.getBlockAt(cx + pointX(exitSegment, segments, radiusForRing(rings - 1)), cy - 1, cz + pointZ(exitSegment, segments, radiusForRing(rings - 1))).setType(Material.RED_TERRACOTTA, false);
+        world.getBlockAt(cx + pointX(startSegment, segments, cellRadius(0)), cy - 1, cz + pointZ(startSegment, segments, cellRadius(0))).setType(Material.LIME_CONCRETE, false);
+        world.getBlockAt(cx + pointX(exitSegment, segments, cellRadius(rings - 1)), cy - 1, cz + pointZ(exitSegment, segments, cellRadius(rings - 1))).setType(Material.RED_TERRACOTTA, false);
     }
 
-    private static void carveDisk(World world, int cx, int cy, int cz, int radius) {
+    private static void drawCircleWall(World world, int cx, int cy, int cz, int radius) {
+        int steps = Math.max(96, radius * 18);
+        for (int i = 0; i < steps; i++) {
+            double angle = (Math.PI * 2) * i / steps;
+            int x = cx + (int) Math.round(Math.cos(angle) * radius);
+            int z = cz + (int) Math.round(Math.sin(angle) * radius);
+            setWall(world, x, cy, z);
+        }
+    }
+
+    private static void drawRadialWall(World world, int cx, int cy, int cz, int fromRadius, int toRadius, double angle) {
+        for (int radius = fromRadius; radius <= toRadius; radius++) {
+            int x = cx + (int) Math.round(Math.cos(angle) * radius);
+            int z = cz + (int) Math.round(Math.sin(angle) * radius);
+            setWall(world, x, cy, z);
+        }
+    }
+
+    private static void clearGap(World world, int cx, int cy, int cz, int radius, int segment, int segments, int gapRadius) {
+        clearDisk(world, cx + pointX(segment, segments, radius), cy, cz + pointZ(segment, segments, radius), gapRadius);
+    }
+
+    private static void clearRadial(World world, int cx, int cy, int cz, int fromRadius, int toRadius, int segment, int segments, int radius) {
+        for (int distance = Math.min(fromRadius, toRadius); distance <= Math.max(fromRadius, toRadius); distance++) {
+            clearDisk(world, cx + pointX(segment, segments, distance), cy, cz + pointZ(segment, segments, distance), radius);
+        }
+    }
+
+    private static void setWall(World world, int x, int cy, int z) {
+        for (int y = cy; y < cy + WALL_HEIGHT; y++) world.getBlockAt(x, y, z).setType(Material.POLISHED_BLACKSTONE_BRICKS, false);
+    }
+
+    private static void clearDisk(World world, int cx, int cy, int cz, int radius) {
         for (int x = cx - radius; x <= cx + radius; x++) {
             for (int z = cz - radius; z <= cz + radius; z++) {
                 if (distance(cx, cz, x, z) > radius + 0.35) continue;
@@ -179,9 +192,8 @@ public final class GeneratedRoundLabyrinthBuilder {
         }
     }
 
-    private static int radiusForRing(int ring) {
-        return CENTER_RADIUS + 2 + ring * RING_STEP;
-    }
+    private static int boundaryRadius(int boundary) { return CENTER_RADIUS + 1 + boundary * RING_STEP; }
+    private static int cellRadius(int ring) { return boundaryRadius(ring) + (RING_STEP / 2) + 1; }
 
     private static int segmentsFor(int diameter) {
         if (diameter >= 55) return 36;
@@ -190,17 +202,10 @@ public final class GeneratedRoundLabyrinthBuilder {
         return 16;
     }
 
-    private static int pointX(int segment, int segments, int radius) {
-        return (int) Math.round(Math.cos(angleForSegment(segment, segments)) * radius);
-    }
-
-    private static int pointZ(int segment, int segments, int radius) {
-        return (int) Math.round(Math.sin(angleForSegment(segment, segments)) * radius);
-    }
-
-    private static double angleForSegment(int segment, int segments) {
-        return ((Math.PI * 2) * wrap(segment, segments) / segments) - (Math.PI / 2);
-    }
+    private static int pointX(int segment, int segments, int radius) { return (int) Math.round(Math.cos(angleForSegment(segment, segments)) * radius); }
+    private static int pointZ(int segment, int segments, int radius) { return (int) Math.round(Math.sin(angleForSegment(segment, segments)) * radius); }
+    private static double angleForSegment(int segment, int segments) { return ((Math.PI * 2) * wrap(segment, segments) / segments) - (Math.PI / 2); }
+    private static double boundaryAngle(int segment, int segments) { return ((Math.PI * 2) * (segment + 0.5) / segments) - (Math.PI / 2); }
 
     private static float yawForSegment(int segment, int segments) {
         double angle = angleForSegment(segment, segments);
