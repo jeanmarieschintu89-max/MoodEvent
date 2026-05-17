@@ -269,6 +269,18 @@ public final class WaitingRoomManager {
         };
     }
 
+    private static Material couchSeatFor(WaitingRoomTheme theme) {
+        return switch (theme) {
+            case ROYAL, GOLDEN -> Material.YELLOW_WOOL;
+            case OCEAN, ICE, EMERALD, WARPED, FESTIVAL -> Material.LIGHT_BLUE_WOOL;
+            case NETHER, CRIMSON, REDSTONE -> Material.RED_WOOL;
+            case NATURE, JUNGLE, TOWNY -> Material.GREEN_WOOL;
+            case AMETHYST, END, CANDY -> Material.PURPLE_WOOL;
+            case COPPER, DESERT -> Material.ORANGE_WOOL;
+            case DEEP_DARK, MOODCRAFT -> Material.GRAY_WOOL;
+        };
+    }
+
     private static void decorate(World world, int cx, int cy, int cz, int radius, int height, WaitingRoomTheme theme) {
         int[][] corners = {
                 {cx - radius + 1, cz - radius + 1},
@@ -285,11 +297,13 @@ public final class WaitingRoomManager {
         world.getBlockAt(cx, cy + 1, cz).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
 
         if (radius >= 5) {
-            Material stair = stairFor(theme.primary());
-            world.getBlockAt(cx + 2, cy + 1, cz).setType(stair, false);
-            world.getBlockAt(cx - 2, cy + 1, cz).setType(stair, false);
-            world.getBlockAt(cx, cy + 1, cz + 2).setType(stair, false);
-            world.getBlockAt(cx, cy + 1, cz - 2).setType(stair, false);
+            buildCouch(world, cx, cy, cz - radius + 2, true, 0, -1, theme);
+            buildCouch(world, cx, cy, cz + radius - 2, true, 0, 1, theme);
+        }
+
+        if (radius >= 7) {
+            buildCouch(world, cx - radius + 2, cy, cz, false, -1, 0, theme);
+            buildCouch(world, cx + radius - 2, cy, cz, false, 1, 0, theme);
         }
 
         if (radius >= 9) {
@@ -300,21 +314,33 @@ public final class WaitingRoomManager {
         }
     }
 
-    private static Material stairFor(Material material) {
-        return switch (material) {
-            case QUARTZ_BLOCK, SMOOTH_QUARTZ, WHITE_CONCRETE -> Material.QUARTZ_STAIRS;
-            case PURPUR_BLOCK -> Material.PURPUR_STAIRS;
-            case OAK_LOG, OAK_PLANKS, JUNGLE_LOG, JUNGLE_PLANKS -> Material.OAK_STAIRS;
-            case SPRUCE_LOG, PACKED_ICE, SNOW_BLOCK -> Material.SPRUCE_STAIRS;
-            case SANDSTONE, SMOOTH_SANDSTONE, CHISELED_SANDSTONE -> Material.SANDSTONE_STAIRS;
-            case PRISMARINE_BRICKS, DARK_PRISMARINE -> Material.PRISMARINE_STAIRS;
-            case CUT_COPPER, COPPER_BLOCK -> Material.CUT_COPPER_STAIRS;
-            case POLISHED_BLACKSTONE, BLACKSTONE, POLISHED_BLACKSTONE_BRICKS, GILDED_BLACKSTONE -> Material.BLACKSTONE_STAIRS;
-            case WARPED_PLANKS, WARPED_WART_BLOCK -> Material.WARPED_STAIRS;
-            case CRIMSON_PLANKS, CRIMSON_NYLIUM -> Material.CRIMSON_STAIRS;
-            case STONE_BRICKS, MOSSY_COBBLESTONE, DEEPSLATE_BRICKS -> Material.STONE_BRICK_STAIRS;
-            default -> Material.STONE_BRICK_STAIRS;
-        };
+    private static void buildCouch(World world, int cx, int cy, int cz, boolean horizontal, int backDx, int backDz, WaitingRoomTheme theme) {
+        Material seat = couchSeatFor(theme);
+        Material frame = solidBlockFor(theme.primary());
+        Material accent = solidBlockFor(theme.accent());
+
+        for (int i = -2; i <= 2; i++) {
+            int x = horizontal ? cx + i : cx;
+            int z = horizontal ? cz : cz + i;
+            world.getBlockAt(x, cy + 1, z).setType(seat, false);
+            world.getBlockAt(x, cy + 2, z).setType(Material.AIR, false);
+        }
+
+        for (int i = -2; i <= 2; i++) {
+            int x = horizontal ? cx + i : cx;
+            int z = horizontal ? cz : cz + i;
+            world.getBlockAt(x + backDx, cy + 1, z + backDz).setType(frame, false);
+            world.getBlockAt(x + backDx, cy + 2, z + backDz).setType(frame, false);
+        }
+
+        int leftX = horizontal ? cx - 3 : cx;
+        int leftZ = horizontal ? cz : cz - 3;
+        int rightX = horizontal ? cx + 3 : cx;
+        int rightZ = horizontal ? cz : cz + 3;
+        world.getBlockAt(leftX, cy + 1, leftZ).setType(accent, false);
+        world.getBlockAt(leftX, cy + 2, leftZ).setType(accent, false);
+        world.getBlockAt(rightX, cy + 1, rightZ).setType(accent, false);
+        world.getBlockAt(rightX, cy + 2, rightZ).setType(accent, false);
     }
 
     private static int radius(String text) {
