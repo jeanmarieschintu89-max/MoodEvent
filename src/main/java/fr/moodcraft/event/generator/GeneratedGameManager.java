@@ -144,6 +144,7 @@ public final class GeneratedGameManager {
             case WATER_JUMP -> MoodStyle.detail("Longueur entre §e40 §7et §e140 §7blocs.");
             case MUR_ESCALADE -> MoodStyle.detail("Nombre de plateformes entre §e8 §7et §e42§7.");
             case LABYRINTHE, LABYRINTHE_ROND -> MoodStyle.detail("Largeur impaire entre §e15 §7et §e61 §7blocs.");
+            case PRISON_BREAK -> MoodStyle.detail("Largeur impaire entre §e5 §7et §e15 §7cellules.");
         };
     }
 
@@ -195,6 +196,7 @@ public final class GeneratedGameManager {
         config.set("water-jump", null);
         config.set("climb", null);
         config.set("labyrinth", null);
+        config.set("prison-break", null);
         active = false;
         activeType = null;
         activeRegion = null;
@@ -233,6 +235,7 @@ public final class GeneratedGameManager {
             case MUR_ESCALADE -> routeClimb(center, spec);
             case LABYRINTHE -> routeLabyrinth(center, spec);
             case LABYRINTHE_ROND -> routeRoundLabyrinth(center, spec);
+            case PRISON_BREAK -> routePrisonBreak(center, spec);
         };
 
         config.set("style", null);
@@ -253,6 +256,7 @@ public final class GeneratedGameManager {
         if (type == GeneratedGameType.RUEE_OR) config.set("gold-rush.duration-seconds", spec.goldDuration);
         if (type == GeneratedGameType.WATER_JUMP) config.set("water-jump.fall-y", points.start().getY() - 1.5);
         if (type == GeneratedGameType.MUR_ESCALADE) config.set("climb.platforms", spec.waterLength);
+        if (type == GeneratedGameType.PRISON_BREAK) config.set("prison-break.cells", spec.mazeWidth);
         save();
 
         configureEvent(player, type, points);
@@ -271,6 +275,7 @@ public final class GeneratedGameManager {
             case MUR_ESCALADE -> "mur_escalade_v1";
             case LABYRINTHE -> "labyrinthe_carre_v2";
             case LABYRINTHE_ROND -> "labyrinthe_rond_v1";
+            case PRISON_BREAK -> "prison_break_v1";
         };
     }
 
@@ -327,6 +332,13 @@ public final class GeneratedGameManager {
         return new Points(layout.start(), layout.finish(), 0);
     }
 
+    private static Points routePrisonBreak(Location center, Spec spec) {
+        GeneratedPrisonBreakBuilder.Layout layout = GeneratedPrisonBreakBuilder.build(center, spec.mazeWidth);
+        config.set("prison-break.cells", layout.cellsWide());
+        config.set("prison-break.reachable", layout.reachable());
+        return new Points(layout.start(), layout.finish(), 0);
+    }
+
     private static void configureEvent(Player player, GeneratedGameType type, Points points) {
         Location back = player.getLocation().clone().add(0, 3, 0);
         EventManager.createEvent(player, type.getDisplayName());
@@ -351,6 +363,7 @@ public final class GeneratedGameManager {
             case MUR_ESCALADE -> "Grimpez de plateforme en plateforme jusqu'au sommet. Top 3 à l'arrivée.";
             case LABYRINTHE -> "Traversez le labyrinthe carré depuis le sas de départ jusqu'au sas d'arrivée. Top 3 à l'arrivée.";
             case LABYRINTHE_ROND -> "Partez du centre du labyrinthe rond et trouvez l'unique sortie extérieure. Top 3 à l'arrivée.";
+            case PRISON_BREAK -> "Échappez-vous de la prison générée aléatoirement et atteignez la sortie rouge.";
         };
     }
 
@@ -363,6 +376,7 @@ public final class GeneratedGameManager {
             case WATER_JUMP -> new Region(world, cx - 12, cy - 4, cz - 22, cx + spec.waterLength + 20, cy + 24, cz + 22);
             case MUR_ESCALADE -> new Region(world, cx - 18, cy - 2, cz - 18, cx + 18, cy + spec.waterLength + 12, cz + 18);
             case LABYRINTHE, LABYRINTHE_ROND -> new Region(world, cx - spec.mazeWidth / 2 - 12, cy - 2, cz - spec.mazeWidth / 2 - 12, cx + spec.mazeWidth / 2 + 12, cy + 8, cz + spec.mazeWidth / 2 + 12);
+            case PRISON_BREAK -> new Region(world, cx - spec.mazeWidth * 2 - 10, cy - 2, cz - spec.mazeWidth * 2 - 10, cx + spec.mazeWidth * 2 + 10, cy + 9, cz + spec.mazeWidth * 2 + 10);
         };
     }
 
@@ -467,6 +481,7 @@ public final class GeneratedGameManager {
                 case WATER_JUMP -> new Spec(0, 0, 0, 0, size.getWaterLength(), 0);
                 case MUR_ESCALADE -> new Spec(0, 0, 0, 0, size.getClimbPlatforms(), 0);
                 case LABYRINTHE, LABYRINTHE_ROND -> new Spec(0, 0, 0, 0, 0, size.getMazeWidth());
+                case PRISON_BREAK -> new Spec(0, 0, 0, 0, 0, size.getPrisonCells());
             };
         }
 
@@ -477,6 +492,7 @@ public final class GeneratedGameManager {
                 case WATER_JUMP -> value >= 40 && value <= 140 ? new Spec(0, 0, 0, 0, value, 0) : null;
                 case MUR_ESCALADE -> value >= 8 && value <= 42 ? new Spec(0, 0, 0, 0, value, 0) : null;
                 case LABYRINTHE, LABYRINTHE_ROND -> value >= 15 && value <= 61 ? new Spec(0, 0, 0, 0, 0, value % 2 == 1 ? value : value + 1) : null;
+                case PRISON_BREAK -> value >= 5 && value <= 15 ? new Spec(0, 0, 0, 0, 0, value % 2 == 1 ? value : value + 1) : null;
             };
         }
 
@@ -496,6 +512,7 @@ public final class GeneratedGameManager {
                 case MUR_ESCALADE -> waterLength + " plateformes §8• §7jump vertical";
                 case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7carré avec sas";
                 case LABYRINTHE_ROND -> mazeWidth + " blocs §8• §7rond, départ au centre";
+                case PRISON_BREAK -> mazeWidth + "x" + mazeWidth + " cellules §8• §7plan aléatoire";
             };
         }
     }
