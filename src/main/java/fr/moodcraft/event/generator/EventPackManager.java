@@ -17,6 +17,10 @@ public final class EventPackManager {
     }
 
     public static void generatePack(Player player, GeneratedGameType type, GeneratedGameSize size) {
+        generatePack(player, type, size, 0);
+    }
+
+    public static void generatePack(Player player, GeneratedGameType type, GeneratedGameSize size, int goldRushDurationSeconds) {
         if (player == null || type == null || size == null) return;
 
         if (GeneratedGameManager.hasStructure()) {
@@ -28,6 +32,8 @@ public final class EventPackManager {
             MoodStyle.errorMessage(player, MoodStyle.MODULE, "Une salle d'attente existe déjà.", MoodStyle.detail("Restaure-la avant de créer un nouveau pack."));
             return;
         }
+
+        if (type == GeneratedGameType.RUEE_OR && !validGoldRushDuration(player, goldRushDurationSeconds)) return;
 
         WaitingRoomTheme waitingTheme = WaitingRoomManager.getSelectedTheme(player);
         String waitingSize = waitingSizeFor(size);
@@ -48,6 +54,10 @@ public final class EventPackManager {
 
         player.teleport(gameCenter);
         GeneratedGameManager.generate(player, type, size);
+        if (type == GeneratedGameType.RUEE_OR) {
+            GeneratedGameManager.config().set("gold-rush.duration-seconds", goldRushDurationSeconds);
+            GeneratedGameManager.save();
+        }
         player.teleport(original);
 
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.15f);
@@ -57,13 +67,21 @@ public final class EventPackManager {
                 "Pack événement créé.",
                 MoodStyle.detail("Mini-jeu : §e" + type.getDisplayName()),
                 MoodStyle.detail("Taille jeu : §e" + size.getDisplayName()),
+                type == GeneratedGameType.RUEE_OR ? MoodStyle.detail("Durée : §e" + goldRushDurationSeconds + "s") : MoodStyle.detail("Durée : §7standard"),
                 MoodStyle.detail("Salle : §e" + waitingSize + " §8• §7" + waitingTheme.displayName()),
                 MoodStyle.detail("Style appliqué uniquement à la salle d'attente."),
                 MoodStyle.detail("Salle à gauche §8• §7Mini-jeu à droite"),
                 MoodStyle.info("Ouvre la file avec §e/eventouvrir")
         );
 
-        EventLogManager.log(player, "Pack événement", type.getDisplayName() + " - " + size.getDisplayName() + " - salle " + waitingTheme.displayName());
+        String durationLog = type == GeneratedGameType.RUEE_OR ? " - " + goldRushDurationSeconds + "s" : "";
+        EventLogManager.log(player, "Pack événement", type.getDisplayName() + " - " + size.getDisplayName() + durationLog + " - salle " + waitingTheme.displayName());
+    }
+
+    private static boolean validGoldRushDuration(Player player, int seconds) {
+        if (seconds >= 30 && seconds <= 900) return true;
+        MoodStyle.errorMessage(player, MoodStyle.MODULE, "Durée Mine en folie invalide.", MoodStyle.detail("Choisis une durée entre §e30s §7et §e900s§7."));
+        return false;
     }
 
     private static String waitingSizeFor(GeneratedGameSize size) {
