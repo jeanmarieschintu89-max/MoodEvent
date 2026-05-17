@@ -144,7 +144,7 @@ public final class EventManager {
         if (!ensureEvent(player)) return;
         EventType next = sanitizeType(EventType.fromText(rawType));
         if (next == EventType.CUSTOM) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type non disponible.", MoodStyle.detail("Modes : §emine_en_folie§7, §etour_infernale§7, §ewater_jump§7, §elabyrinthe"));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type non disponible.", MoodStyle.detail("Modes : §emine_en_folie§7, §etour_infernale§7, §ewater_jump§7, §emur_escalade§7, §elabyrinthe§7, §eprison_break"));
             return;
         }
         type = next;
@@ -158,7 +158,9 @@ public final class EventManager {
         type = switch (getType()) {
             case SURVIE_ETAGES -> EventType.RUEE_OR;
             case RUEE_OR -> EventType.WATER_JUMP;
-            case WATER_JUMP -> EventType.LABYRINTHE;
+            case WATER_JUMP -> EventType.MUR_ESCALADE;
+            case MUR_ESCALADE -> EventType.LABYRINTHE;
+            case LABYRINTHE -> EventType.PRISON_BREAK;
             default -> EventType.SURVIE_ETAGES;
         };
         if (!type.usesFinishLine()) finishLocation = null;
@@ -177,7 +179,7 @@ public final class EventManager {
         if (!ensureEvent(player)) return;
         if (!getType().usesFinishLine()) {
             clearFinishLocation(player);
-            MoodStyle.infoMessage(player, MoodStyle.MODULE, "Arrivée non utilisée pour cette épreuve.", MoodStyle.detail("Water Jump et Labyrinthe utilisent une arrivée."));
+            MoodStyle.infoMessage(player, MoodStyle.MODULE, "Arrivée non utilisée pour cette épreuve.", MoodStyle.detail("Water Jump, Mur d'escalade, Labyrinthe et Prison Break utilisent une arrivée."));
             return;
         }
         finishLocation = player.getLocation().clone();
@@ -195,7 +197,7 @@ public final class EventManager {
     public static void openQueue(Player player) {
         if (!ensureEvent(player) || !ensureLocation(player)) return;
         if (getType() == EventType.CUSTOM) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type d'événement non défini.", MoodStyle.detail("Utilise §e/eventtype mine_en_folie|tour_infernale|water_jump|labyrinthe"));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type d'événement non défini.", MoodStyle.detail("Utilise §e/eventtype mine_en_folie|tour_infernale|water_jump|mur_escalade|labyrinthe|prison_break"));
             return;
         }
         queueOpen = true;
@@ -398,7 +400,7 @@ public final class EventManager {
         MoodStyle.send(player, MoodStyle.MODULE,
                 MoodStyle.info("Commandes événement."),
                 MoodStyle.detail("/eventcreer <nom>"),
-                MoodStyle.detail("/eventtype <mine_en_folie|tour_infernale|water_jump|labyrinthe>"),
+                MoodStyle.detail("/eventtype <mine_en_folie|tour_infernale|water_jump|mur_escalade|labyrinthe|prison_break>"),
                 MoodStyle.detail("/eventdepart"),
                 MoodStyle.detail("/eventsalleattente <mini|petite|moyenne|grande|tresgrande|festival>"),
                 MoodStyle.detail("/eventouvrir"),
@@ -478,6 +480,11 @@ public final class EventManager {
                     MoodStyle.detail("Trouve la sortie avant les autres."),
                     MoodStyle.detail("Les 3 premiers à l'arrivée gagnent."),
                     MoodStyle.detail("Reste rapide et attentif."));
+            case PRISON_BREAK -> MoodStyle.send(player, MoodStyle.MODULE,
+                    MoodStyle.info("Prison Break lancé."),
+                    MoodStyle.detail("Échappe-toi de la prison."),
+                    MoodStyle.detail("Trouve la sortie rouge."),
+                    MoodStyle.detail("Les 3 premiers à sortir gagnent."));
             default -> MoodStyle.infoMessage(player, MoodStyle.MODULE, "Tu es entré dans l'événement.");
         }
     }
@@ -538,6 +545,7 @@ public final class EventManager {
         return switch (getType()) {
             case WATER_JUMP -> "saute de plateforme en plateforme et atteins l'arrivée";
             case LABYRINTHE -> "trouve la sortie avant les autres";
+            case PRISON_BREAK -> "échappe-toi de la prison et atteins la sortie rouge";
             case SURVIE_ETAGES -> "reste en vie pendant que le sol disparaît";
             case RUEE_OR -> "mine un maximum de minerais pendant le chrono";
             default -> "participe et vise la victoire";
