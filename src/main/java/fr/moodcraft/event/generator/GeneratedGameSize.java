@@ -54,12 +54,22 @@ public enum GeneratedGameSize {
         return 0;
     }
 
+    public int getClimbPlatforms() {
+        return switch (this) {
+            case PETIT -> 12;
+            case MOYEN -> 18;
+            case GRAND -> 26;
+            case GEANT -> 34;
+        };
+    }
+
     public String describeFor(GeneratedGameType type) {
         if (type == null) return displayName;
         return switch (type) {
             case SURVIE_ETAGES -> survivalWidth + "x" + survivalWidth + " §8• §7" + survivalFloors + " étages";
             case RUEE_OR -> getGoldRushWidth() + "x" + getGoldRushHeight() + " §8• §7durée au choix";
             case WATER_JUMP -> waterLength + " blocs §8• §7hauteur progressive";
+            case MUR_ESCALADE -> getClimbPlatforms() + " plateformes §8• §7jump vertical";
             case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7carré avec sas";
             case LABYRINTHE_ROND -> mazeWidth + " blocs §8• §7rond, départ au centre";
         };
