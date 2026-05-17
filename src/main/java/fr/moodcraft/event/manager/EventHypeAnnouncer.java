@@ -9,7 +9,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 public final class EventHypeAnnouncer {
 
-    private static final int REMINDER_INTERVAL_SECONDS = 120;
+    private static final int REMINDER_INTERVAL_SECONDS = 300;
 
     private static BukkitTask task;
     private static boolean wasQueueOpen;
