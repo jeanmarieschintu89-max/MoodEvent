@@ -4,10 +4,10 @@ import org.bukkit.Material;
 
 public enum GeneratedGameSize {
 
-    PETIT("Petit", Material.LIME_CONCRETE, 13, 7, 60, 21),
-    MOYEN("Moyen", Material.GOLD_BLOCK, 15, 8, 90, 31),
-    GRAND("Grand", Material.ORANGE_CONCRETE, 17, 9, 125, 43),
-    GEANT("Géant", Material.REDSTONE_BLOCK, 19, 10, 160, 55);
+    PETIT("Petit", Material.LIME_CONCRETE, 13, 7, 60, 21, 12),
+    MOYEN("Moyen", Material.GOLD_BLOCK, 15, 8, 90, 31, 20),
+    GRAND("Grand", Material.ORANGE_CONCRETE, 17, 9, 125, 43, 28),
+    GEANT("Géant", Material.REDSTONE_BLOCK, 19, 10, 160, 55, 36);
 
     private final String displayName;
     private final Material icon;
@@ -15,14 +15,16 @@ public enum GeneratedGameSize {
     private final int survivalFloors;
     private final int waterLength;
     private final int mazeWidth;
+    private final int jumpPlatforms;
 
-    GeneratedGameSize(String displayName, Material icon, int survivalWidth, int survivalFloors, int waterLength, int mazeWidth) {
+    GeneratedGameSize(String displayName, Material icon, int survivalWidth, int survivalFloors, int waterLength, int mazeWidth, int jumpPlatforms) {
         this.displayName = displayName;
         this.icon = icon;
         this.survivalWidth = survivalWidth;
         this.survivalFloors = survivalFloors;
         this.waterLength = waterLength;
         this.mazeWidth = mazeWidth;
+        this.jumpPlatforms = jumpPlatforms;
     }
 
     public String getDisplayName() { return displayName; }
@@ -31,6 +33,7 @@ public enum GeneratedGameSize {
     public int getSurvivalFloors() { return survivalFloors; }
     public int getWaterLength() { return waterLength; }
     public int getMazeWidth() { return mazeWidth; }
+    public int getJumpPlatforms() { return jumpPlatforms; }
 
     public int getGoldRushWidth() {
         return switch (this) {
@@ -60,6 +63,7 @@ public enum GeneratedGameSize {
             case SURVIE_ETAGES -> survivalWidth + "x" + survivalWidth + " §8• §7" + survivalFloors + " étages";
             case RUEE_OR -> getGoldRushWidth() + "x" + getGoldRushHeight() + " §8• §7durée au choix";
             case WATER_JUMP -> waterLength + " blocs §8• §7hauteur progressive";
+            case JUMP -> jumpPlatforms + " plateformes §8• §7montée validée";
             case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7carré avec sas";
             case LABYRINTHE_ROND -> mazeWidth + " blocs §8• §7rond, départ au centre";
         };
