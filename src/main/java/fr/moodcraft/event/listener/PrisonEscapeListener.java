@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,8 +18,10 @@ import org.bukkit.event.player.PlayerInteractEvent;
 
 public class PrisonEscapeListener implements Listener {
 
-    private static final int OPEN_RADIUS = 7;
+    private static final int SEARCH_RADIUS = 9;
+    private static final int GATE_RADIUS = 3;
     private static final int OPEN_HEIGHT = 4;
+    private static final Material PUZZLE_MARKER = Material.LODESTONE;
 
     @EventHandler
     public void onPuzzleInteract(PlayerInteractEvent event) {
@@ -33,24 +36,70 @@ public class PrisonEscapeListener implements Listener {
         if (type != Material.STONE_BUTTON && type != Material.LEVER) return;
         if (!GeneratedGameManager.isInsideStructure(clicked.getLocation())) return;
 
-        int opened = openNearbyGate(clicked.getLocation());
-        if (opened <= 0) {
+        if (!isCorrectMechanism(clicked)) {
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.8f);
-            player.sendActionBar("§c✖ §fRien ne bouge... mauvais mécanisme ?");
+            player.sendActionBar("§c✖ §fMauvais mécanisme... cherche mieux.");
             return;
         }
 
+        int opened = openNearestGate(clicked.getLocation());
+        if (opened <= 0) {
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.8f);
+            player.sendActionBar("§c✖ §fLe mécanisme grince, mais rien ne s'ouvre.");
+            return;
+        }
+
+        clearPuzzleMarker(clicked);
         player.playSound(player.getLocation(), Sound.BLOCK_IRON_DOOR_OPEN, 0.9f, 1.1f);
         MoodStyle.successMessage(
                 player,
                 MoodStyle.MODULE,
                 "Mécanisme activé.",
-                MoodStyle.detail("Une grille s'ouvre plus loin."),
+                MoodStyle.detail("La grille suivante s'ouvre."),
                 MoodStyle.info("Continue l'évasion, cherche la sortie rouge.")
         );
     }
 
-    private int openNearbyGate(Location center) {
+    private boolean isCorrectMechanism(Block clicked) {
+        Block marker = clicked.getRelative(BlockFace.DOWN, 2);
+        return marker.getType() == PUZZLE_MARKER;
+    }
+
+    private void clearPuzzleMarker(Block clicked) {
+        Block marker = clicked.getRelative(BlockFace.DOWN, 2);
+        if (marker.getType() == PUZZLE_MARKER) marker.setType(Material.POLISHED_ANDESITE, false);
+    }
+
+    private int openNearestGate(Location center) {
+        World world = center.getWorld();
+        if (world == null) return 0;
+
+        Block nearest = null;
+        double best = Double.MAX_VALUE;
+        int cx = center.getBlockX();
+        int cy = center.getBlockY();
+        int cz = center.getBlockZ();
+
+        for (int x = cx - SEARCH_RADIUS; x <= cx + SEARCH_RADIUS; x++) {
+            for (int y = cy - 1; y <= cy + OPEN_HEIGHT; y++) {
+                for (int z = cz - SEARCH_RADIUS; z <= cz + SEARCH_RADIUS; z++) {
+                    Block block = world.getBlockAt(x, y, z);
+                    if (block.getType() != Material.IRON_BARS) continue;
+                    if (!GeneratedGameManager.isInsideStructure(block.getLocation())) continue;
+                    double distance = block.getLocation().distanceSquared(center);
+                    if (distance < best) {
+                        best = distance;
+                        nearest = block;
+                    }
+                }
+            }
+        }
+
+        if (nearest == null) return 0;
+        return openGateAround(nearest.getLocation());
+    }
+
+    private int openGateAround(Location center) {
         World world = center.getWorld();
         if (world == null) return 0;
         int opened = 0;
@@ -58,9 +107,9 @@ public class PrisonEscapeListener implements Listener {
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
 
-        for (int x = cx - OPEN_RADIUS; x <= cx + OPEN_RADIUS; x++) {
+        for (int x = cx - GATE_RADIUS; x <= cx + GATE_RADIUS; x++) {
             for (int y = cy - 1; y <= cy + OPEN_HEIGHT; y++) {
-                for (int z = cz - OPEN_RADIUS; z <= cz + OPEN_RADIUS; z++) {
+                for (int z = cz - GATE_RADIUS; z <= cz + GATE_RADIUS; z++) {
                     Block block = world.getBlockAt(x, y, z);
                     if (block.getType() != Material.IRON_BARS) continue;
                     if (!GeneratedGameManager.isInsideStructure(block.getLocation())) continue;
