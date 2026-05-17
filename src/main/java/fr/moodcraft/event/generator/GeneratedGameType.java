@@ -8,7 +8,8 @@ public enum GeneratedGameType {
     SURVIE_ETAGES("Tour Infernale", Material.MAGENTA_WOOL, EventType.SURVIE_ETAGES),
     RUEE_OR("Mine en folie", Material.GOLDEN_PICKAXE, EventType.RUEE_OR),
     WATER_JUMP("Water Jump", Material.WATER_BUCKET, EventType.WATER_JUMP),
-    LABYRINTHE("Labyrinthe", Material.MAP, EventType.LABYRINTHE);
+    LABYRINTHE("Labyrinthe carré", Material.MAP, EventType.LABYRINTHE),
+    LABYRINTHE_ROND("Labyrinthe rond", Material.COMPASS, EventType.LABYRINTHE);
 
     private final String displayName;
     private final Material icon;
