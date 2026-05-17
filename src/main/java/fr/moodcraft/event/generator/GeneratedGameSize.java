@@ -50,20 +50,11 @@ public enum GeneratedGameSize {
         };
     }
 
-    public String getConfigKey() {
-        return switch (this) {
-            case PETIT -> "petit";
-            case MOYEN -> "moyen";
-            case GRAND -> "grand";
-            case GEANT -> "geant";
-        };
-    }
-
     public String describeFor(GeneratedGameType type) {
         if (type == null) return displayName;
         return switch (type) {
             case SURVIE_ETAGES -> survivalWidth + "x" + survivalWidth + " §8• §7" + survivalFloors + " étages";
-            case RUEE_OR -> getGoldRushWidth() + "x" + getGoldRushHeight() + " §8• §7durée config";
+            case RUEE_OR -> getGoldRushWidth() + "x" + getGoldRushHeight() + " §8• §7durée au choix";
             case WATER_JUMP -> waterLength + " blocs §8• §7hauteur progressive";
             case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7carré avec sas";
             case LABYRINTHE_ROND -> mazeWidth + " blocs §8• §7rond, départ au centre";
