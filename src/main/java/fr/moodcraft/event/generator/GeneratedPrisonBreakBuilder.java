@@ -9,8 +9,9 @@ import java.util.Random;
 public final class GeneratedPrisonBreakBuilder {
 
     private static final int WALL_HEIGHT = 5;
-    private static final int ROOM_HALF = 6;
-    private static final int ROOM_GAP = 15;
+    private static final int ROOM_HALF = 4;
+    private static final int ROOM_GAP = 11;
+    private static final int COLUMNS = 3;
 
     private GeneratedPrisonBreakBuilder() {}
 
@@ -18,7 +19,7 @@ public final class GeneratedPrisonBreakBuilder {
         World world = center.getWorld();
         if (world == null) return new Layout(center, center, 0, false);
 
-        int rooms = Math.max(5, Math.min(8, (cellsWide + 1) / 2));
+        int rooms = roomsFor(cellsWide);
         int cx = center.getBlockX();
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
@@ -26,41 +27,53 @@ public final class GeneratedPrisonBreakBuilder {
 
         int[] xs = new int[rooms];
         int[] zs = new int[rooms];
+        int rows = (int) Math.ceil(rooms / (double) COLUMNS);
+        int startZ = ((rows - 1) * ROOM_GAP) / 2;
+
         for (int i = 0; i < rooms; i++) {
-            xs[i] = cx + zigzagX(i, random);
-            zs[i] = cz + ((rooms - 1) / 2 - i) * ROOM_GAP;
+            int row = i / COLUMNS;
+            int rawCol = i % COLUMNS;
+            int col = row % 2 == 0 ? rawCol : COLUMNS - 1 - rawCol;
+            xs[i] = cx + (col - 1) * ROOM_GAP + (i == 0 ? 0 : random.nextInt(3) - 1);
+            zs[i] = cz + startZ - row * ROOM_GAP;
         }
 
-        buildRoom(world, xs[0], cy, zs[0], Material.DEEPSLATE_TILES);
-        buildStartCell(world, xs[0], cy, zs[0]);
-
-        for (int i = 1; i < rooms; i++) {
-            Material floor = switch (i % 5) {
-                case 1 -> Material.POLISHED_ANDESITE;
-                case 2 -> Material.SPRUCE_PLANKS;
-                case 3 -> Material.MOSSY_STONE_BRICKS;
-                case 4 -> Material.POLISHED_DEEPSLATE;
-                default -> Material.STONE_BRICKS;
-            };
-            buildRoom(world, xs[i], cy, zs[i], floor);
-            connectRooms(world, xs[i - 1], cy, zs[i - 1], xs[i], zs[i], random);
-            decorateRoom(world, xs[i], cy, zs[i], i, random);
-            buildPuzzleGate(world, xs[i], cy, zs[i] + ROOM_HALF + 1);
-            placePuzzleClue(world, xs[i - 1], cy, zs[i - 1], i, random);
-            buildFakeDoor(world, xs[i], cy, zs[i], random);
+        for (int i = 0; i < rooms; i++) {
+            buildRoom(world, xs[i], cy, zs[i], floorFor(i));
+            if (i == 0) buildStartCell(world, xs[i], cy, zs[i]);
+            else decorateRoom(world, xs[i], cy, zs[i], i, random);
+            if (i > 0) {
+                connectRooms(world, xs[i - 1], cy, zs[i - 1], xs[i], zs[i], random);
+                buildPuzzleGate(world, xs[i], cy, zs[i], xs[i - 1], zs[i - 1]);
+                placePuzzleClue(world, xs[i - 1], cy, zs[i - 1], i, random);
+                buildFakeDoor(world, xs[i], cy, zs[i], random);
+            }
         }
 
-        buildExit(world, xs[rooms - 1], cy, zs[rooms - 1] - ROOM_HALF + 2);
+        buildExit(world, xs[rooms - 1], cy, zs[rooms - 1]);
         Location start = new Location(world, xs[0] + 0.5, cy + 1.0, zs[0] + 0.5, 180f, 0f);
-        Location finish = new Location(world, xs[rooms - 1] + 0.5, cy + 1.0, zs[rooms - 1] - ROOM_HALF + 2.5, 0f, 0f);
+        Location finish = new Location(world, xs[rooms - 1] + 0.5, cy + 1.0, zs[rooms - 1] - ROOM_HALF + 1.5, 0f, 0f);
         return new Layout(start, finish, rooms, true);
     }
 
-    private static int zigzagX(int index, Random random) {
-        if (index == 0) return 0;
-        int wave = index % 3;
-        int base = wave == 0 ? 0 : wave == 1 ? -ROOM_GAP : ROOM_GAP;
-        return base + random.nextInt(5) - 2;
+    private static int roomsFor(int cellsWide) {
+        if (cellsWide <= 7) return 6;
+        if (cellsWide <= 9) return 8;
+        if (cellsWide <= 11) return 10;
+        return 12;
+    }
+
+    private static Material floorFor(int index) {
+        return switch (index % 8) {
+            case 0 -> Material.DEEPSLATE_TILES;
+            case 1 -> Material.POLISHED_ANDESITE;
+            case 2 -> Material.SPRUCE_PLANKS;
+            case 3 -> Material.MOSSY_STONE_BRICKS;
+            case 4 -> Material.POLISHED_DEEPSLATE;
+            case 5 -> Material.MUD_BRICKS;
+            case 6 -> Material.DARK_PRISMARINE;
+            default -> Material.STONE_BRICKS;
+        };
     }
 
     private static void buildRoom(World world, int cx, int cy, int cz, Material floor) {
@@ -80,43 +93,78 @@ public final class GeneratedPrisonBreakBuilder {
     private static void buildStartCell(World world, int cx, int cy, int cz) {
         for (int x = cx - 3; x <= cx + 3; x++) {
             for (int y = cy + 1; y <= cy + 3; y++) {
-                world.getBlockAt(x, y, cz - 3).setType(Material.IRON_BARS, false);
+                world.getBlockAt(x, y, cz + 2).setType(Material.IRON_BARS, false);
             }
         }
-        openDoor(world, cx, cy, cz - 3);
-        world.getBlockAt(cx - 2, cy + 1, cz + 2).setType(Material.GRAY_BED, false);
-        world.getBlockAt(cx + 2, cy + 1, cz + 2).setType(Material.CAULDRON, false);
-        world.getBlockAt(cx, cy + 1, cz - 2).setType(Material.STONE_BUTTON, false);
-        world.getBlockAt(cx, cy + 2, cz + 4).setType(Material.OAK_SIGN, false);
+        openDoor(world, cx, cy, cz + 2);
+        world.getBlockAt(cx - 2, cy + 1, cz - 2).setType(Material.GRAY_BED, false);
+        world.getBlockAt(cx + 2, cy + 1, cz - 2).setType(Material.CAULDRON, false);
+        world.getBlockAt(cx, cy + 1, cz + 1).setType(Material.STONE_BUTTON, false);
+        world.getBlockAt(cx - 3, cy + 1, cz + 3).setType(Material.CHEST, false);
     }
 
     private static void decorateRoom(World world, int cx, int cy, int cz, int index, Random random) {
-        switch (index % 6) {
-            case 1 -> {
-                world.getBlockAt(cx - 3, cy + 1, cz - 2).setType(Material.LECTERN, false);
-                world.getBlockAt(cx + 3, cy + 1, cz + 2).setType(Material.CHEST, false);
-                world.getBlockAt(cx, cy + 1, cz).setType(Material.REDSTONE_TORCH, false);
-            }
-            case 2 -> {
-                for (int x = cx - 4; x <= cx + 4; x += 2) world.getBlockAt(x, cy + 1, cz - 3).setType(Material.BOOKSHELF, false);
-                world.getBlockAt(cx + random.nextInt(5) - 2, cy + 1, cz + random.nextInt(5) - 2).setType(Material.STONE_BUTTON, false);
-            }
-            case 3 -> {
-                for (int x = cx - 4; x <= cx + 4; x++) world.getBlockAt(x, cy + 1, cz).setType(Material.IRON_TRAPDOOR, false);
-                world.getBlockAt(cx - 4, cy + 2, cz - 4).setType(Material.LEVER, false);
-            }
-            case 4 -> {
-                for (int x = cx - 3; x <= cx + 3; x++) for (int z = cz - 3; z <= cz + 3; z++) world.getBlockAt(x, cy, z).setType(Material.GRASS_BLOCK, false);
-                world.getBlockAt(cx + 2, cy + 1, cz + 2).setType(Material.STONE_BUTTON, false);
-                world.getBlockAt(cx - 2, cy + 1, cz - 2).setType(Material.COBWEB, false);
-            }
-            case 5 -> {
-                for (int z = cz - 4; z <= cz + 4; z++) world.getBlockAt(cx, cy, z).setType(Material.WATER, false);
-                world.getBlockAt(cx + 4, cy + 1, cz).setType(Material.LEVER, false);
-            }
+        switch (index % 8) {
+            case 1 -> guardRoom(world, cx, cy, cz);
+            case 2 -> archiveRoom(world, cx, cy, cz, random);
+            case 3 -> ventRoom(world, cx, cy, cz);
+            case 4 -> courtyardRoom(world, cx, cy, cz);
+            case 5 -> sewerRoom(world, cx, cy, cz);
+            case 6 -> evidenceRoom(world, cx, cy, cz, random);
+            case 7 -> workshopRoom(world, cx, cy, cz);
             default -> world.getBlockAt(cx, cy + 1, cz).setType(Material.LANTERN, false);
         }
-        for (int i = 0; i < 3; i++) {
+        scatterClutter(world, cx, cy, cz, random);
+    }
+
+    private static void guardRoom(World world, int cx, int cy, int cz) {
+        world.getBlockAt(cx - 3, cy + 1, cz - 2).setType(Material.LECTERN, false);
+        world.getBlockAt(cx + 3, cy + 1, cz + 2).setType(Material.CHEST, false);
+        world.getBlockAt(cx, cy + 1, cz).setType(Material.REDSTONE_TORCH, false);
+        world.getBlockAt(cx - 2, cy + 1, cz + 2).setType(Material.STONE_BUTTON, false);
+    }
+
+    private static void archiveRoom(World world, int cx, int cy, int cz, Random random) {
+        for (int x = cx - 3; x <= cx + 3; x += 2) {
+            world.getBlockAt(x, cy + 1, cz - 3).setType(Material.BOOKSHELF, false);
+            world.getBlockAt(x, cy + 1, cz + 3).setType(Material.BOOKSHELF, false);
+        }
+        world.getBlockAt(cx + random.nextInt(5) - 2, cy + 1, cz + random.nextInt(5) - 2).setType(Material.LEVER, false);
+    }
+
+    private static void ventRoom(World world, int cx, int cy, int cz) {
+        for (int x = cx - 3; x <= cx + 3; x++) world.getBlockAt(x, cy + 1, cz).setType(Material.IRON_TRAPDOOR, false);
+        world.getBlockAt(cx - 3, cy + 2, cz - 3).setType(Material.LEVER, false);
+        world.getBlockAt(cx + 3, cy + 1, cz + 3).setType(Material.CHAIN, false);
+    }
+
+    private static void courtyardRoom(World world, int cx, int cy, int cz) {
+        for (int x = cx - 2; x <= cx + 2; x++) for (int z = cz - 2; z <= cz + 2; z++) world.getBlockAt(x, cy, z).setType(Material.GRASS_BLOCK, false);
+        world.getBlockAt(cx, cy + 1, cz).setType(Material.OAK_FENCE, false);
+        world.getBlockAt(cx + 2, cy + 1, cz + 2).setType(Material.STONE_BUTTON, false);
+        world.getBlockAt(cx - 2, cy + 1, cz - 2).setType(Material.COBWEB, false);
+    }
+
+    private static void sewerRoom(World world, int cx, int cy, int cz) {
+        for (int z = cz - 3; z <= cz + 3; z++) world.getBlockAt(cx, cy, z).setType(Material.WATER, false);
+        world.getBlockAt(cx + 3, cy + 1, cz).setType(Material.LEVER, false);
+        world.getBlockAt(cx - 3, cy + 1, cz).setType(Material.MOSSY_COBBLESTONE, false);
+    }
+
+    private static void evidenceRoom(World world, int cx, int cy, int cz, Random random) {
+        world.getBlockAt(cx - 3, cy + 1, cz).setType(Material.CHEST, false);
+        world.getBlockAt(cx + 3, cy + 1, cz).setType(Material.BARREL, false);
+        world.getBlockAt(cx + random.nextInt(5) - 2, cy + 1, cz - 3).setType(Material.STONE_BUTTON, false);
+    }
+
+    private static void workshopRoom(World world, int cx, int cy, int cz) {
+        world.getBlockAt(cx - 2, cy + 1, cz - 2).setType(Material.CRAFTING_TABLE, false);
+        world.getBlockAt(cx + 2, cy + 1, cz - 2).setType(Material.ANVIL, false);
+        world.getBlockAt(cx, cy + 1, cz + 3).setType(Material.LEVER, false);
+    }
+
+    private static void scatterClutter(World world, int cx, int cy, int cz, Random random) {
+        for (int i = 0; i < 4; i++) {
             int x = cx + random.nextInt(ROOM_HALF * 2 - 2) - ROOM_HALF + 1;
             int z = cz + random.nextInt(ROOM_HALF * 2 - 2) - ROOM_HALF + 1;
             if (world.getBlockAt(x, cy + 1, z).getType() == Material.AIR) {
@@ -126,8 +174,8 @@ public final class GeneratedPrisonBreakBuilder {
     }
 
     private static void connectRooms(World world, int x1, int cy, int z1, int x2, int z2, Random random) {
-        carveCorridorZ(world, x1, cy, z1 - ROOM_HALF, z2 + ROOM_HALF, 2, Material.POLISHED_ANDESITE);
-        carveCorridorX(world, x1, x2, cy, z2 + ROOM_HALF, 2, Material.POLISHED_ANDESITE);
+        carveCorridorZ(world, x1, cy, z1, z2, 1, Material.POLISHED_ANDESITE);
+        carveCorridorX(world, x1, x2, cy, z2, 1, Material.POLISHED_ANDESITE);
         if (random.nextBoolean()) carveFakeSide(world, x1, cy, (z1 + z2) / 2, random);
     }
 
@@ -150,15 +198,25 @@ public final class GeneratedPrisonBreakBuilder {
 
     private static void carveFakeSide(World world, int cx, int cy, int cz, Random random) {
         int dir = random.nextBoolean() ? 1 : -1;
-        for (int x = cx; x != cx + dir * 8; x += dir) carveColumn(world, x, cy, cz, Material.CRACKED_STONE_BRICKS);
-        buildPuzzleGate(world, cx + dir * 8, cy, cz);
-        world.getBlockAt(cx + dir * 6, cy + 1, cz).setType(Material.CHEST, false);
+        for (int x = cx; x != cx + dir * 7; x += dir) carveColumn(world, x, cy, cz, Material.CRACKED_STONE_BRICKS);
+        buildClosedGate(world, cx + dir * 7, cy, cz, true);
+        world.getBlockAt(cx + dir * 5, cy + 1, cz).setType(Material.CHEST, false);
     }
 
-    private static void buildPuzzleGate(World world, int cx, int cy, int cz) {
-        for (int x = cx - 2; x <= cx + 2; x++) for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(x, y, cz).setType(Material.IRON_BARS, false);
-        openDoor(world, cx, cy, cz);
-        world.getBlockAt(cx + 2, cy + 1, cz - 1).setType(Material.REDSTONE_LAMP, false);
+    private static void buildPuzzleGate(World world, int cx, int cy, int cz, int previousX, int previousZ) {
+        boolean vertical = Math.abs(cx - previousX) <= Math.abs(cz - previousZ);
+        int gateZ = previousZ > cz ? cz + ROOM_HALF : cz - ROOM_HALF;
+        int gateX = previousX > cx ? cx + ROOM_HALF : cx - ROOM_HALF;
+        if (vertical) buildClosedGate(world, cx, cy, gateZ, true); else buildClosedGate(world, gateX, cy, cz, false);
+    }
+
+    private static void buildClosedGate(World world, int cx, int cy, int cz, boolean alongX) {
+        if (alongX) {
+            for (int x = cx - 2; x <= cx + 2; x++) for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(x, y, cz).setType(Material.IRON_BARS, false);
+        } else {
+            for (int z = cz - 2; z <= cz + 2; z++) for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(cx, y, z).setType(Material.IRON_BARS, false);
+        }
+        world.getBlockAt(cx + (alongX ? 2 : 0), cy + 1, cz + (alongX ? 0 : 2)).setType(Material.REDSTONE_LAMP, false);
     }
 
     private static void openDoor(World world, int x, int cy, int z) {
@@ -177,13 +235,13 @@ public final class GeneratedPrisonBreakBuilder {
         int side = random.nextInt(4);
         int x = cx + (side == 0 ? ROOM_HALF : side == 1 ? -ROOM_HALF : random.nextInt(ROOM_HALF * 2) - ROOM_HALF);
         int z = cz + (side == 2 ? ROOM_HALF : side == 3 ? -ROOM_HALF : random.nextInt(ROOM_HALF * 2) - ROOM_HALF);
-        buildPuzzleGate(world, x, cy, z);
+        buildClosedGate(world, x, cy, z, side <= 1);
     }
 
     private static void buildExit(World world, int cx, int cy, int cz) {
-        for (int x = cx - 3; x <= cx + 3; x++) for (int z = cz - 1; z <= cz + 1; z++) world.getBlockAt(x, cy, z).setType(Material.RED_WOOL, false);
-        world.getBlockAt(cx - 4, cy + 1, cz).setType(Material.SEA_LANTERN, false);
-        world.getBlockAt(cx + 4, cy + 1, cz).setType(Material.SEA_LANTERN, false);
+        for (int x = cx - 3; x <= cx + 3; x++) for (int z = cz - ROOM_HALF; z <= cz - ROOM_HALF + 2; z++) world.getBlockAt(x, cy, z).setType(Material.RED_WOOL, false);
+        world.getBlockAt(cx - 4, cy + 1, cz - ROOM_HALF + 1).setType(Material.SEA_LANTERN, false);
+        world.getBlockAt(cx + 4, cy + 1, cz - ROOM_HALF + 1).setType(Material.SEA_LANTERN, false);
     }
 
     private static Material wallFor(int seed) {
