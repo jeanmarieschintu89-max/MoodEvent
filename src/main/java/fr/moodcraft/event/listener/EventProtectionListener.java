@@ -11,8 +11,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
@@ -87,15 +89,37 @@ public class EventProtectionListener implements Listener {
 
     @EventHandler
     public void onPlace(BlockPlaceEvent event) {
-        if (isInsideWaitingRoom(event.getBlockPlaced().getLocation())) {
-            event.setCancelled(true);
-            MoodStyle.errorMessage(event.getPlayer(), MoodStyle.MODULE, "Pose interdite en salle d'attente.", MoodStyle.detail("La zone doit rester propre jusqu'au lancement."));
-            return;
-        }
+        Location location = event.getBlockPlaced().getLocation();
 
-        if (!GeneratedGameManager.isInsideStructure(event.getBlockPlaced().getLocation())) return;
+        if (isInsideProtectedEventZone(location)) {
+            event.setCancelled(true);
+            MoodStyle.errorMessage(event.getPlayer(), MoodStyle.MODULE, "Pose interdite dans la zone événement.", MoodStyle.detail("Salle d'attente et mini-jeux restent verrouillés."));
+        }
+    }
+
+    @EventHandler
+    public void onBucketEmpty(PlayerBucketEmptyEvent event) {
+        Material bucket = event.getBucket();
+        if (bucket != Material.WATER_BUCKET && bucket != Material.LAVA_BUCKET) return;
+
+        Location target = event.getBlockClicked().getRelative(event.getBlockFace()).getLocation();
+        if (!isInsideProtectedEventZone(target)) return;
+
         event.setCancelled(true);
-        MoodStyle.errorMessage(event.getPlayer(), MoodStyle.MODULE, "Pose interdite dans la structure générée.", MoodStyle.detail("Garde le mini-jeu propre et équitable."));
+        MoodStyle.errorMessage(
+                event.getPlayer(),
+                MoodStyle.MODULE,
+                bucket == Material.LAVA_BUCKET ? "Lave interdite dans la zone événement." : "Eau interdite dans la zone événement.",
+                MoodStyle.detail("Les salles d'attente et mini-jeux doivent rester propres.")
+        );
+    }
+
+    @EventHandler
+    public void onFluidFlow(BlockFromToEvent event) {
+        Material material = event.getBlock().getType();
+        if (!isFluid(material)) return;
+        if (!isInsideProtectedEventZone(event.getToBlock().getLocation())) return;
+        event.setCancelled(true);
     }
 
     @EventHandler
@@ -110,6 +134,10 @@ public class EventProtectionListener implements Listener {
                 return;
             }
         }
+    }
+
+    private boolean isInsideProtectedEventZone(Location location) {
+        return isInsideWaitingRoom(location) || GeneratedGameManager.isInsideStructure(location);
     }
 
     private boolean isInsideWaitingRoom(Location location) {
@@ -133,6 +161,11 @@ public class EventProtectionListener implements Listener {
         if (item == null || item.getType() != Material.DIAMOND_PICKAXE) return false;
         ItemMeta meta = item.getItemMeta();
         return meta != null && GOLD_RUSH_PICKAXE_NAME.equals(meta.getDisplayName());
+    }
+
+    private boolean isFluid(Material material) {
+        return material == Material.WATER
+                || material == Material.LAVA;
     }
 
     private boolean isGoldRushMineBlock(Material material) {
