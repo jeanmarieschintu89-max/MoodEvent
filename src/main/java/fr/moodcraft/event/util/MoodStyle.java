@@ -10,6 +10,7 @@ import java.util.Locale;
 public final class MoodStyle {
 
     private static final ThreadLocal<Boolean> SILENT = ThreadLocal.withInitial(() -> false);
+    private static final ThreadLocal<Boolean> GOLD_RUSH_CONTEXT = ThreadLocal.withInitial(() -> false);
 
     private MoodStyle() {
     }
@@ -67,7 +68,9 @@ public final class MoodStyle {
     }
 
     public static String detail(String text) {
-        return "§d➜ §f" + cleanPrefix(text);
+        String prepared = prepareDetail(cleanPrefix(text));
+        if (prepared.isBlank()) return "";
+        return "§d➜ §f" + prepared;
     }
 
     public static String hype(String text) {
@@ -122,8 +125,12 @@ public final class MoodStyle {
         if (rewritten != null) return rewritten;
         if (isExtraLaunchRule(trimmed)) return "";
 
-        if (trimmed.startsWith("§d➜")
-                || trimmed.startsWith("§b◆")
+        if (trimmed.startsWith("§d➜")) {
+            String prepared = prepareDetail(trimmed.substring(3).trim());
+            return prepared.isBlank() ? "" : "§d➜ §f" + prepared;
+        }
+
+        if (trimmed.startsWith("§b◆")
                 || trimmed.startsWith("§a▶")
                 || trimmed.startsWith("§c■")
                 || trimmed.startsWith("§e★")
@@ -145,6 +152,52 @@ public final class MoodStyle {
         if (trimmed.toLowerCase(Locale.ROOT).contains("objectif")) return hype(trimmed);
 
         return info(trimmed);
+    }
+
+    private static String prepareDetail(String text) {
+        if (text == null || text.isBlank()) return "";
+
+        String clean = stripDecorations(text);
+        String lower = clean.toLowerCase(Locale.ROOT);
+
+        if (lower.startsWith("épreuve :") || lower.startsWith("epreuve :")) {
+            boolean goldRush = lower.contains("mine en folie");
+            GOLD_RUSH_CONTEXT.set(goldRush);
+            int coloredSplit = text.indexOf("§8•");
+            if (coloredSplit >= 0) return text.substring(0, coloredSplit).trim();
+            int split = clean.indexOf("•");
+            if (split >= 0) return clean.substring(0, split).trim();
+            return text;
+        }
+
+        if (isEmptyRewardLine(lower)) return "";
+
+        if (Boolean.TRUE.equals(GOLD_RUSH_CONTEXT.get())) {
+            if (lower.startsWith("participation :") && lower.contains("minerais")) return "Butin : §6tu gardes les minerais minés";
+            if (isPodiumOrRewardLine(lower)) return "";
+        }
+
+        return text;
+    }
+
+    private static boolean isEmptyRewardLine(String lower) {
+        if (lower == null) return true;
+        return lower.equals("top 1 :")
+                || lower.equals("top 2 :")
+                || lower.equals("top 3 :")
+                || lower.equals("participation :")
+                || lower.equals("récompense possible :")
+                || lower.equals("recompense possible :")
+                || lower.contains("à configurer par le staff")
+                || lower.contains("a configurer par le staff");
+    }
+
+    private static boolean isPodiumOrRewardLine(String lower) {
+        return lower.startsWith("top 1 :")
+                || lower.startsWith("top 2 :")
+                || lower.startsWith("top 3 :")
+                || lower.startsWith("récompense possible :")
+                || lower.startsWith("recompense possible :");
     }
 
     private static String rewriteOldNames(String line) {
