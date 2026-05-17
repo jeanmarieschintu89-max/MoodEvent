@@ -50,16 +50,6 @@ public final class MiniGameGeneratorGUI {
         addType(inv, 22, GeneratedGameType.LABYRINTHE, "Labyrinthe carré avec sas opposés.");
         addType(inv, 24, GeneratedGameType.LABYRINTHE_ROND, "Labyrinthe rond, départ au centre et sortie extérieure.");
 
-        inv.setItem(29, EventItem.item(
-                Material.CHEST,
-                "§6✦ §fLoot généré §6✦",
-                MoodStyle.detail("Commun, rare, épique."),
-                MoodStyle.detail("Items + argent Vault."),
-                MoodStyle.detail("Anti double-récupération."),
-                "",
-                MoodStyle.info("Configurer les récompenses")
-        ));
-
         inv.setItem(33, EventItem.item(
                 GeneratedGameManager.hasStructure() ? Material.MAGMA_BLOCK : Material.GRAY_DYE,
                 GeneratedGameManager.hasStructure() ? "§c✦ §fRestaurer structure §c✦" : "§6✦ §fAucune structure §6✦",
