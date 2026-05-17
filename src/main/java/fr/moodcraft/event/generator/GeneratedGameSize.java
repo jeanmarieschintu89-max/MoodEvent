@@ -50,6 +50,10 @@ public enum GeneratedGameSize {
         };
     }
 
+    public int getGoldRushDurationSeconds() {
+        return 0;
+    }
+
     public String describeFor(GeneratedGameType type) {
         if (type == null) return displayName;
         return switch (type) {
