@@ -56,6 +56,8 @@ public final class TrainTunnelWaitingRoomBuilder {
 
     public static void board(Player player, Location spawn) {
         if (player == null || spawn == null || spawn.getWorld() == null) return;
+        if (!EventManager.isEventPlayer(player)) return;
+
         Minecart cart = spawn.getWorld().spawn(spawn.clone().add(0, 0.05, 0), Minecart.class);
         cart.setMaxSpeed(0.55D);
         cart.setSlowWhenEmpty(false);
