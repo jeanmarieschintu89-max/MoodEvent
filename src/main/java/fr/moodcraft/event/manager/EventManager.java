@@ -481,10 +481,12 @@ public final class EventManager {
                     MoodStyle.detail("Les 3 premiers à l'arrivée gagnent."),
                     MoodStyle.detail("Reste rapide et attentif."));
             case PRISON_BREAK -> MoodStyle.send(player, MoodStyle.MODULE,
-                    MoodStyle.info("Prison Break lancé."),
-                    MoodStyle.detail("Échappe-toi de la prison."),
-                    MoodStyle.detail("Trouve la sortie rouge."),
-                    MoodStyle.detail("Les 3 premiers à sortir gagnent."));
+                    MoodStyle.info("Prison Escape lancé."),
+                    MoodStyle.detail("Explore les salles une par une."),
+                    MoodStyle.detail("Cherche les boutons, leviers et indices."),
+                    MoodStyle.detail("Les fausses portes peuvent te faire perdre du temps."),
+                    MoodStyle.detail("Objectif final : §catteindre la sortie rouge."),
+                    MoodStyle.detail("Les 3 premiers évadés gagnent."));
             default -> MoodStyle.infoMessage(player, MoodStyle.MODULE, "Tu es entré dans l'événement.");
         }
     }
@@ -545,7 +547,7 @@ public final class EventManager {
         return switch (getType()) {
             case WATER_JUMP -> "saute de plateforme en plateforme et atteins l'arrivée";
             case LABYRINTHE -> "trouve la sortie avant les autres";
-            case PRISON_BREAK -> "échappe-toi de la prison et atteins la sortie rouge";
+            case PRISON_BREAK -> "résous les salles et atteins la sortie rouge";
             case SURVIE_ETAGES -> "reste en vie pendant que le sol disparaît";
             case RUEE_OR -> "mine un maximum de minerais pendant le chrono";
             default -> "participe et vise la victoire";
