@@ -13,7 +13,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 public class GoldRushStopGuard implements Listener {
 
-    private static final String PICKAXE_NAME = "§6✦ §fPioche Ruée vers l'or §6✦";
+    private static final String PICKAXE_NAME = GoldRushTask.PICKAXE_NAME;
 
     @EventHandler
     public void onCommand(PlayerCommandPreprocessEvent event) {
@@ -21,7 +21,7 @@ public class GoldRushStopGuard implements Listener {
         if (!message.equals("/eventstop") && !message.startsWith("/eventstop ")) return;
         if (EventManager.getType() != EventType.RUEE_OR || !EventManager.isRunning()) return;
 
-        event.setCancelled(true);
+        event.setCancelled(true;
         for (Player online : Bukkit.getOnlinePlayers()) removePickaxes(online);
         GoldRushClosure.close(event.getPlayer());
     }
