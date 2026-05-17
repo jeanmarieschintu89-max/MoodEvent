@@ -1,5 +1,6 @@
 package fr.moodcraft.event.manager;
 
+import fr.moodcraft.event.Main;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -9,24 +10,26 @@ import org.bukkit.block.data.Powerable;
 import org.bukkit.block.data.Rail;
 import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 public final class TrainTunnelWaitingRoomBuilder {
 
-    private static final int TRACK = 16;
-    private static final int TUNNEL_WIDTH = 4;
+    private static final int TRACK = 9;
+    private static final int TUNNEL_WIDTH = 3;
     private static final int FLOOR_Y = 2;
-    private static final int TUNNEL_HEIGHT = 6;
+    private static final int TUNNEL_HEIGHT = 5;
+    private static final double CART_SPEED = 0.48D;
 
     private TrainTunnelWaitingRoomBuilder() {
     }
 
     public static int radius() {
-        return TRACK + TUNNEL_WIDTH + 4;
+        return TRACK + TUNNEL_WIDTH + 2;
     }
 
     public static int height() {
-        return FLOOR_Y + TUNNEL_HEIGHT + 4;
+        return FLOOR_Y + TUNNEL_HEIGHT + 3;
     }
 
     public static Location spawn(Location center) {
@@ -46,19 +49,65 @@ public final class TrainTunnelWaitingRoomBuilder {
         int cz = center.getBlockZ();
 
         clearArea(world, cx, cy, cz);
-        buildLoopTunnel(world, cx, cy, cz);
+        buildClosedTube(world, cx, cy, cz);
         buildLoopTrack(world, cx, cy, cz);
-        buildStartPlatform(world, cx, cy, cz);
         buildLights(world, cx, cy, cz);
     }
 
     public static void board(Player player, Location spawn) {
         if (player == null || spawn == null || spawn.getWorld() == null) return;
         Minecart cart = spawn.getWorld().spawn(spawn.clone().add(0, 0.05, 0), Minecart.class);
-        cart.setMaxSpeed(0.42D);
+        cart.setMaxSpeed(0.55D);
         cart.setSlowWhenEmpty(false);
         cart.addPassenger(player);
-        cart.setVelocity(new Vector(0.55, 0, 0));
+        cart.setVelocity(new Vector(CART_SPEED, 0, 0));
+        keepCartMovingAndReleaseOnStart(player, cart, spawn);
+    }
+
+    private static void keepCartMovingAndReleaseOnStart(Player player, Minecart cart, Location spawn) {
+        new BukkitRunnable() {
+            private int ticks;
+
+            @Override
+            public void run() {
+                ticks += 5;
+                if (!player.isOnline() || cart.isDead()) {
+                    cancel();
+                    return;
+                }
+
+                if (EventManager.isRunning() && EventManager.isParticipant(player)) {
+                    cart.eject();
+                    player.leaveVehicle();
+                    cart.remove();
+                    EventManager.resetPlayerToStart(player);
+                    cancel();
+                    return;
+                }
+
+                if (!cart.getPassengers().contains(player)) {
+                    if (ticks > 20) cart.remove();
+                    cancel();
+                    return;
+                }
+
+                if (cart.getVelocity().lengthSquared() < 0.04D) {
+                    cart.setVelocity(loopVelocity(cart.getLocation(), spawn));
+                }
+            }
+        }.runTaskTimer(Main.getInstance(), 5L, 5L);
+    }
+
+    private static Vector loopVelocity(Location cartLocation, Location spawn) {
+        int centerX = spawn.getBlockX() + TRACK - 2;
+        int centerZ = spawn.getBlockZ() + TRACK;
+        double x = cartLocation.getX() - centerX;
+        double z = cartLocation.getZ() - centerZ;
+
+        if (z <= -TRACK + 0.75 && x < TRACK - 0.5) return new Vector(CART_SPEED, 0, 0);
+        if (x >= TRACK - 0.75 && z < TRACK - 0.5) return new Vector(0, 0, CART_SPEED);
+        if (z >= TRACK - 0.75 && x > -TRACK + 0.5) return new Vector(-CART_SPEED, 0, 0);
+        return new Vector(0, 0, -CART_SPEED);
     }
 
     private static void clearArea(World world, int cx, int cy, int cz) {
@@ -72,90 +121,68 @@ public final class TrainTunnelWaitingRoomBuilder {
         }
     }
 
-    private static void buildLoopTunnel(World world, int cx, int cy, int cz) {
-        for (int x = -TRACK; x <= TRACK; x++) {
-            buildTunnelSliceX(world, cx + x, cy, cz - TRACK, x);
-            buildTunnelSliceX(world, cx + x, cy, cz + TRACK, x + 9);
-        }
-
-        for (int z = -TRACK; z <= TRACK; z++) {
-            buildTunnelSliceZ(world, cx - TRACK, cy, cz + z, z + 18);
-            buildTunnelSliceZ(world, cx + TRACK, cy, cz + z, z + 27);
-        }
-    }
-
-    private static void buildTunnelSliceX(World world, int x, int cy, int centerZ, int seed) {
-        for (int y = 0; y <= TUNNEL_HEIGHT; y++) {
-            for (int dz = -TUNNEL_WIDTH; dz <= TUNNEL_WIDTH; dz++) {
-                boolean floor = y == 0;
-                boolean roof = y == TUNNEL_HEIGHT;
-                boolean wall = Math.abs(dz) == TUNNEL_WIDTH;
-                if (floor || roof || wall) {
-                    world.getBlockAt(x, cy + FLOOR_Y - 1 + y, centerZ + dz).setType(tunnelMaterial(seed + y + dz), false);
-                } else {
-                    world.getBlockAt(x, cy + FLOOR_Y - 1 + y, centerZ + dz).setType(Material.AIR, false);
+    private static void buildClosedTube(World world, int cx, int cy, int cz) {
+        int radius = TRACK + TUNNEL_WIDTH;
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                if (!isTunnelCell(x, z)) continue;
+                for (int y = 0; y <= TUNNEL_HEIGHT; y++) {
+                    boolean floor = y == 0;
+                    boolean roof = y == TUNNEL_HEIGHT;
+                    boolean wall = isTunnelWall(x, z);
+                    Block block = world.getBlockAt(cx + x, cy + FLOOR_Y - 1 + y, cz + z);
+                    block.setType(floor || roof || wall ? tunnelMaterial(x + z + y) : Material.AIR, false);
                 }
             }
         }
     }
 
-    private static void buildTunnelSliceZ(World world, int centerX, int cy, int z, int seed) {
-        for (int y = 0; y <= TUNNEL_HEIGHT; y++) {
-            for (int dx = -TUNNEL_WIDTH; dx <= TUNNEL_WIDTH; dx++) {
-                boolean floor = y == 0;
-                boolean roof = y == TUNNEL_HEIGHT;
-                boolean wall = Math.abs(dx) == TUNNEL_WIDTH;
-                if (floor || roof || wall) {
-                    world.getBlockAt(centerX + dx, cy + FLOOR_Y - 1 + y, z).setType(tunnelMaterial(seed + y + dx), false);
-                } else {
-                    world.getBlockAt(centerX + dx, cy + FLOOR_Y - 1 + y, z).setType(Material.AIR, false);
-                }
-            }
-        }
+    private static boolean isTunnelCell(int x, int z) {
+        return isHorizontalTunnel(x, z) || isVerticalTunnel(x, z);
+    }
+
+    private static boolean isHorizontalTunnel(int x, int z) {
+        boolean north = Math.abs(z + TRACK) <= TUNNEL_WIDTH;
+        boolean south = Math.abs(z - TRACK) <= TUNNEL_WIDTH;
+        return (north || south) && x >= -TRACK - TUNNEL_WIDTH && x <= TRACK + TUNNEL_WIDTH;
+    }
+
+    private static boolean isVerticalTunnel(int x, int z) {
+        boolean west = Math.abs(x + TRACK) <= TUNNEL_WIDTH;
+        boolean east = Math.abs(x - TRACK) <= TUNNEL_WIDTH;
+        return (west || east) && z >= -TRACK - TUNNEL_WIDTH && z <= TRACK + TUNNEL_WIDTH;
+    }
+
+    private static boolean isTunnelWall(int x, int z) {
+        return !isTunnelCell(x + 1, z)
+                || !isTunnelCell(x - 1, z)
+                || !isTunnelCell(x, z + 1)
+                || !isTunnelCell(x, z - 1);
     }
 
     private static void buildLoopTrack(World world, int cx, int cy, int cz) {
         int y = cy + FLOOR_Y;
-
         for (int x = -TRACK + 1; x <= TRACK - 1; x++) {
             placeRail(world, cx + x, y, cz - TRACK, true, Rail.Shape.EAST_WEST);
             placeRail(world, cx + x, y, cz + TRACK, true, Rail.Shape.EAST_WEST);
         }
-
         for (int z = -TRACK + 1; z <= TRACK - 1; z++) {
             placeRail(world, cx - TRACK, y, cz + z, true, Rail.Shape.NORTH_SOUTH);
             placeRail(world, cx + TRACK, y, cz + z, true, Rail.Shape.NORTH_SOUTH);
         }
-
         placeRail(world, cx - TRACK, y, cz - TRACK, false, Rail.Shape.SOUTH_EAST);
         placeRail(world, cx + TRACK, y, cz - TRACK, false, Rail.Shape.SOUTH_WEST);
         placeRail(world, cx + TRACK, y, cz + TRACK, false, Rail.Shape.NORTH_WEST);
         placeRail(world, cx - TRACK, y, cz + TRACK, false, Rail.Shape.NORTH_EAST);
     }
 
-    private static void buildStartPlatform(World world, int cx, int cy, int cz) {
-        int y = cy + FLOOR_Y - 1;
-        int startX = cx - TRACK + 1;
-        int startZ = cz - TRACK;
-
-        for (int x = startX; x <= startX + 5; x++) {
-            world.getBlockAt(x, y, startZ - 1).setType(Material.SMOOTH_STONE, false);
-            world.getBlockAt(x, y, startZ + 1).setType(Material.SMOOTH_STONE, false);
-        }
-
-        world.getBlockAt(startX + 1, y + 1, startZ - 2).setType(Material.SEA_LANTERN, false);
-        world.getBlockAt(startX + 1, y + 1, startZ + 2).setType(Material.SEA_LANTERN, false);
-    }
-
     private static void buildLights(World world, int cx, int cy, int cz) {
         int roofY = cy + FLOOR_Y - 1 + TUNNEL_HEIGHT;
-
-        for (int x = -TRACK + 4; x <= TRACK - 4; x += 6) {
+        for (int x = -TRACK + 3; x <= TRACK - 3; x += 5) {
             world.getBlockAt(cx + x, roofY, cz - TRACK).setType(Material.SEA_LANTERN, false);
             world.getBlockAt(cx + x, roofY, cz + TRACK).setType(Material.SEA_LANTERN, false);
         }
-
-        for (int z = -TRACK + 4; z <= TRACK - 4; z += 6) {
+        for (int z = -TRACK + 3; z <= TRACK - 3; z += 5) {
             world.getBlockAt(cx - TRACK, roofY, cz + z).setType(Material.SEA_LANTERN, false);
             world.getBlockAt(cx + TRACK, roofY, cz + z).setType(Material.SEA_LANTERN, false);
         }
@@ -163,16 +190,11 @@ public final class TrainTunnelWaitingRoomBuilder {
 
     private static void placeRail(World world, int x, int y, int z, boolean powered, Rail.Shape shape) {
         world.getBlockAt(x, y - 1, z).setType(powered ? Material.REDSTONE_BLOCK : Material.SMOOTH_STONE, false);
-
         Block railBlock = world.getBlockAt(x, y, z);
         railBlock.setType(powered ? Material.POWERED_RAIL : Material.RAIL, false);
         BlockData data = railBlock.getBlockData();
-        if (data instanceof Rail rail) {
-            rail.setShape(shape);
-        }
-        if (data instanceof Powerable powerable) {
-            powerable.setPowered(true);
-        }
+        if (data instanceof Rail rail) rail.setShape(shape);
+        if (data instanceof Powerable powerable) powerable.setPowered(true);
         railBlock.setBlockData(data, false);
     }
 
