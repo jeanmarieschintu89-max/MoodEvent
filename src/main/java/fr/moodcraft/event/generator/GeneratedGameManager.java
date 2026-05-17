@@ -267,7 +267,7 @@ public final class GeneratedGameManager {
         return switch (type) {
             case SURVIE_ETAGES -> "survie_etages";
             case RUEE_OR -> "ruee_or";
-            case WATER_JUMP -> "water_jump_safe_v1";
+            case WATER_JUMP -> "water_jump_safe_v2";
             case MUR_ESCALADE -> "mur_escalade_v1";
             case LABYRINTHE -> "labyrinthe_carre_v2";
             case LABYRINTHE_ROND -> "labyrinthe_rond_v1";
@@ -360,8 +360,8 @@ public final class GeneratedGameManager {
         return switch (type) {
             case SURVIE_ETAGES -> new Region(world, cx - spec.width / 2 - 4, cy - 2, cz - spec.width / 2 - 4, cx + spec.width / 2 + 4, cy + 10 + spec.floors * 5, cz + spec.width / 2 + 4);
             case RUEE_OR -> new Region(world, cx - spec.width / 2 - 2, cy - 1, cz - spec.width / 2 - 2, cx + spec.width / 2 + 2, cy + spec.goldHeight + 2, cz + spec.width / 2 + 2);
-            case WATER_JUMP -> new Region(world, cx - 10, cy - 3, cz - 11, cx + spec.waterLength + 18, cy + 22, cz + 11);
-            case MUR_ESCALADE -> new Region(world, cx - 14, cy - 2, cz - 14, cx + 14, cy + spec.waterLength + 12, cz + 14);
+            case WATER_JUMP -> new Region(world, cx - 12, cy - 4, cz - 22, cx + spec.waterLength + 20, cy + 24, cz + 22);
+            case MUR_ESCALADE -> new Region(world, cx - 18, cy - 2, cz - 18, cx + 18, cy + spec.waterLength + 12, cz + 18);
             case LABYRINTHE, LABYRINTHE_ROND -> new Region(world, cx - spec.mazeWidth / 2 - 12, cy - 2, cz - spec.mazeWidth / 2 - 12, cx + spec.mazeWidth / 2 + 12, cy + 8, cz + spec.mazeWidth / 2 + 12);
         };
     }
