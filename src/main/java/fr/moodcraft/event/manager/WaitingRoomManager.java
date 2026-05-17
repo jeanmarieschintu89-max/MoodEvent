@@ -33,8 +33,7 @@ public final class WaitingRoomManager {
     private static Location spawn;
     private static boolean active;
 
-    private WaitingRoomManager() {
-    }
+    private WaitingRoomManager() {}
 
     public static void load() {
         file = new File(Main.getInstance().getDataFolder(), "waiting-room.yml");
@@ -227,21 +226,23 @@ public final class WaitingRoomManager {
                     boolean borderX = x == cx - radius || x == cx + radius;
                     boolean borderZ = z == cz - radius || z == cz + radius;
                     boolean border = borderX || borderZ;
-                    boolean corner = borderX && borderZ;
                     boolean floor = y == cy;
                     boolean roof = y == cy + height;
                     Block block = world.getBlockAt(x, y, z);
 
-                    if (floor) block.setType(floorMaterial(theme, cx, cz, x, z), false);
-                    else if (roof) block.setType(roofMaterial(theme, cx, cz, x, z), false);
-                    else if (corner) block.setType(solidBlockFor(theme.accent()), false);
-                    else if (border) block.setType(wallMaterial(theme, y, cy, height), false);
-                    else block.setType(Material.AIR, false);
+                    if (floor) {
+                        block.setType(floorMaterial(theme, cx, cz, x, z), false);
+                    } else if (roof) {
+                        block.setType(roofMaterial(theme, cx, cz, x, z), false);
+                    } else if (border) {
+                        block.setType(wallBlock(theme, x, y, z, cx, cy, cz, radius, height), false);
+                    } else {
+                        block.setType(Material.AIR, false);
+                    }
                 }
             }
         }
 
-        repairWaitingRoomShell(world, cx, cy, cz, radius, height, theme);
         decorate(world, cx, cy, cz, radius, height, theme);
     }
 
@@ -254,14 +255,26 @@ public final class WaitingRoomManager {
     }
 
     private static Material roofMaterial(WaitingRoomTheme theme, int cx, int cz, int x, int z) {
-        return x == cx || z == cz ? solidBlockFor(theme.accent()) : solidBlockFor(theme.primary());
+        int dx = Math.abs(x - cx);
+        int dz = Math.abs(z - cz);
+        if (dx == 0 || dz == 0 || dx == dz) return solidBlockFor(theme.accent());
+        return solidBlockFor(theme.primary());
     }
 
-    private static Material wallMaterial(WaitingRoomTheme theme, int y, int cy, int height) {
+    private static Material wallBlock(WaitingRoomTheme theme, int x, int y, int z, int cx, int cy, int cz, int radius, int height) {
         int relative = y - cy;
+        boolean corner = (Math.abs(x - cx) == radius) && (Math.abs(z - cz) == radius);
+        boolean post = corner || x == cx || z == cz || isQuarterPost(x, z, cx, cz, radius);
+        if (post) return solidBlockFor(theme.accent());
         if (relative == 1 || relative == height - 1) return solidBlockFor(theme.primary());
-        if (relative == 2 || relative == 3) return theme.glass();
-        return solidBlockFor(theme.accent());
+        if (relative == 2 || (height >= 5 && relative == 3)) return theme.glass();
+        return solidBlockFor(theme.primary());
+    }
+
+    private static boolean isQuarterPost(int x, int z, int cx, int cz, int radius) {
+        if (radius < 7) return false;
+        int q = Math.max(2, radius / 2);
+        return Math.abs(x - cx) == q || Math.abs(z - cz) == q;
     }
 
     private static Material solidLightFor(WaitingRoomTheme theme) {
@@ -288,7 +301,7 @@ public final class WaitingRoomManager {
 
         for (int[] point : corners) {
             world.getBlockAt(point[0], cy + 1, point[1]).setType(theme.light(), false);
-            if (height >= 7) world.getBlockAt(point[0], cy + height - 1, point[1]).setType(theme.light(), false);
+            world.getBlockAt(point[0], cy + height - 1, point[1]).setType(theme.light(), false);
         }
 
         world.getBlockAt(cx, cy + 1, cz).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
@@ -299,27 +312,6 @@ public final class WaitingRoomManager {
             world.getBlockAt(cx - radius + 2, cy + 1, cz).setType(solidBlockFor(theme.accent()), false);
             world.getBlockAt(cx, cy + 1, cz + radius - 2).setType(Material.CRAFTING_TABLE, false);
             world.getBlockAt(cx, cy + 1, cz - radius + 2).setType(Material.CARTOGRAPHY_TABLE, false);
-        }
-    }
-
-    private static void repairWaitingRoomShell(World world, int cx, int cy, int cz, int radius, int height, WaitingRoomTheme theme) {
-        for (int x = cx - radius; x <= cx + radius; x++) {
-            for (int y = cy; y <= cy + height; y++) {
-                for (int z = cz - radius; z <= cz + radius; z++) {
-                    boolean borderX = x == cx - radius || x == cx + radius;
-                    boolean borderZ = z == cz - radius || z == cz + radius;
-                    boolean border = borderX || borderZ;
-                    boolean corner = borderX && borderZ;
-                    boolean floor = y == cy;
-                    boolean roof = y == cy + height;
-                    Block block = world.getBlockAt(x, y, z);
-
-                    if (floor) block.setType(floorMaterial(theme, cx, cz, x, z), false);
-                    else if (roof) block.setType(roofMaterial(theme, cx, cz, x, z), false);
-                    else if (corner) block.setType(solidBlockFor(theme.accent()), false);
-                    else if (border) block.setType(wallMaterial(theme, y, cy, height), false);
-                }
-            }
         }
     }
 
@@ -380,48 +372,6 @@ public final class WaitingRoomManager {
             case SOUTH -> 1;
             default -> 0;
         };
-    }
-
-    private static void buildStairCouch(World world, int cx, int cy, int cz, CouchSide side, WaitingRoomTheme theme) {
-        Material stair = stairFor(theme.primary());
-        Material frame = solidBlockFor(theme.primary());
-        Material accent = solidBlockFor(theme.accent());
-
-        for (int i = -2; i <= 2; i++) {
-            int x = side == CouchSide.NORTH || side == CouchSide.SOUTH ? cx + i : cx;
-            int z = side == CouchSide.EAST || side == CouchSide.WEST ? cz + i : cz;
-            setCouchSeat(world, x, cy + 1, z, stair, side);
-        }
-
-        for (int i = -2; i <= 2; i++) {
-            int x = side == CouchSide.NORTH || side == CouchSide.SOUTH ? cx + i : cx;
-            int z = side == CouchSide.EAST || side == CouchSide.WEST ? cz + i : cz;
-            int backX = x;
-            int backZ = z;
-            switch (side) {
-                case NORTH -> backZ = z - 1;
-                case SOUTH -> backZ = z + 1;
-                case WEST -> backX = x - 1;
-                case EAST -> backX = x + 1;
-            }
-            world.getBlockAt(backX, cy + 1, backZ).setType(frame, false);
-            world.getBlockAt(backX, cy + 2, backZ).setType(frame, false);
-        }
-
-        switch (side) {
-            case NORTH, SOUTH -> {
-                world.getBlockAt(cx - 3, cy + 1, cz).setType(accent, false);
-                world.getBlockAt(cx - 3, cy + 2, cz).setType(accent, false);
-                world.getBlockAt(cx + 3, cy + 1, cz).setType(accent, false);
-                world.getBlockAt(cx + 3, cy + 2, cz).setType(accent, false);
-            }
-            case EAST, WEST -> {
-                world.getBlockAt(cx, cy + 1, cz - 3).setType(accent, false);
-                world.getBlockAt(cx, cy + 2, cz - 3).setType(accent, false);
-                world.getBlockAt(cx, cy + 1, cz + 3).setType(accent, false);
-                world.getBlockAt(cx, cy + 2, cz + 3).setType(accent, false);
-            }
-        }
     }
 
     private static void setCouchSeat(World world, int x, int y, int z, Material stairMaterial, CouchSide side) {
@@ -504,10 +454,9 @@ public final class WaitingRoomManager {
     }
 
     private static int height(int radius) {
-        if (radius >= 11) return 9;
-        if (radius >= 9) return 8;
-        if (radius >= 7) return 7;
-        return 6;
+        if (radius >= 11) return 6;
+        if (radius >= 7) return 5;
+        return 4;
     }
 
     private static void writeLocation(String path, Location location) {
