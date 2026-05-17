@@ -45,7 +45,8 @@ public final class MiniGameGeneratorGUI {
         addType(inv, 10, GeneratedGameType.SURVIE_ETAGES, "Salle d'attente + Tour Infernale.");
         addType(inv, 12, GeneratedGameType.RUEE_OR, "Salle d'attente + Mine en folie.");
         addType(inv, 14, GeneratedGameType.WATER_JUMP, "Salle d'attente + Water Jump.");
-        addType(inv, 16, GeneratedGameType.LABYRINTHE, "Salle d'attente + Labyrinthe avec sas opposés.");
+        addType(inv, 16, GeneratedGameType.LABYRINTHE, "Labyrinthe carré avec sas opposés.");
+        addType(inv, 22, GeneratedGameType.LABYRINTHE_ROND, "Labyrinthe rond, départ au centre et sortie unique.");
 
         inv.setItem(29, EventItem.item(
                 Material.CHEST,
@@ -107,7 +108,7 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Mini-jeu : §e" + type.getDisplayName()),
                 MoodStyle.detail("Style salle : §e" + WaitingRoomManager.getSelectedTheme(player).displayName()),
                 MoodStyle.detail("Choix 3/4 : §etaille du pack"),
-                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Jeu : modèles plus hauts, moins étalés.") : type == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Jeu : plateformes au-dessus de l'eau.") : type == GeneratedGameType.LABYRINTHE ? MoodStyle.detail("Jeu : sas départ/arrivée opposés aléatoires.") : MoodStyle.detail("Jeu : durée calculée automatiquement."),
+                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Jeu : modèles plus hauts, moins étalés.") : type == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Jeu : plateformes au-dessus de l'eau.") : type == GeneratedGameType.LABYRINTHE ? MoodStyle.detail("Jeu : forme carrée avec sas opposés.") : type == GeneratedGameType.LABYRINTHE_ROND ? MoodStyle.detail("Jeu : forme ronde, départ au centre.") : MoodStyle.detail("Jeu : durée calculée automatiquement."),
                 "",
                 MoodStyle.info("Choisis la taille")
         )));
@@ -157,7 +158,7 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Taille jeu : §e" + pending.describe()),
                 MoodStyle.detail("Style salle : §e" + WaitingRoomManager.getSelectedTheme(player).displayName()),
                 MoodStyle.detail("Le style sera appliqué uniquement à la salle."),
-                pending.type() == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Water Jump : départ, eau, plateformes, arrivée.") : pending.type() == GeneratedGameType.LABYRINTHE ? MoodStyle.detail("Labyrinthe : entrée/sortie opposées et aléatoires.") : pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : prudence.") : MoodStyle.detail("Restauration possible avec /eventstop."),
+                pending.type() == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Water Jump : départ, eau, plateformes, arrivée.") : pending.type() == GeneratedGameType.LABYRINTHE ? MoodStyle.detail("Labyrinthe carré : sas opposés.") : pending.type() == GeneratedGameType.LABYRINTHE_ROND ? MoodStyle.detail("Labyrinthe rond : centre vers sortie rouge.") : pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : prudence.") : MoodStyle.detail("Restauration possible avec /eventstop."),
                 "",
                 MoodStyle.info("Vérifie avant de générer")
         )));
