@@ -8,6 +8,9 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Stairs;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -121,8 +124,13 @@ public final class WaitingRoomManager {
             return;
         }
 
+        int cx = center.getBlockX();
+        int cz = center.getBlockZ();
+
+        prepareChunks(world, cx, cz, radius);
         backup(center, radius, height);
         generate(center, radius, height, theme);
+        refreshChunks(world, cx, cz, radius);
 
         spawn = center.clone().add(0, 1, 0);
         spawn.setYaw(player.getLocation().getYaw());
@@ -233,8 +241,8 @@ public final class WaitingRoomManager {
             }
         }
 
-        decorate(world, cx, cy, cz, radius, height, theme);
         repairWaitingRoomShell(world, cx, cy, cz, radius, height, theme);
+        decorate(world, cx, cy, cz, radius, height, theme);
     }
 
     private static Material floorMaterial(WaitingRoomTheme theme, int cx, int cz, int x, int z) {
@@ -286,13 +294,13 @@ public final class WaitingRoomManager {
         world.getBlockAt(cx, cy + 1, cz).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
 
         if (radius >= 5) {
-            buildStairCouch(world, cx, cy, cz - radius + 2, true, 0, -1, theme);
-            buildStairCouch(world, cx, cy, cz + radius - 2, true, 0, 1, theme);
+            buildStairCouch(world, cx, cy, cz - radius + 2, CouchSide.NORTH, theme);
+            buildStairCouch(world, cx, cy, cz + radius - 2, CouchSide.SOUTH, theme);
         }
 
         if (radius >= 7) {
-            buildStairCouch(world, cx - radius + 2, cy, cz, false, -1, 0, theme);
-            buildStairCouch(world, cx + radius - 2, cy, cz, false, 1, 0, theme);
+            buildStairCouch(world, cx - radius + 2, cy, cz, CouchSide.WEST, theme);
+            buildStairCouch(world, cx + radius - 2, cy, cz, CouchSide.EAST, theme);
         }
 
         if (radius >= 9) {
@@ -324,33 +332,62 @@ public final class WaitingRoomManager {
         }
     }
 
-    private static void buildStairCouch(World world, int cx, int cy, int cz, boolean horizontal, int backDx, int backDz, WaitingRoomTheme theme) {
-        Material seat = stairFor(theme.primary());
+    private static void buildStairCouch(World world, int cx, int cy, int cz, CouchSide side, WaitingRoomTheme theme) {
+        Material stair = stairFor(theme.primary());
         Material frame = solidBlockFor(theme.primary());
         Material accent = solidBlockFor(theme.accent());
 
         for (int i = -2; i <= 2; i++) {
-            int x = horizontal ? cx + i : cx;
-            int z = horizontal ? cz : cz + i;
-            world.getBlockAt(x, cy + 1, z).setType(seat, false);
-            world.getBlockAt(x, cy + 2, z).setType(Material.AIR, false);
+            int x = side == CouchSide.NORTH || side == CouchSide.SOUTH ? cx + i : cx;
+            int z = side == CouchSide.EAST || side == CouchSide.WEST ? cz + i : cz;
+            setCouchSeat(world, x, cy + 1, z, stair, side);
         }
 
         for (int i = -2; i <= 2; i++) {
-            int x = horizontal ? cx + i : cx;
-            int z = horizontal ? cz : cz + i;
-            world.getBlockAt(x + backDx, cy + 1, z + backDz).setType(frame, false);
-            world.getBlockAt(x + backDx, cy + 2, z + backDz).setType(frame, false);
+            int x = side == CouchSide.NORTH || side == CouchSide.SOUTH ? cx + i : cx;
+            int z = side == CouchSide.EAST || side == CouchSide.WEST ? cz + i : cz;
+            int backX = x;
+            int backZ = z;
+            switch (side) {
+                case NORTH -> backZ = z - 1;
+                case SOUTH -> backZ = z + 1;
+                case WEST -> backX = x - 1;
+                case EAST -> backX = x + 1;
+            }
+            world.getBlockAt(backX, cy + 1, backZ).setType(frame, false);
+            world.getBlockAt(backX, cy + 2, backZ).setType(frame, false);
         }
 
-        int leftX = horizontal ? cx - 3 : cx;
-        int leftZ = horizontal ? cz : cz - 3;
-        int rightX = horizontal ? cx + 3 : cx;
-        int rightZ = horizontal ? cz : cz + 3;
-        world.getBlockAt(leftX, cy + 1, leftZ).setType(accent, false);
-        world.getBlockAt(leftX, cy + 2, leftZ).setType(accent, false);
-        world.getBlockAt(rightX, cy + 1, rightZ).setType(accent, false);
-        world.getBlockAt(rightX, cy + 2, rightZ).setType(accent, false);
+        switch (side) {
+            case NORTH, SOUTH -> {
+                world.getBlockAt(cx - 3, cy + 1, cz).setType(accent, false);
+                world.getBlockAt(cx - 3, cy + 2, cz).setType(accent, false);
+                world.getBlockAt(cx + 3, cy + 1, cz).setType(accent, false);
+                world.getBlockAt(cx + 3, cy + 2, cz).setType(accent, false);
+            }
+            case EAST, WEST -> {
+                world.getBlockAt(cx, cy + 1, cz - 3).setType(accent, false);
+                world.getBlockAt(cx, cy + 2, cz - 3).setType(accent, false);
+                world.getBlockAt(cx, cy + 1, cz + 3).setType(accent, false);
+                world.getBlockAt(cx, cy + 2, cz + 3).setType(accent, false);
+            }
+        }
+    }
+
+    private static void setCouchSeat(World world, int x, int y, int z, Material stairMaterial, CouchSide side) {
+        Block block = world.getBlockAt(x, y, z);
+        block.setType(stairMaterial, false);
+        BlockData data = block.getBlockData();
+        if (data instanceof Stairs stairs) {
+            switch (side) {
+                case NORTH -> stairs.setFacing(BlockFace.SOUTH);
+                case SOUTH -> stairs.setFacing(BlockFace.NORTH);
+                case WEST -> stairs.setFacing(BlockFace.EAST);
+                case EAST -> stairs.setFacing(BlockFace.WEST);
+            }
+            stairs.setHalf(Stairs.Half.BOTTOM);
+            block.setBlockData(stairs, false);
+        }
     }
 
     private static Material stairFor(Material material) {
@@ -365,8 +402,42 @@ public final class WaitingRoomManager {
             case POLISHED_BLACKSTONE, BLACKSTONE, POLISHED_BLACKSTONE_BRICKS, GILDED_BLACKSTONE -> Material.BLACKSTONE_STAIRS;
             case WARPED_PLANKS, WARPED_WART_BLOCK -> Material.WARPED_STAIRS;
             case CRIMSON_PLANKS, CRIMSON_NYLIUM -> Material.CRIMSON_STAIRS;
+            case STONE_BRICKS, MOSSY_COBBLESTONE, DEEPSLATE_BRICKS -> Material.STONE_BRICK_STAIRS;
             default -> Material.STONE_BRICK_STAIRS;
         };
+    }
+
+    private enum CouchSide {
+        NORTH,
+        SOUTH,
+        EAST,
+        WEST
+    }
+
+    private static void prepareChunks(World world, int centerX, int centerZ, int radius) {
+        int margin = Math.max(4, radius / 2);
+        int minChunkX = (centerX - radius - margin) >> 4;
+        int maxChunkX = (centerX + radius + margin) >> 4;
+        int minChunkZ = (centerZ - radius - margin) >> 4;
+        int maxChunkZ = (centerZ + radius + margin) >> 4;
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                world.loadChunk(chunkX, chunkZ, true);
+            }
+        }
+    }
+
+    private static void refreshChunks(World world, int centerX, int centerZ, int radius) {
+        int margin = Math.max(4, radius / 2);
+        int minChunkX = (centerX - radius - margin) >> 4;
+        int maxChunkX = (centerX + radius + margin) >> 4;
+        int minChunkZ = (centerZ - radius - margin) >> 4;
+        int maxChunkZ = (centerZ + radius + margin) >> 4;
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                world.refreshChunk(chunkX, chunkZ);
+            }
+        }
     }
 
     private static int radius(String text) {
