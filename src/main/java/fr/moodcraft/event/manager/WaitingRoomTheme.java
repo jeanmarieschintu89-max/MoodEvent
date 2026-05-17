@@ -7,7 +7,6 @@ import java.util.Locale;
 public enum WaitingRoomTheme {
 
     MOODCRAFT("moodcraft", "MoodCraft", Material.POLISHED_BLACKSTONE, Material.DEEPSLATE_TILES, Material.GRAY_STAINED_GLASS, Material.SOUL_LANTERN),
-    TRAIN_TUNNEL("train_tunnel", "Train Tunnel", Material.SMOOTH_STONE, Material.RED_CONCRETE, Material.LIGHT_BLUE_STAINED_GLASS, Material.TORCH),
     ROYAL("royal", "Palais Royal", Material.QUARTZ_BLOCK, Material.GOLD_BLOCK, Material.YELLOW_STAINED_GLASS, Material.LANTERN),
     OCEAN("ocean", "Temple Océan", Material.PRISMARINE_BRICKS, Material.SEA_LANTERN, Material.LIGHT_BLUE_STAINED_GLASS, Material.SEA_LANTERN),
     NETHER("nether", "Forteresse Nether", Material.RED_NETHER_BRICKS, Material.NETHER_BRICKS, Material.RED_STAINED_GLASS, Material.SOUL_LANTERN),
@@ -27,7 +26,8 @@ public enum WaitingRoomTheme {
     CRIMSON("crimson", "Refuge Crimson", Material.CRIMSON_PLANKS, Material.CRIMSON_NYLIUM, Material.RED_STAINED_GLASS, Material.SHROOMLIGHT),
     TOWNY("towny", "Maison Communale", Material.STONE_BRICKS, Material.OAK_LOG, Material.WHITE_STAINED_GLASS, Material.LANTERN),
     FESTIVAL("festival", "Dôme Festival", Material.PURPLE_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.MAGENTA_STAINED_GLASS, Material.SEA_LANTERN),
-    NEON_LOUNGE("neon_lounge", "Neon Lounge", Material.POLISHED_BLACKSTONE_BRICKS, Material.CRYING_OBSIDIAN, Material.CYAN_STAINED_GLASS, Material.SEA_LANTERN);
+    NEON_LOUNGE("neon_lounge", "Neon Lounge", Material.POLISHED_BLACKSTONE_BRICKS, Material.CRYING_OBSIDIAN, Material.CYAN_STAINED_GLASS, Material.SEA_LANTERN),
+    TRAIN_TUNNEL("train_tunnel", "Train Tunnel", Material.SMOOTH_STONE, Material.RED_CONCRETE, Material.LIGHT_BLUE_STAINED_GLASS, Material.TORCH);
 
     private final String key;
     private final String displayName;
