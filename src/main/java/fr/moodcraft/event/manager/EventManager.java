@@ -361,13 +361,10 @@ public final class EventManager {
         player.sendTitle(place <= 3 ? "§6Top " + place : "§aArrivée", "§f" + cleanDisplay(getType().getDisplayName()), 0, 50, 10);
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
         if (place <= 3) {
-            MoodStyle.successMessage(player, MoodStyle.MODULE,
-                    "Tu termines dans le Top 3 !",
-                    MoodStyle.detail("Place : §e" + formatPlace(place)),
-                    MoodStyle.detail("Récompense : §6" + rewardLine(place)));
+            player.sendActionBar("§6" + formatPlace(place) + " §8• §fRécompense reçue");
             RewardManager.giveTopReward(player, place);
         } else {
-            MoodStyle.successMessage(player, MoodStyle.MODULE, "Tu as terminé l'épreuve.", MoodStyle.detail("Retour en salle d'attente."));
+            player.sendActionBar("§aArrivée §8• §7Retour en salle d'attente");
         }
         if (finishedPlayers.containsAll(participants)) scheduleAutoStop(player, "Tous les joueurs ont terminé " + cleanDisplay(getType().getDisplayName()) + ".");
     }
@@ -396,10 +393,7 @@ public final class EventManager {
                     WaitingRoomManager.teleport(survivorPlayer);
                     survivorPlayer.sendTitle("§6Victoire", "§fDernier survivant", 0, 55, 12);
                     survivorPlayer.playSound(survivorPlayer.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.15f);
-                    MoodStyle.successMessage(survivorPlayer, MoodStyle.MODULE,
-                            "Tu gagnes la Tour Infernale !",
-                            MoodStyle.detail("Tu es le dernier survivant."),
-                            MoodStyle.detail("Top 3 calculé à la clôture."));
+                    survivorPlayer.sendActionBar("§6Victoire §8• §fTop 3 calculé à la clôture");
                 }
             }
             cancelSurvivalTask();
@@ -513,12 +507,20 @@ public final class EventManager {
             if (player == null || !player.isOnline()) continue;
             int place = index + 1;
             player.sendTitle(place == 1 ? "§6Victoire" : "§6Top " + place, "§f" + cleanDisplay(getType().getDisplayName()), 0, 50, 10);
-            MoodStyle.successMessage(player, MoodStyle.MODULE,
-                    place == 1 ? "Tu gagnes l'épreuve !" : "Tu termines dans le Top 3 !",
-                    MoodStyle.detail("Place : §e" + formatPlace(place)),
-                    reward ? MoodStyle.detail("Récompense : §6" + rewardLine(place)) : MoodStyle.detail("Classement confirmé."));
+            player.sendActionBar("§6" + formatPlace(place) + " §8• §fRécompense reçue");
             if (reward) RewardManager.giveTopReward(player, place);
         }
+    }
+
+    private static void broadcastEndSummary(int returned, boolean rankedMode) {
+        String line1 = rankedMode ? rankLine(1) : MoodStyle.detail("Mode : §eMine en folie");
+        String line2 = rankedMode ? rankLine(2) : MoodStyle.detail("Minerais conservés par les joueurs.");
+        String line3 = rankedMode ? rankLine(3) : MoodStyle.detail("Fin du minage.");
+        broadcastEvent(MoodStyle.success("Événement terminé."),
+                MoodStyle.detail("Participants renvoyés : §e" + returned),
+                line1,
+                line2,
+                line3);
     }
 
     private static String rankLine(int place) {
@@ -588,12 +590,10 @@ public final class EventManager {
             Player player = Bukkit.getPlayer(entry.getKey());
             Location returnLocation = entry.getValue();
             if (player == null || !player.isOnline() || returnLocation == null || returnLocation.getWorld() == null) continue;
-            if (giveParticipation) {
-                RewardManager.giveParticipationReward(player);
-                MoodStyle.infoMessage(player, MoodStyle.MODULE, "Événement terminé.", MoodStyle.detail("Récompense de participation : §a" + participationLine()));
-            }
+            if (giveParticipation) RewardManager.giveParticipationReward(player);
             player.teleport(returnLocation);
             player.sendTitle("§aRetour", "§fMerci d'avoir participé", 0, 35, 10);
+            player.sendActionBar("§aRetour effectué §8• §7Merci d'avoir participé");
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.2f);
             returned++;
         }
@@ -613,98 +613,4 @@ public final class EventManager {
         autoClosing = true;
         broadcastEvent(MoodStyle.success("Épreuve terminée."), MoodStyle.detail(reason), MoodStyle.info("Retour automatique dans §e30 secondes"));
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
-            if (!running || !hasEvent()) { autoClosing = false; return; }
-            stopEvent(resolveActor(actor));
-        }, 20L * 30);
-    }
-
-    private static Player resolveActor(Player player) {
-        if (player != null && player.isOnline()) return player;
-        for (UUID uuid : returnLocations.keySet()) {
-            Player online = Bukkit.getPlayer(uuid);
-            if (online != null && online.isOnline()) return online;
-        }
-        for (UUID uuid : participants) {
-            Player online = Bukkit.getPlayer(uuid);
-            if (online != null && online.isOnline()) return online;
-        }
-        for (Player online : Bukkit.getOnlinePlayers()) return online;
-        return null;
-    }
-
-    private static boolean ensureEvent(Player player) {
-        if (!hasEvent()) { MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucun événement créé.", MoodStyle.detail("Utilise §e/eventcreer <nom>")); return false; }
-        return true;
-    }
-
-    private static boolean ensureLocation(Player player) {
-        if (!hasLocation()) { MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucun point de départ défini.", MoodStyle.detail("Utilise §e/eventdepart")); return false; }
-        return true;
-    }
-
-    private static boolean ensureFinishLocation(Player player) {
-        if (!hasFinishLocation()) { MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucun point d'arrivée défini.", MoodStyle.detail("Utilise le générateur ou §e/eventarrivee")); return false; }
-        return true;
-    }
-
-    private static boolean hasEvent() { return name != null && !name.isBlank(); }
-
-    private static void clearCollections() {
-        queue.clear();
-        participants.clear();
-        eliminated.clear();
-        finishedPlayers.clear();
-        eliminationOrder.clear();
-        finalRanking.clear();
-        returnLocations.clear();
-    }
-
-    private static void clearRuntime() {
-        queueOpen = false;
-        running = false;
-        autoClosing = false;
-        clearCollections();
-        cancelSurvivalTask();
-    }
-
-    private static void clearEvent() {
-        name = "";
-        description = "";
-        type = EventType.CUSTOM;
-        startLocation = null;
-        finishLocation = null;
-        clearRuntime();
-    }
-
-    private static void cancelSurvivalTask() {
-        if (survivalTask != null) { survivalTask.cancel(); survivalTask = null; }
-    }
-
-    private static EventType sanitizeType(EventType raw) {
-        if (raw == EventType.SURVIE_ETAGES || raw == EventType.RUEE_OR || raw == EventType.WATER_JUMP || raw == EventType.LABYRINTHE) return raw;
-        return EventType.CUSTOM;
-    }
-
-    private static void broadcastEvent(String... lines) {
-        Bukkit.broadcastMessage("");
-        Bukkit.broadcastMessage(MoodStyle.header(MoodStyle.MODULE));
-        if (lines != null) for (String line : lines) Bukkit.broadcastMessage(line);
-        Bukkit.broadcastMessage(MoodStyle.FRAME);
-    }
-
-    private static void writeLocation(FileConfiguration config, String path, Location location) {
-        if (location == null || location.getWorld() == null) { config.set(path, null); return; }
-        config.set(path + ".world", location.getWorld().getName());
-        config.set(path + ".x", location.getX());
-        config.set(path + ".y", location.getY());
-        config.set(path + ".z", location.getZ());
-        config.set(path + ".yaw", location.getYaw());
-        config.set(path + ".pitch", location.getPitch());
-    }
-
-    private static Location readLocation(FileConfiguration config, String path) {
-        World world = Bukkit.getWorld(config.getString(path + ".world", ""));
-        if (world == null) return null;
-        return new Location(world, config.getDouble(path + ".x"), config.getDouble(path + ".y"), config.getDouble(path + ".z"), (float) config.getDouble(path + ".yaw"), (float) config.getDouble(path + ".pitch"));
-    }
-}
+            if (!running || !hasEvent()) { autoClosing = false; return... (truncated due to tool response token budget)
