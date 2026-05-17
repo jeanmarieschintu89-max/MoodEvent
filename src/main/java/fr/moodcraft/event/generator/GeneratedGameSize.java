@@ -63,6 +63,15 @@ public enum GeneratedGameSize {
         };
     }
 
+    public int getPrisonCells() {
+        return switch (this) {
+            case PETIT -> 7;
+            case MOYEN -> 9;
+            case GRAND -> 11;
+            case GEANT -> 13;
+        };
+    }
+
     public String describeFor(GeneratedGameType type) {
         if (type == null) return displayName;
         return switch (type) {
@@ -72,6 +81,7 @@ public enum GeneratedGameSize {
             case MUR_ESCALADE -> getClimbPlatforms() + " plateformes §8• §7jump vertical";
             case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7carré avec sas";
             case LABYRINTHE_ROND -> mazeWidth + " blocs §8• §7rond, départ au centre";
+            case PRISON_BREAK -> getPrisonCells() + "x" + getPrisonCells() + " cellules §8• §7plan aléatoire";
         };
     }
 }
