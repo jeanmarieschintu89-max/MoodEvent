@@ -48,6 +48,7 @@ public final class MiniGameGeneratorGUI {
         addType(inv, 12, GeneratedGameType.RUEE_OR, "Salle d'attente + Mine en folie avec durée au choix.");
         addType(inv, 14, GeneratedGameType.WATER_JUMP, "Salle d'attente + Water Jump.");
         addType(inv, 16, GeneratedGameType.MUR_ESCALADE, "Salle d'attente + Mur d'escalade en hauteur.");
+        addType(inv, 20, GeneratedGameType.PRISON_BREAK, "Prison aléatoire avec cellules, couloirs et sortie rouge.");
         addType(inv, 22, GeneratedGameType.LABYRINTHE, "Labyrinthe carré avec sas opposés.");
         addType(inv, 24, GeneratedGameType.LABYRINTHE_ROND, "Labyrinthe rond, départ au centre et sortie extérieure.");
 
@@ -100,7 +101,7 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Mini-jeu : §e" + type.getDisplayName()),
                 MoodStyle.detail("Style salle : §e" + WaitingRoomManager.getSelectedTheme(player).displayName()),
                 MoodStyle.detail("Choix 3/4 : §etaille du pack"),
-                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Jeu : modèles plus hauts, moins étalés.") : type == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Jeu : plateformes au-dessus de l'eau.") : type == GeneratedGameType.MUR_ESCALADE ? MoodStyle.detail("Jeu : plateformes verticales en hauteur.") : type == GeneratedGameType.LABYRINTHE ? MoodStyle.detail("Jeu : forme carrée avec sas opposés.") : type == GeneratedGameType.LABYRINTHE_ROND ? MoodStyle.detail("Jeu : forme ronde, départ au centre.") : MoodStyle.detail("Jeu : durée choisie à l'étape suivante."),
+                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Jeu : modèles plus hauts, moins étalés.") : type == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Jeu : plateformes au-dessus de l'eau.") : type == GeneratedGameType.MUR_ESCALADE ? MoodStyle.detail("Jeu : plateformes verticales en hauteur.") : type == GeneratedGameType.LABYRINTHE ? MoodStyle.detail("Jeu : forme carrée avec sas opposés.") : type == GeneratedGameType.LABYRINTHE_ROND ? MoodStyle.detail("Jeu : forme ronde, départ au centre.") : type == GeneratedGameType.PRISON_BREAK ? MoodStyle.detail("Jeu : prison différente à chaque génération.") : MoodStyle.detail("Jeu : durée choisie à l'étape suivante."),
                 "",
                 MoodStyle.info("Choisis la taille")
         )));
@@ -211,6 +212,7 @@ public final class MiniGameGeneratorGUI {
             case MUR_ESCALADE -> MoodStyle.detail("Mur d'escalade : montée verticale, arrivée au sommet.");
             case LABYRINTHE -> MoodStyle.detail("Labyrinthe carré : sas opposés.");
             case LABYRINTHE_ROND -> MoodStyle.detail("Labyrinthe rond : centre vers sortie rouge.");
+            case PRISON_BREAK -> MoodStyle.detail("Prison Break : cellules, couloirs aléatoires et sortie rouge.");
             case RUEE_OR -> MoodStyle.detail("Mine en folie : chrono choisi dans le menu.");
             default -> pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : prudence.") : MoodStyle.detail("Restauration possible avec /eventstop.");
         };
