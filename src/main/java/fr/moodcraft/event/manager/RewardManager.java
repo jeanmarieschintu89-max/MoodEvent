@@ -163,13 +163,6 @@ public final class RewardManager {
     public static void giveParticipationReward(Player player) {
         if (EventManager.getType() == EventType.RUEE_OR) return;
         giveReward(player, PARTICIPATION, true);
-        Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
-            if (player != null && player.isOnline() && WaitingRoomManager.hasRoom()) {
-                WaitingRoomManager.teleport(player);
-                player.sendTitle("§6Salle d'attente", "§fMerci d'avoir participé", 0, 35, 10);
-                player.sendActionBar("§6Salle d'attente §8• §7À bientôt pour le prochain event");
-            }
-        }, 2L);
     }
 
     public static void giveTopReward(Player player, int place) {
