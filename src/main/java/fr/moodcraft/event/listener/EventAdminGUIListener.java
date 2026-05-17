@@ -106,7 +106,7 @@ public class EventAdminGUIListener implements Listener {
             case 12 -> { click(player); EventChatListener.startDescription(player); }
             case 14 -> { click(player); EventManager.setLocation(player); EventAdvancedGUI.open(player); }
             case 15 -> { click(player); EventManager.setFinishLocation(player); EventAdvancedGUI.open(player); }
-            case 16 -> { click(player); WaitingRoomGUI.open(player); }
+            case 16 -> { click(player); WaitingRoomGUI.openStyle(player); }
             case 22 -> { no(player); WaitingRoomManager.restore(player); EventAdvancedGUI.open(player); }
             case 31 -> {
                 no(player);
