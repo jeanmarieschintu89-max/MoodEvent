@@ -45,7 +45,7 @@ public final class WaitingRoomGUI {
                 "§6✦ §fChoisir le style §6✦",
                 MoodStyle.detail("Actuel : §e" + selectedStyle),
                 MoodStyle.detail("Ouvre la grille complète des styles."),
-                MoodStyle.detail("20 styles disponibles."),
+                MoodStyle.detail("21 styles disponibles."),
                 "",
                 MoodStyle.success("Ouvrir les styles")
         )));
@@ -91,7 +91,7 @@ public final class WaitingRoomGUI {
         )));
 
         WaitingRoomTheme[] themes = WaitingRoomTheme.values();
-        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33};
+        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
         for (int i = 0; i < themes.length && i < slots.length; i++) {
             addTheme(inv, slots[i], themes[i], WaitingRoomManager.getSelectedTheme(player) == themes[i]);
         }
