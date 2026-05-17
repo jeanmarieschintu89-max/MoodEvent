@@ -292,16 +292,7 @@ public final class WaitingRoomManager {
         }
 
         world.getBlockAt(cx, cy + 1, cz).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
-
-        if (radius >= 5) {
-            buildStairCouch(world, cx, cy, cz - radius + 2, CouchSide.NORTH, theme);
-            buildStairCouch(world, cx, cy, cz + radius - 2, CouchSide.SOUTH, theme);
-        }
-
-        if (radius >= 7) {
-            buildStairCouch(world, cx - radius + 2, cy, cz, CouchSide.WEST, theme);
-            buildStairCouch(world, cx + radius - 2, cy, cz, CouchSide.EAST, theme);
-        }
+        buildCornerCouches(world, cx, cy, cz, radius, theme);
 
         if (radius >= 9) {
             world.getBlockAt(cx + radius - 2, cy + 1, cz).setType(solidBlockFor(theme.accent()), false);
@@ -330,6 +321,65 @@ public final class WaitingRoomManager {
                 }
             }
         }
+    }
+
+    private static void buildCornerCouches(World world, int cx, int cy, int cz, int radius, WaitingRoomTheme theme) {
+        if (radius < 3) return;
+
+        int seatY = cy + 1;
+        int westSeatX = cx - radius + 1;
+        int eastSeatX = cx + radius - 1;
+        int northSeatZ = cz - radius + 1;
+        int southSeatZ = cz + radius - 1;
+        boolean withInnerArm = radius >= 4;
+
+        buildTwoSeatCouch(world, westSeatX, seatY, northSeatZ, 1, 0, CouchSide.NORTH, theme, withInnerArm);
+        buildTwoSeatCouch(world, eastSeatX, seatY, northSeatZ, -1, 0, CouchSide.NORTH, theme, withInnerArm);
+        buildTwoSeatCouch(world, westSeatX, seatY, southSeatZ, 1, 0, CouchSide.SOUTH, theme, withInnerArm);
+        buildTwoSeatCouch(world, eastSeatX, seatY, southSeatZ, -1, 0, CouchSide.SOUTH, theme, withInnerArm);
+    }
+
+    private static void buildTwoSeatCouch(World world, int startX, int seatY, int startZ, int stepX, int stepZ, CouchSide side, WaitingRoomTheme theme, boolean withInnerArm) {
+        Material stair = stairFor(theme.primary());
+        Material frame = solidBlockFor(theme.primary());
+        Material accent = solidBlockFor(theme.accent());
+
+        for (int i = 0; i < 2; i++) {
+            int x = startX + (stepX * i);
+            int z = startZ + (stepZ * i);
+            setCouchSeat(world, x, seatY, z, stair, side);
+            setCouchBack(world, x, seatY, z, side, frame);
+        }
+
+        if (withInnerArm) {
+            int armX = startX + (stepX * 2);
+            int armZ = startZ + (stepZ * 2);
+            world.getBlockAt(armX, seatY, armZ).setType(accent, false);
+            world.getBlockAt(armX, seatY + 1, armZ).setType(accent, false);
+        }
+    }
+
+    private static void setCouchBack(World world, int x, int y, int z, CouchSide side, Material frame) {
+        int backX = x + backOffsetX(side);
+        int backZ = z + backOffsetZ(side);
+        world.getBlockAt(backX, y, backZ).setType(frame, false);
+        world.getBlockAt(backX, y + 1, backZ).setType(frame, false);
+    }
+
+    private static int backOffsetX(CouchSide side) {
+        return switch (side) {
+            case WEST -> -1;
+            case EAST -> 1;
+            default -> 0;
+        };
+    }
+
+    private static int backOffsetZ(CouchSide side) {
+        return switch (side) {
+            case NORTH -> -1;
+            case SOUTH -> 1;
+            default -> 0;
+        };
     }
 
     private static void buildStairCouch(World world, int cx, int cy, int cz, CouchSide side, WaitingRoomTheme theme) {
@@ -380,10 +430,10 @@ public final class WaitingRoomManager {
         BlockData data = block.getBlockData();
         if (data instanceof Stairs stairs) {
             switch (side) {
-                case NORTH -> stairs.setFacing(BlockFace.SOUTH);
-                case SOUTH -> stairs.setFacing(BlockFace.NORTH);
-                case WEST -> stairs.setFacing(BlockFace.EAST);
-                case EAST -> stairs.setFacing(BlockFace.WEST);
+                case NORTH -> stairs.setFacing(BlockFace.NORTH);
+                case SOUTH -> stairs.setFacing(BlockFace.SOUTH);
+                case WEST -> stairs.setFacing(BlockFace.WEST);
+                case EAST -> stairs.setFacing(BlockFace.EAST);
             }
             stairs.setHalf(Stairs.Half.BOTTOM);
             block.setBlockData(stairs, false);
