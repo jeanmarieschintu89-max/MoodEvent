@@ -226,7 +226,7 @@ public final class WaitingRoomManager {
 
                     if (floor) block.setType(floorMaterial(theme, cx, cz, x, z), false);
                     else if (roof) block.setType(roofMaterial(theme, cx, cz, x, z), false);
-                    else if (corner) block.setType(theme.accent(), false);
+                    else if (corner) block.setType(solidBlockFor(theme.accent()), false);
                     else if (border) block.setType(wallMaterial(theme, y, cy, height), false);
                     else block.setType(Material.AIR, false);
                 }
@@ -234,6 +234,7 @@ public final class WaitingRoomManager {
         }
 
         decorate(world, cx, cy, cz, radius, height, theme);
+        repairWaitingRoomShell(world, cx, cy, cz, radius, height, theme);
     }
 
     private static Material floorMaterial(WaitingRoomTheme theme, int cx, int cz, int x, int z) {
@@ -269,18 +270,6 @@ public final class WaitingRoomManager {
         };
     }
 
-    private static Material couchSeatFor(WaitingRoomTheme theme) {
-        return switch (theme) {
-            case ROYAL, GOLDEN -> Material.YELLOW_WOOL;
-            case OCEAN, ICE, EMERALD, WARPED, FESTIVAL -> Material.LIGHT_BLUE_WOOL;
-            case NETHER, CRIMSON, REDSTONE -> Material.RED_WOOL;
-            case NATURE, JUNGLE, TOWNY -> Material.GREEN_WOOL;
-            case AMETHYST, END, CANDY -> Material.PURPLE_WOOL;
-            case COPPER, DESERT -> Material.ORANGE_WOOL;
-            case DEEP_DARK, MOODCRAFT -> Material.GRAY_WOOL;
-        };
-    }
-
     private static void decorate(World world, int cx, int cy, int cz, int radius, int height, WaitingRoomTheme theme) {
         int[][] corners = {
                 {cx - radius + 1, cz - radius + 1},
@@ -297,13 +286,13 @@ public final class WaitingRoomManager {
         world.getBlockAt(cx, cy + 1, cz).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
 
         if (radius >= 5) {
-            buildCouch(world, cx, cy, cz - radius + 2, true, 0, -1, theme);
-            buildCouch(world, cx, cy, cz + radius - 2, true, 0, 1, theme);
+            buildStairCouch(world, cx, cy, cz - radius + 2, true, 0, -1, theme);
+            buildStairCouch(world, cx, cy, cz + radius - 2, true, 0, 1, theme);
         }
 
         if (radius >= 7) {
-            buildCouch(world, cx - radius + 2, cy, cz, false, -1, 0, theme);
-            buildCouch(world, cx + radius - 2, cy, cz, false, 1, 0, theme);
+            buildStairCouch(world, cx - radius + 2, cy, cz, false, -1, 0, theme);
+            buildStairCouch(world, cx + radius - 2, cy, cz, false, 1, 0, theme);
         }
 
         if (radius >= 9) {
@@ -314,8 +303,29 @@ public final class WaitingRoomManager {
         }
     }
 
-    private static void buildCouch(World world, int cx, int cy, int cz, boolean horizontal, int backDx, int backDz, WaitingRoomTheme theme) {
-        Material seat = couchSeatFor(theme);
+    private static void repairWaitingRoomShell(World world, int cx, int cy, int cz, int radius, int height, WaitingRoomTheme theme) {
+        for (int x = cx - radius; x <= cx + radius; x++) {
+            for (int y = cy; y <= cy + height; y++) {
+                for (int z = cz - radius; z <= cz + radius; z++) {
+                    boolean borderX = x == cx - radius || x == cx + radius;
+                    boolean borderZ = z == cz - radius || z == cz + radius;
+                    boolean border = borderX || borderZ;
+                    boolean corner = borderX && borderZ;
+                    boolean floor = y == cy;
+                    boolean roof = y == cy + height;
+                    Block block = world.getBlockAt(x, y, z);
+
+                    if (floor) block.setType(floorMaterial(theme, cx, cz, x, z), false);
+                    else if (roof) block.setType(roofMaterial(theme, cx, cz, x, z), false);
+                    else if (corner) block.setType(solidBlockFor(theme.accent()), false);
+                    else if (border) block.setType(wallMaterial(theme, y, cy, height), false);
+                }
+            }
+        }
+    }
+
+    private static void buildStairCouch(World world, int cx, int cy, int cz, boolean horizontal, int backDx, int backDz, WaitingRoomTheme theme) {
+        Material seat = stairFor(theme.primary());
         Material frame = solidBlockFor(theme.primary());
         Material accent = solidBlockFor(theme.accent());
 
@@ -341,6 +351,22 @@ public final class WaitingRoomManager {
         world.getBlockAt(leftX, cy + 2, leftZ).setType(accent, false);
         world.getBlockAt(rightX, cy + 1, rightZ).setType(accent, false);
         world.getBlockAt(rightX, cy + 2, rightZ).setType(accent, false);
+    }
+
+    private static Material stairFor(Material material) {
+        return switch (material) {
+            case QUARTZ_BLOCK, SMOOTH_QUARTZ, WHITE_CONCRETE -> Material.QUARTZ_STAIRS;
+            case PURPUR_BLOCK -> Material.PURPUR_STAIRS;
+            case OAK_LOG, OAK_PLANKS, JUNGLE_LOG, JUNGLE_PLANKS -> Material.OAK_STAIRS;
+            case SPRUCE_LOG, PACKED_ICE, SNOW_BLOCK -> Material.SPRUCE_STAIRS;
+            case SANDSTONE, SMOOTH_SANDSTONE, CHISELED_SANDSTONE -> Material.SANDSTONE_STAIRS;
+            case PRISMARINE_BRICKS, DARK_PRISMARINE -> Material.PRISMARINE_STAIRS;
+            case CUT_COPPER, COPPER_BLOCK -> Material.CUT_COPPER_STAIRS;
+            case POLISHED_BLACKSTONE, BLACKSTONE, POLISHED_BLACKSTONE_BRICKS, GILDED_BLACKSTONE -> Material.BLACKSTONE_STAIRS;
+            case WARPED_PLANKS, WARPED_WART_BLOCK -> Material.WARPED_STAIRS;
+            case CRIMSON_PLANKS, CRIMSON_NYLIUM -> Material.CRIMSON_STAIRS;
+            default -> Material.STONE_BRICK_STAIRS;
+        };
     }
 
     private static int radius(String text) {
