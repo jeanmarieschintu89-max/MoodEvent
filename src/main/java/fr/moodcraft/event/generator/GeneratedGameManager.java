@@ -17,13 +17,10 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 
 public final class GeneratedGameManager {
 
@@ -33,7 +30,6 @@ public final class GeneratedGameManager {
     private static GeneratedGameType activeType;
     private static Region activeRegion;
     private static final List<Location> survivalBlocks = new ArrayList<>();
-    private static final Random RANDOM = new Random();
 
     private GeneratedGameManager() {}
 
@@ -146,7 +142,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> MoodStyle.detail("Largeur entre §e15 §7et §e61§7, étages automatiques.");
             case RUEE_OR -> MoodStyle.detail("Largeur mine entre §e15 §7et §e51§7. Temps calculé automatiquement.");
             case WATER_JUMP -> MoodStyle.detail("Longueur entre §e40 §7et §e140 §7blocs.");
-            case LABYRINTHE -> MoodStyle.detail("Largeur impaire entre §e15 §7et §e51 §7blocs.");
+            case LABYRINTHE -> MoodStyle.detail("Largeur impaire entre §e15 §7et §e61 §7blocs.");
         };
     }
 
@@ -267,7 +263,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> "survie_etages";
             case RUEE_OR -> "ruee_or";
             case WATER_JUMP -> "water_jump_v2";
-            case LABYRINTHE -> "labyrinthe_v1";
+            case LABYRINTHE -> "labyrinthe_v2";
         };
     }
 
@@ -321,15 +317,7 @@ public final class GeneratedGameManager {
         world.getBlockAt(cx, cy + 2, cz - laneHalf).setType(Material.SEA_LANTERN, false);
         world.getBlockAt(cx, cy + 2, cz + laneHalf).setType(Material.SEA_LANTERN, false);
 
-        Material[] colors = {
-                Material.LIGHT_BLUE_WOOL,
-                Material.CYAN_WOOL,
-                Material.WHITE_WOOL,
-                Material.YELLOW_WOOL,
-                Material.ORANGE_WOOL,
-                Material.MAGENTA_WOOL,
-                Material.PINK_WOOL
-        };
+        Material[] colors = {Material.LIGHT_BLUE_WOOL, Material.CYAN_WOOL, Material.WHITE_WOOL, Material.YELLOW_WOOL, Material.ORANGE_WOOL, Material.MAGENTA_WOOL, Material.PINK_WOOL};
         int x = cx + 8;
         int step = 0;
         int lastY = cy + 1;
@@ -369,152 +357,12 @@ public final class GeneratedGameManager {
     }
 
     private static Points routeLabyrinth(Location center, Spec spec) {
-        World world = center.getWorld();
-        int cx = center.getBlockX();
-        int cy = center.getBlockY();
-        int cz = center.getBlockZ();
-        int size = spec.mazeWidth % 2 == 1 ? spec.mazeWidth : spec.mazeWidth + 1;
-        int half = size / 2;
-        int minX = cx - half;
-        int minZ = cz - half;
-        int maxX = cx + half;
-        int maxZ = cz + half;
-        boolean[][] path = generateMazeGrid(size);
-        int side = RANDOM.nextInt(4);
-        int entryIndex = randomOdd(size);
-        int exitIndex = randomOdd(size);
-
-        for (int x = minX - 6; x <= maxX + 6; x++) {
-            for (int z = minZ - 6; z <= maxZ + 6; z++) {
-                world.getBlockAt(x, cy - 1, z).setType(Material.SMOOTH_STONE, false);
-                for (int y = cy; y <= cy + 5; y++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
-            }
-        }
-
-        for (int gx = 0; gx < size; gx++) {
-            for (int gz = 0; gz < size; gz++) {
-                int wx = minX + gx;
-                int wz = minZ + gz;
-                world.getBlockAt(wx, cy - 1, wz).setType(path[gx][gz] ? Material.SMOOTH_STONE : Material.POLISHED_BLACKSTONE_BRICKS, false);
-                if (!path[gx][gz]) {
-                    for (int y = cy; y <= cy + 2; y++) world.getBlockAt(wx, y, wz).setType(Material.POLISHED_BLACKSTONE_BRICKS, false);
-                }
-            }
-        }
-
-        Gate entryGate = gateForSide(side, minX, maxX, minZ, maxZ, entryIndex, cy, true);
-        Gate exitGate = gateForSide(opposite(side), minX, maxX, minZ, maxZ, exitIndex, cy, false);
-        openGate(world, entryGate.mazeX(), cy, entryGate.mazeZ());
-        openGate(world, exitGate.mazeX(), cy, exitGate.mazeZ());
-        buildMazeSas(world, entryGate, Material.LIME_CONCRETE, Material.LIME_STAINED_GLASS, true);
-        buildMazeSas(world, exitGate, Material.RED_CONCRETE, Material.RED_STAINED_GLASS, false);
-        buildMazeCornerLights(world, minX, maxX, minZ, maxZ, cy);
-
-        float startYaw = yawForDirection(entryGate.dx(), entryGate.dz());
-        float finishYaw = yawForDirection(exitGate.dx(), exitGate.dz());
-        Location start = new Location(world, entryGate.spawnX() + 0.5, cy + 1, entryGate.spawnZ() + 0.5, startYaw, 0f);
-        Location finish = new Location(world, exitGate.spawnX() + 0.5, cy + 1, exitGate.spawnZ() + 0.5, finishYaw, 0f);
-        config.set("labyrinth.entry-side", side);
-        config.set("labyrinth.exit-side", opposite(side));
-        return new Points(start, finish, 0);
-    }
-
-    private static boolean[][] generateMazeGrid(int size) {
-        boolean[][] path = new boolean[size][size];
-        boolean[][] visited = new boolean[size][size];
-        Deque<int[]> stack = new ArrayDeque<>();
-        int sx = randomOdd(size);
-        int sz = randomOdd(size);
-        visited[sx][sz] = true;
-        path[sx][sz] = true;
-        stack.push(new int[]{sx, sz});
-        int[][] dirs = {{2, 0}, {-2, 0}, {0, 2}, {0, -2}};
-        while (!stack.isEmpty()) {
-            int[] current = stack.peek();
-            List<int[]> options = new ArrayList<>();
-            for (int[] dir : dirs) {
-                int nx = current[0] + dir[0];
-                int nz = current[1] + dir[1];
-                if (nx > 0 && nz > 0 && nx < size - 1 && nz < size - 1 && !visited[nx][nz]) options.add(dir);
-            }
-            if (options.isEmpty()) {
-                stack.pop();
-                continue;
-            }
-            int[] dir = options.get(RANDOM.nextInt(options.size()));
-            int nx = current[0] + dir[0];
-            int nz = current[1] + dir[1];
-            path[current[0] + dir[0] / 2][current[1] + dir[1] / 2] = true;
-            path[nx][nz] = true;
-            visited[nx][nz] = true;
-            stack.push(new int[]{nx, nz});
-        }
-        return path;
-    }
-
-    private static int randomOdd(int size) {
-        int cells = Math.max(1, (size - 1) / 2);
-        return 1 + RANDOM.nextInt(cells) * 2;
-    }
-
-    private static Gate gateForSide(int side, int minX, int maxX, int minZ, int maxZ, int index, int y, boolean start) {
-        return switch (side) {
-            case 0 -> new Gate(minX + index, minZ, minX + index, minZ - 3, 0, 1, y, start);
-            case 1 -> new Gate(minX + index, maxZ, minX + index, maxZ + 3, 0, -1, y, start);
-            case 2 -> new Gate(minX, minZ + index, minX - 3, minZ + index, 1, 0, y, start);
-            default -> new Gate(maxX, minZ + index, maxX + 3, minZ + index, -1, 0, y, start);
-        };
-    }
-
-    private static int opposite(int side) {
-        return switch (side) {
-            case 0 -> 1;
-            case 1 -> 0;
-            case 2 -> 3;
-            default -> 2;
-        };
-    }
-
-    private static void openGate(World world, int x, int cy, int z) {
-        for (int y = cy; y <= cy + 3; y++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
-        world.getBlockAt(x, cy - 1, z).setType(Material.SMOOTH_STONE, false);
-    }
-
-    private static void buildMazeSas(World world, Gate gate, Material floor, Material glass, boolean start) {
-        int cx = gate.spawnX();
-        int cz = gate.spawnZ();
-        for (int x = cx - 2; x <= cx + 2; x++) {
-            for (int z = cz - 2; z <= cz + 2; z++) {
-                boolean border = x == cx - 2 || x == cx + 2 || z == cz - 2 || z == cz + 2;
-                world.getBlockAt(x, gate.y() - 1, z).setType(floor, false);
-                if (border) {
-                    for (int y = gate.y(); y <= gate.y() + 2; y++) world.getBlockAt(x, y, z).setType(glass, false);
-                } else {
-                    for (int y = gate.y(); y <= gate.y() + 3; y++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
-                }
-            }
-        }
-        for (int i = 0; i <= 2; i++) {
-            int x = gate.spawnX() + gate.dx() * i;
-            int z = gate.spawnZ() + gate.dz() * i;
-            openGate(world, x, gate.y(), z);
-        }
-        world.getBlockAt(cx, gate.y(), cz).setType(start ? Material.LIME_CONCRETE : Material.RED_CONCRETE, false);
-        world.getBlockAt(cx, gate.y() + 1, cz).setType(start ? Material.LIGHT_WEIGHTED_PRESSURE_PLATE : Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
-    }
-
-    private static void buildMazeCornerLights(World world, int minX, int maxX, int minZ, int maxZ, int cy) {
-        int[][] corners = {{minX, minZ}, {maxX, minZ}, {minX, maxZ}, {maxX, maxZ}};
-        for (int[] point : corners) {
-            world.getBlockAt(point[0], cy + 3, point[1]).setType(Material.SEA_LANTERN, false);
-        }
-    }
-
-    private static float yawForDirection(int dx, int dz) {
-        if (dx > 0) return -90f;
-        if (dx < 0) return 90f;
-        if (dz > 0) return 0f;
-        return 180f;
+        GeneratedLabyrinthBuilder.Layout layout = GeneratedLabyrinthBuilder.build(center, spec.mazeWidth);
+        config.set("labyrinth.entry-side", layout.entrySide());
+        config.set("labyrinth.exit-side", layout.exitSide());
+        config.set("labyrinth.sas-size", layout.sasSize());
+        config.set("labyrinth.reachable", layout.reachable());
+        return new Points(layout.start(), layout.finish(), 0);
     }
 
     private static void buildPlatform(World world, int cx, int cy, int cz, int radius, Material material) {
@@ -570,7 +418,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> new Region(world, cx - spec.width / 2 - 4, cy - 2, cz - spec.width / 2 - 4, cx + spec.width / 2 + 4, cy + 10 + spec.floors * 5, cz + spec.width / 2 + 4);
             case RUEE_OR -> new Region(world, cx - spec.width / 2 - 2, cy - 1, cz - spec.width / 2 - 2, cx + spec.width / 2 + 2, cy + spec.goldHeight + 2, cz + spec.width / 2 + 2);
             case WATER_JUMP -> new Region(world, cx - 10, cy - 3, cz - 11, cx + spec.waterLength + 18, cy + 22, cz + 11);
-            case LABYRINTHE -> new Region(world, cx - spec.mazeWidth / 2 - 8, cy - 2, cz - spec.mazeWidth / 2 - 8, cx + spec.mazeWidth / 2 + 8, cy + 8, cz + spec.mazeWidth / 2 + 8);
+            case LABYRINTHE -> new Region(world, cx - spec.mazeWidth / 2 - 12, cy - 2, cz - spec.mazeWidth / 2 - 12, cx + spec.mazeWidth / 2 + 12, cy + 8, cz + spec.mazeWidth / 2 + 12);
         };
     }
 
@@ -659,8 +507,6 @@ public final class GeneratedGameManager {
 
     private record Points(Location start, Location finish, int eliminationY) {}
 
-    private record Gate(int mazeX, int mazeZ, int spawnX, int spawnZ, int dx, int dz, int y, boolean start) {}
-
     private record Region(String worldName, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
         private boolean contains(Location location) {
             if (location == null || location.getWorld() == null || !location.getWorld().getName().equals(worldName)) return false;
@@ -684,7 +530,7 @@ public final class GeneratedGameManager {
                 case SURVIE_ETAGES -> value >= 15 && value <= 61 ? new Spec(value % 2 == 1 ? value : value + 1, floors(value), 0, 0, 0, 0) : null;
                 case RUEE_OR -> value >= 15 && value <= 51 ? new Spec(value % 2 == 1 ? value : value + 1, 0, Math.max(9, value / 3), Math.max(60, Math.min(240, value * 4)), 0, 0) : null;
                 case WATER_JUMP -> value >= 40 && value <= 140 ? new Spec(0, 0, 0, 0, value, 0) : null;
-                case LABYRINTHE -> value >= 15 && value <= 51 ? new Spec(0, 0, 0, 0, 0, value % 2 == 1 ? value : value + 1) : null;
+                case LABYRINTHE -> value >= 15 && value <= 61 ? new Spec(0, 0, 0, 0, 0, value % 2 == 1 ? value : value + 1) : null;
             };
         }
 
@@ -701,7 +547,7 @@ public final class GeneratedGameManager {
                 case SURVIE_ETAGES -> width + "x" + width + " §8• §7" + floors + " étages";
                 case RUEE_OR -> width + "x" + goldHeight + " §8• §7" + goldDuration + "s";
                 case WATER_JUMP -> waterLength + " blocs §8• §7montée progressive";
-                case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7sas opposés aléatoires";
+                case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7sas élargis";
             };
         }
     }
