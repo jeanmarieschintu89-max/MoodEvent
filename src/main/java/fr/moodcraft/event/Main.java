@@ -16,6 +16,7 @@ import fr.moodcraft.event.listener.GoldRushInventoryGuard;
 import fr.moodcraft.event.listener.GoldRushPressureReminder;
 import fr.moodcraft.event.listener.GoldRushStopGuard;
 import fr.moodcraft.event.listener.GoldRushTask;
+import fr.moodcraft.event.listener.PrisonEscapeListener;
 import fr.moodcraft.event.listener.SurvivalFloorTask;
 import fr.moodcraft.event.loot.EventLootManager;
 import fr.moodcraft.event.manager.EventAutoStartTask;
@@ -84,6 +85,7 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new EventMobGuard(), this);
         Bukkit.getPluginManager().registerEvents(new EventProtectionListener(), this);
         Bukkit.getPluginManager().registerEvents(new EventProgressListener(), this);
+        Bukkit.getPluginManager().registerEvents(new PrisonEscapeListener(), this);
         Bukkit.getPluginManager().registerEvents(new EventDeathGuard(), this);
         Bukkit.getPluginManager().registerEvents(new SurvivalFloorTask(), this);
         Bukkit.getPluginManager().registerEvents(new GoldRushTask(), this);
@@ -91,7 +93,7 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new GoldRushStopGuard(), this);
         Bukkit.getPluginManager().registerEvents(new GoldRushInventoryGuard(), this);
 
-        getLogger().info("MoodEvent active : Mine en folie, Tour Infernale et Water Jump.");
+        getLogger().info("MoodEvent active : Mine en folie, Tour Infernale, Water Jump et Prison Escape.");
     }
 
     @Override
