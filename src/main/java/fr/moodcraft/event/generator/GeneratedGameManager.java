@@ -138,7 +138,7 @@ public final class GeneratedGameManager {
     public static String customRule(GeneratedGameType type) {
         return switch (type) {
             case LABYRINTHE -> MoodStyle.detail("Largeur impaire entre §e15 §7et §e101§7.");
-            case JUMP -> MoodStyle.detail("Hauteur entre §e30 §7et §e250 §7niveaux visuels.");
+            case JUMP -> MoodStyle.detail("Hauteur entre §e30 §7et §e250 §7niveaux visuels, avec validation automatique des sauts.");
             case COURSE -> MoodStyle.detail("Longueur entre §e50 §7et §e1000 §7blocs.");
             case WATER_JUMP -> MoodStyle.detail("Longueur entre §e30 §7et §e250 §7blocs.");
             case SURVIE_ETAGES -> MoodStyle.detail("Largeur entre §e15 §7et §e61§7, étages automatiques.");
@@ -189,6 +189,7 @@ public final class GeneratedGameManager {
         config.set("finish", null);
         config.set("survival", null);
         config.set("gold-rush", null);
+        config.set("jump", null);
         active = false;
         activeType = null;
         activeRegion = null;
@@ -233,6 +234,8 @@ public final class GeneratedGameManager {
             config.set("style", style.name());
         } else if (type == GeneratedGameType.LABYRINTHE) {
             config.set("style", "LABYRINTHE_PREMIUM");
+        } else if (type == GeneratedGameType.JUMP) {
+            config.set("style", "JUMP_HAUTEUR_LAINE");
         } else {
             config.set("style", "LAINE_CONSTANTE");
         }
@@ -258,7 +261,8 @@ public final class GeneratedGameManager {
         MoodStyle.successMessage(player, MoodStyle.MODULE,
                 "Mini-jeu généré.",
                 MoodStyle.detail("Type : §e" + type.getDisplayName()),
-                MoodStyle.detail("Taille : §e" + spec.describe(type)));
+                MoodStyle.detail("Taille : §e" + spec.describe(type)),
+                type == GeneratedGameType.JUMP ? MoodStyle.detail("Validation : " + (config.getBoolean("jump.reachable", false) ? "§aparcours faisable" : "§cà vérifier")) : MoodStyle.detail("Structure prête."));
     }
 
     private static void configureEvent(Player player, GeneratedGameType type, Points points) {
@@ -278,7 +282,7 @@ public final class GeneratedGameManager {
     private static String description(GeneratedGameType type) {
         return switch (type) {
             case LABYRINTHE -> "Trouvez la sortie rouge avant les autres.";
-            case JUMP -> "Montez de plateforme en plateforme jusqu'à la ligne rouge en hauteur.";
+            case JUMP -> "Montez de plateforme en plateforme sur toute la zone jusqu'à la ligne rouge en hauteur.";
             case COURSE -> "Restez dans la piste et atteignez la ligne rouge avant les autres.";
             case WATER_JUMP -> "Franchissez les blocs de laine au-dessus de l'eau jusqu'à l'arrivée rouge.";
             case SURVIE_ETAGES -> "Restez le plus longtemps possible dans l'arène fermée pendant que les étages disparaissent.";
@@ -293,6 +297,11 @@ public final class GeneratedGameManager {
 
     private static Points generateJump(Location center, Spec spec) {
         GeneratedVerticalJumpBuilder.Layout layout = GeneratedVerticalJumpBuilder.build(center, spec.platforms);
+        config.set("jump.profile", "hauteur_laine_faisable_v1");
+        config.set("jump.reachable", layout.reachable());
+        config.set("jump.corrections", layout.corrections());
+        config.set("jump.platforms", layout.platformCount());
+        config.set("jump.validation", layout.reachable() ? "OK" : "A_VERIFIER");
         return new Points(layout.start(), layout.finish());
     }
 
@@ -538,7 +547,7 @@ public final class GeneratedGameManager {
         private String describe(GeneratedGameType type) {
             return switch (type) {
                 case LABYRINTHE -> width + "x" + width;
-                case JUMP -> platforms + " plateformes en hauteur";
+                case JUMP -> platforms + " plateformes en hauteur §8• §7sauts validés";
                 case COURSE, WATER_JUMP -> length + " blocs";
                 case SURVIE_ETAGES -> width + "x" + width + " §8• §7" + floors + " étages";
                 case RUEE_OR -> width + "x" + goldHeight + " §8• §7" + goldDuration + "s";
