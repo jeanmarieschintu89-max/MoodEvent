@@ -558,11 +558,11 @@ public final class EventManager {
     private static void scheduleAutoStop(Player actor, String reason) {
         if (!running || autoClosing) return;
         autoClosing = true;
-        broadcastEvent(MoodStyle.success("Épreuve terminée."), MoodStyle.detail(reason), MoodStyle.info("Clôture automatique dans §e3 secondes"));
+        broadcastEvent(MoodStyle.success("Épreuve terminée."), MoodStyle.detail(reason), MoodStyle.info("Retour automatique dans §e30 secondes"));
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
             if (!running || !hasEvent()) { autoClosing = false; return; }
             stopEvent(resolveActor(actor));
-        }, 60L);
+        }, 20L * 30);
     }
 
     private static Player resolveActor(Player player) {
