@@ -96,6 +96,13 @@ public final class GeneratedGameManager {
         return feet == Material.WATER || below == Material.WATER || location.getY() <= config.getDouble("water-jump.fall-y", -9999);
     }
 
+    public static boolean isJumpFall(Player player) {
+        ensureLoaded();
+        if (player == null || player.getWorld() == null || activeType != GeneratedGameType.JUMP) return false;
+        if (!hasStructure() || !activeRegion.contains(player.getLocation())) return false;
+        return player.getLocation().getY() <= config.getDouble("jump.fall-y", -9999);
+    }
+
     public static int getGoldRushDurationSeconds() {
         ensureLoaded();
         return config.getInt("gold-rush.duration-seconds", 60);
@@ -142,6 +149,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> MoodStyle.detail("Largeur entre §e15 §7et §e61§7, étages automatiques.");
             case RUEE_OR -> MoodStyle.detail("Largeur mine entre §e15 §7et §e51§7. Temps calculé automatiquement.");
             case WATER_JUMP -> MoodStyle.detail("Longueur entre §e40 §7et §e140 §7blocs.");
+            case JUMP -> MoodStyle.detail("Hauteur entre §e30 §7et §e250 §7niveaux visuels, avec validation automatique des sauts.");
             case LABYRINTHE, LABYRINTHE_ROND -> MoodStyle.detail("Largeur impaire entre §e15 §7et §e61 §7blocs.");
         };
     }
@@ -192,6 +200,7 @@ public final class GeneratedGameManager {
         config.set("survival", null);
         config.set("gold-rush", null);
         config.set("water-jump", null);
+        config.set("jump", null);
         config.set("labyrinth", null);
         active = false;
         activeType = null;
@@ -228,6 +237,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> routeCollapse(center, spec);
             case RUEE_OR -> routeMine(center, spec);
             case WATER_JUMP -> routeWaterJump(center, spec);
+            case JUMP -> routeJump(center, spec);
             case LABYRINTHE -> routeLabyrinth(center, spec);
             case LABYRINTHE_ROND -> routeRoundLabyrinth(center, spec);
         };
@@ -256,7 +266,8 @@ public final class GeneratedGameManager {
         MoodStyle.successMessage(player, MoodStyle.MODULE,
                 "Mini-jeu généré.",
                 MoodStyle.detail("Type : §e" + type.getDisplayName()),
-                MoodStyle.detail("Taille : §e" + spec.describe(type)));
+                MoodStyle.detail("Taille : §e" + spec.describe(type)),
+                type == GeneratedGameType.JUMP ? MoodStyle.detail("Validation : " + (config.getBoolean("jump.reachable", false) ? "§aparcours faisable" : "§cà vérifier")) : MoodStyle.detail("Structure prête."));
     }
 
     private static String generationProfile(GeneratedGameType type) {
@@ -264,6 +275,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> "survie_etages";
             case RUEE_OR -> "ruee_or";
             case WATER_JUMP -> "water_jump_safe_v1";
+            case JUMP -> "jump_hauteur_laine_v1";
             case LABYRINTHE -> "labyrinthe_carre_v2";
             case LABYRINTHE_ROND -> "labyrinthe_rond_v1";
         };
@@ -292,6 +304,16 @@ public final class GeneratedGameManager {
         config.set("water-jump.reachable", layout.reachable());
         config.set("water-jump.corrections", layout.corrections());
         config.set("water-jump.platforms", layout.platformCount());
+        return new Points(layout.start(), layout.finish(), 0);
+    }
+
+    private static Points routeJump(Location center, Spec spec) {
+        GeneratedVerticalJumpBuilder.Layout layout = GeneratedVerticalJumpBuilder.build(center, spec.jumpPlatforms);
+        config.set("jump.reachable", layout.reachable());
+        config.set("jump.corrections", layout.corrections());
+        config.set("jump.platforms", layout.platformCount());
+        config.set("jump.fall-y", layout.fallY());
+        config.set("jump.validation", layout.reachable() ? "OK" : "A_VERIFIER");
         return new Points(layout.start(), layout.finish(), 0);
     }
 
@@ -338,6 +360,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> "Survivez dans la tour pendant que les étages disparaissent.";
             case RUEE_OR -> "Minez un maximum de minerais dans le temps imparti. Vous gardez les minerais.";
             case WATER_JUMP -> "Franchissez les plateformes au-dessus de l'eau. Chaque raccord est vérifié pour rester faisable.";
+            case JUMP -> "Montez de plateforme en plateforme sur toute la zone jusqu'à la ligne rouge en hauteur.";
             case LABYRINTHE -> "Traversez le labyrinthe carré depuis le sas de départ jusqu'au sas d'arrivée. Top 3 à l'arrivée.";
             case LABYRINTHE_ROND -> "Partez du centre du labyrinthe rond et trouvez l'unique sortie extérieure. Top 3 à l'arrivée.";
         };
@@ -350,6 +373,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> new Region(world, cx - spec.width / 2 - 4, cy - 2, cz - spec.width / 2 - 4, cx + spec.width / 2 + 4, cy + 10 + spec.floors * 5, cz + spec.width / 2 + 4);
             case RUEE_OR -> new Region(world, cx - spec.width / 2 - 2, cy - 1, cz - spec.width / 2 - 2, cx + spec.width / 2 + 2, cy + spec.goldHeight + 2, cz + spec.width / 2 + 2);
             case WATER_JUMP -> new Region(world, cx - 10, cy - 3, cz - 11, cx + spec.waterLength + 18, cy + 22, cz + 11);
+            case JUMP -> new Region(world, cx - 12, cy - 2, cz - 12, cx + 12, cy + Math.max(28, spec.jumpPlatforms + 14), cz + 12);
             case LABYRINTHE, LABYRINTHE_ROND -> new Region(world, cx - spec.mazeWidth / 2 - 12, cy - 2, cz - spec.mazeWidth / 2 - 12, cx + spec.mazeWidth / 2 + 12, cy + 8, cz + spec.mazeWidth / 2 + 12);
         };
     }
@@ -447,22 +471,24 @@ public final class GeneratedGameManager {
         }
     }
 
-    private record Spec(int width, int floors, int goldHeight, int goldDuration, int waterLength, int mazeWidth) {
+    private record Spec(int width, int floors, int goldHeight, int goldDuration, int waterLength, int mazeWidth, int jumpPlatforms) {
         private static Spec preset(GeneratedGameType type, GeneratedGameSize size) {
             return switch (type) {
-                case SURVIE_ETAGES -> new Spec(size.getSurvivalWidth(), size.getSurvivalFloors(), 0, 0, 0, 0);
-                case RUEE_OR -> new Spec(size.getGoldRushWidth(), 0, size.getGoldRushHeight(), size.getGoldRushDurationSeconds(), 0, 0);
-                case WATER_JUMP -> new Spec(0, 0, 0, 0, size.getWaterLength(), 0);
-                case LABYRINTHE, LABYRINTHE_ROND -> new Spec(0, 0, 0, 0, 0, size.getMazeWidth());
+                case SURVIE_ETAGES -> new Spec(size.getSurvivalWidth(), size.getSurvivalFloors(), 0, 0, 0, 0, 0);
+                case RUEE_OR -> new Spec(size.getGoldRushWidth(), 0, size.getGoldRushHeight(), size.getGoldRushDurationSeconds(), 0, 0, 0);
+                case WATER_JUMP -> new Spec(0, 0, 0, 0, size.getWaterLength(), 0, 0);
+                case JUMP -> new Spec(0, 0, 0, 0, 0, 0, size.getJumpPlatforms());
+                case LABYRINTHE, LABYRINTHE_ROND -> new Spec(0, 0, 0, 0, 0, size.getMazeWidth(), 0);
             };
         }
 
         private static Spec custom(GeneratedGameType type, int value) {
             return switch (type) {
-                case SURVIE_ETAGES -> value >= 15 && value <= 61 ? new Spec(value % 2 == 1 ? value : value + 1, floors(value), 0, 0, 0, 0) : null;
-                case RUEE_OR -> value >= 15 && value <= 51 ? new Spec(value % 2 == 1 ? value : value + 1, 0, Math.max(9, value / 3), Math.max(60, Math.min(240, value * 4)), 0, 0) : null;
-                case WATER_JUMP -> value >= 40 && value <= 140 ? new Spec(0, 0, 0, 0, value, 0) : null;
-                case LABYRINTHE, LABYRINTHE_ROND -> value >= 15 && value <= 61 ? new Spec(0, 0, 0, 0, 0, value % 2 == 1 ? value : value + 1) : null;
+                case SURVIE_ETAGES -> value >= 15 && value <= 61 ? new Spec(value % 2 == 1 ? value : value + 1, floors(value), 0, 0, 0, 0, 0) : null;
+                case RUEE_OR -> value >= 15 && value <= 51 ? new Spec(value % 2 == 1 ? value : value + 1, 0, Math.max(9, value / 3), Math.max(60, Math.min(240, value * 4)), 0, 0, 0) : null;
+                case WATER_JUMP -> value >= 40 && value <= 140 ? new Spec(0, 0, 0, 0, value, 0, 0) : null;
+                case JUMP -> value >= 30 && value <= 250 ? new Spec(0, 0, 0, 0, 0, 0, Math.max(12, Math.min(44, value / 5))) : null;
+                case LABYRINTHE, LABYRINTHE_ROND -> value >= 15 && value <= 61 ? new Spec(0, 0, 0, 0, 0, value % 2 == 1 ? value : value + 1, 0) : null;
             };
         }
 
@@ -479,6 +505,7 @@ public final class GeneratedGameManager {
                 case SURVIE_ETAGES -> width + "x" + width + " §8• §7" + floors + " étages";
                 case RUEE_OR -> width + "x" + goldHeight + " §8• §7" + goldDuration + "s";
                 case WATER_JUMP -> waterLength + " blocs §8• §7sauts sécurisés";
+                case JUMP -> jumpPlatforms + " plateformes §8• §7sauts validés";
                 case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7carré avec sas";
                 case LABYRINTHE_ROND -> mazeWidth + " blocs §8• §7rond, départ au centre";
             };
