@@ -6,17 +6,23 @@ import org.bukkit.World;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public final class GeneratedVerticalJumpBuilder {
 
-    private static final Random RANDOM = new Random();
-    private static final int MAX_SAFE_XZ_GAP = 3;
+    private static final int MAX_SAFE_XZ_GAP = 4;
     private static final int MAX_SAFE_Y_UP = 1;
-    private static final int TOWER_RADIUS = 9;
+    private static final int TOWER_RADIUS = 15;
+    private static final int SPREAD_LIMIT = 12;
     private static final Material[] WOOL = {
             Material.WHITE_WOOL, Material.YELLOW_WOOL, Material.ORANGE_WOOL, Material.LIME_WOOL,
             Material.LIGHT_BLUE_WOOL, Material.CYAN_WOOL, Material.MAGENTA_WOOL, Material.PINK_WOOL
+    };
+
+    private static final int[][] SPREAD_PATH = {
+            {0, 0}, {3, 0}, {6, 2}, {9, 5}, {12, 8}, {8, 12}, {4, 10}, {0, 12},
+            {-4, 10}, {-8, 12}, {-12, 8}, {-9, 4}, {-12, 0}, {-9, -4}, {-12, -8}, {-7, -12},
+            {-2, -10}, {3, -12}, {8, -10}, {12, -6}, {10, -1}, {12, 4}, {7, 8}, {2, 11},
+            {-3, 8}, {-8, 5}, {-11, 1}, {-8, -3}, {-4, -7}, {1, -9}, {6, -7}, {10, -3}
     };
 
     private GeneratedVerticalJumpBuilder() {}
@@ -35,34 +41,33 @@ public final class GeneratedVerticalJumpBuilder {
         List<JumpNode> nodes = new ArrayList<>();
 
         buildSafetyTower(world, cx, cy, cz, topY);
-        drawGroundLine(world, cx, cy, cz, 4, Material.LIME_WOOL);
+        drawGroundLine(world, cx, cy, cz, 5, Material.LIME_WOOL);
         buildStartMark(world, cx, cy, cz);
 
         JumpNode previous = new JumpNode(cx, cy, cz, 4);
-        int x = cx;
-        int z = cz;
-        int y = cy + 1;
 
         for (int i = 1; i <= safePlatforms; i++) {
-            int direction = i % 4;
-            if (direction == 0) x += 2 + RANDOM.nextInt(2);
-            if (direction == 1) z += 2 + RANDOM.nextInt(2);
-            if (direction == 2) x -= 2 + RANDOM.nextInt(2);
-            if (direction == 3) z -= 2 + RANDOM.nextInt(2);
-            y += 1;
+            int[] offset = SPREAD_PATH[i % SPREAD_PATH.length];
+            int wantedX = cx + offset[0];
+            int wantedZ = cz + offset[1];
+            int wantedY = cy + i;
+            int radius = i % 8 == 0 ? 2 : 1;
 
-            int radius = i % 7 == 0 ? 2 : 1;
-            JumpNode wanted = new JumpNode(clamp(x, cx - 6, cx + 6), y, clamp(z, cz - 6, cz + 6), radius);
+            JumpNode wanted = new JumpNode(
+                    clamp(wantedX, cx - SPREAD_LIMIT, cx + SPREAD_LIMIT),
+                    wantedY,
+                    clamp(wantedZ, cz - SPREAD_LIMIT, cz + SPREAD_LIMIT),
+                    radius
+            );
+
             JumpNode next = adaptReachableNode(previous, wanted, cx, cz);
             if (!sameNode(wanted, next)) corrections++;
             if (!isReachable(previous, next)) reachable = false;
 
             platform(world, next.x(), next.y(), next.z(), next.radius(), WOOL[i % WOOL.length]);
+            addPlatformMarker(world, next, i);
             nodes.add(next);
             previous = next;
-            x = next.x();
-            y = next.y();
-            z = next.z();
         }
 
         int finishY = previous.y() + 1;
@@ -73,7 +78,7 @@ public final class GeneratedVerticalJumpBuilder {
         }
         reachable = reachable && isReachable(previous, finishNode);
 
-        drawGroundLine(world, finishNode.x(), finishNode.y(), finishNode.z(), 4, Material.RED_WOOL);
+        drawGroundLine(world, finishNode.x(), finishNode.y(), finishNode.z(), 5, Material.RED_WOOL);
         buildFinishMark(world, finishNode.x(), finishNode.y(), finishNode.z());
 
         return new Layout(
@@ -98,8 +103,8 @@ public final class GeneratedVerticalJumpBuilder {
         if (z < previous.z() - maxDelta) z = previous.z() - maxDelta;
         if (y > previous.y() + MAX_SAFE_Y_UP) y = previous.y() + MAX_SAFE_Y_UP;
 
-        x = clamp(x, centerX - 6, centerX + 6);
-        z = clamp(z, centerZ - 6, centerZ + 6);
+        x = clamp(x, centerX - SPREAD_LIMIT, centerX + SPREAD_LIMIT);
+        z = clamp(z, centerZ - SPREAD_LIMIT, centerZ + SPREAD_LIMIT);
         return new JumpNode(x, y, z, radius);
     }
 
@@ -146,19 +151,23 @@ public final class GeneratedVerticalJumpBuilder {
     }
 
     private static void drawGroundLine(World world, int x, int y, int z, int halfWidth, Material material) {
-        for (int dz = -halfWidth; dz <= halfWidth; dz++) {
-            world.getBlockAt(x, y, z + dz).setType(material, false);
-            world.getBlockAt(x, y + 1, z + dz).setType(Material.AIR, false);
+        for (int dx = -halfWidth; dx <= halfWidth; dx++) {
+            for (int dz = -halfWidth; dz <= halfWidth; dz++) {
+                if (Math.abs(dx) == halfWidth || Math.abs(dz) == halfWidth || dx == 0 || dz == 0) {
+                    world.getBlockAt(x + dx, y, z + dz).setType(material, false);
+                    world.getBlockAt(x + dx, y + 1, z + dz).setType(Material.AIR, false);
+                }
+            }
         }
     }
 
     private static void buildStartMark(World world, int x, int y, int z) {
-        for (int dz = -4; dz <= 4; dz++) world.getBlockAt(x - 1, y, z + dz).setType(Material.LIME_WOOL, false);
+        for (int dz = -5; dz <= 5; dz++) world.getBlockAt(x - 1, y, z + dz).setType(Material.LIME_WOOL, false);
         world.getBlockAt(x, y + 3, z).setType(Material.SEA_LANTERN, false);
     }
 
     private static void buildFinishMark(World world, int x, int y, int z) {
-        for (int dz = -4; dz <= 4; dz++) world.getBlockAt(x + 1, y, z + dz).setType(Material.RED_WOOL, false);
+        for (int dz = -5; dz <= 5; dz++) world.getBlockAt(x + 1, y, z + dz).setType(Material.RED_WOOL, false);
         world.getBlockAt(x, y + 3, z).setType(Material.SEA_LANTERN, false);
     }
 
@@ -168,6 +177,11 @@ public final class GeneratedVerticalJumpBuilder {
                 world.getBlockAt(x, cy, z).setType(material, false);
             }
         }
+    }
+
+    private static void addPlatformMarker(World world, JumpNode node, int index) {
+        if (index % 4 == 0) world.getBlockAt(node.x(), node.y() + 1, node.z()).setType(Material.SEA_LANTERN, false);
+        if (index % 5 == 0) world.getBlockAt(node.x(), node.y() - 1, node.z()).setType(Material.GLOWSTONE, false);
     }
 
     private static int clamp(int value, int min, int max) {
