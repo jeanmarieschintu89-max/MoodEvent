@@ -2,6 +2,7 @@ package fr.moodcraft.event.manager;
 
 import fr.moodcraft.event.Main;
 import fr.moodcraft.event.hook.VaultHook;
+import fr.moodcraft.event.model.EventType;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -160,6 +161,7 @@ public final class RewardManager {
     }
 
     public static void giveParticipationReward(Player player) {
+        if (EventManager.getType() == EventType.RUEE_OR) return;
         giveReward(player, PARTICIPATION, true);
     }
 
