@@ -3,7 +3,7 @@ package fr.moodcraft.event.model;
 public enum EventType {
 
     COURSE("§aCourse", "§a➜"),
-    JUMP("§eMur d'escalade", "§e⬆"),
+    JUMP("§eJump en hauteur", "§e⬆"),
     WATER_JUMP("§bWater Jump", "§b≈"),
     LABYRINTHE("§5Labyrinthe", "§5✦"),
     SURVIE_ETAGES("§dTour Infernale", "§d▣"),
@@ -58,7 +58,7 @@ public enum EventType {
 
         return switch (clean) {
             case "course", "race", "running" -> COURSE;
-            case "jump", "parcours", "parkour", "parcours_jump", "saut", "mur_descalade", "mur_escalade", "escalade" -> JUMP;
+            case "jump", "parcours", "parkour", "parcours_jump", "saut", "jump_hauteur", "jump_en_hauteur", "hauteur", "parkour_hauteur", "mur_descalade", "mur_escalade", "escalade" -> JUMP;
             case "waterjump", "water_jump", "water", "eau", "jump_eau", "saut_eau", "water_jumps" -> WATER_JUMP;
             case "labyrinthe", "maze", "labyrinth" -> LABYRINTHE;
             case "tour_infernale", "effondrement", "dernier_etage", "etage_final", "last_floor", "survie_etages", "survie_des_etages", "etages", "etage", "floor", "floors", "floor_survival" -> SURVIE_ETAGES;
