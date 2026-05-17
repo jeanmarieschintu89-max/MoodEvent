@@ -128,6 +128,7 @@ public class EventAdminGUIListener implements Listener {
             case 12 -> openStyle(player, GeneratedGameType.RUEE_OR);
             case 14 -> openStyle(player, GeneratedGameType.WATER_JUMP);
             case 16 -> openStyle(player, GeneratedGameType.MUR_ESCALADE);
+            case 20 -> openStyle(player, GeneratedGameType.PRISON_BREAK);
             case 22 -> openStyle(player, GeneratedGameType.LABYRINTHE);
             case 24 -> openStyle(player, GeneratedGameType.LABYRINTHE_ROND);
             case 33 -> {
