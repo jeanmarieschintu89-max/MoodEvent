@@ -13,6 +13,7 @@ public final class GeneratedPrisonBreakBuilder {
     private static final int ROOM_GAP = 11;
     private static final int COLUMNS = 3;
     private static final Material PUZZLE_MARKER = Material.LODESTONE;
+    private static final Material GATE_MARKER = Material.RESPAWN_ANCHOR;
 
     private GeneratedPrisonBreakBuilder() {}
 
@@ -210,7 +211,7 @@ public final class GeneratedPrisonBreakBuilder {
     private static void carveFakeSide(World world, int cx, int cy, int cz, Random random) {
         int dir = random.nextBoolean() ? 1 : -1;
         for (int x = cx; x != cx + dir * 7; x += dir) carveColumn(world, x, cy, cz, Material.CRACKED_STONE_BRICKS);
-        buildClosedGate(world, cx + dir * 7, cy, cz, true);
+        buildFakeGate(world, cx + dir * 7, cy, cz, true);
         world.getBlockAt(cx + dir * 5, cy + 1, cz).setType(Material.CHEST, false);
     }
 
@@ -218,16 +219,26 @@ public final class GeneratedPrisonBreakBuilder {
         boolean vertical = Math.abs(cx - previousX) <= Math.abs(cz - previousZ);
         int gateZ = previousZ > cz ? cz + ROOM_HALF : cz - ROOM_HALF;
         int gateX = previousX > cx ? cx + ROOM_HALF : cx - ROOM_HALF;
-        if (vertical) buildClosedGate(world, cx, cy, gateZ, true); else buildClosedGate(world, gateX, cy, cz, false);
+        if (vertical) buildRealGate(world, cx, cy, gateZ, true); else buildRealGate(world, gateX, cy, cz, false);
     }
 
-    private static void buildClosedGate(World world, int cx, int cy, int cz, boolean alongX) {
+    private static void buildRealGate(World world, int cx, int cy, int cz, boolean alongX) {
+        buildGateBars(world, cx, cy, cz, alongX);
+        world.getBlockAt(cx, cy - 1, cz).setType(GATE_MARKER, false);
+        world.getBlockAt(cx + (alongX ? 2 : 0), cy + 1, cz + (alongX ? 0 : 2)).setType(Material.REDSTONE_LAMP, false);
+    }
+
+    private static void buildFakeGate(World world, int cx, int cy, int cz, boolean alongX) {
+        buildGateBars(world, cx, cy, cz, alongX);
+        world.getBlockAt(cx + (alongX ? 2 : 0), cy + 1, cz + (alongX ? 0 : 2)).setType(Material.REDSTONE_LAMP, false);
+    }
+
+    private static void buildGateBars(World world, int cx, int cy, int cz, boolean alongX) {
         if (alongX) {
             for (int x = cx - 2; x <= cx + 2; x++) for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(x, y, cz).setType(Material.IRON_BARS, false);
         } else {
             for (int z = cz - 2; z <= cz + 2; z++) for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(cx, y, z).setType(Material.IRON_BARS, false);
         }
-        world.getBlockAt(cx + (alongX ? 2 : 0), cy + 1, cz + (alongX ? 0 : 2)).setType(Material.REDSTONE_LAMP, false);
     }
 
     private static void openDoor(World world, int x, int cy, int z) {
@@ -257,7 +268,7 @@ public final class GeneratedPrisonBreakBuilder {
         int side = random.nextInt(4);
         int x = cx + (side == 0 ? ROOM_HALF : side == 1 ? -ROOM_HALF : random.nextInt(ROOM_HALF * 2) - ROOM_HALF);
         int z = cz + (side == 2 ? ROOM_HALF : side == 3 ? -ROOM_HALF : random.nextInt(ROOM_HALF * 2) - ROOM_HALF);
-        buildClosedGate(world, x, cy, z, side <= 1);
+        buildFakeGate(world, x, cy, z, side <= 1);
     }
 
     private static void buildExit(World world, int cx, int cy, int cz) {
