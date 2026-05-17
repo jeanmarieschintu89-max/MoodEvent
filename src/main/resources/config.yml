@@ -17,3 +17,15 @@ event:
     z: 0.0
     yaw: 0.0
     pitch: 0.0
+
+# Durées configurables des mini-jeux générés.
+# Aucun chrono de Mine en folie n'est calculé automatiquement dans le code.
+# Si une valeur manque ou vaut 0, la génération est refusée.
+generated-games:
+  ruee-or:
+    durations:
+      petit: 60
+      moyen: 100
+      grand: 140
+      geant: 180
+      custom: 120
