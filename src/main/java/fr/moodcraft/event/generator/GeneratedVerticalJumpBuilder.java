@@ -3,15 +3,30 @@ package fr.moodcraft.event.generator;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class GeneratedVerticalJumpBuilder {
 
+    private static final int HALF = 11;
+    private static final int MAX_SAFE_XZ_GAP = 4;
+    private static final int MAX_SAFE_Y_UP = 1;
+
     private static final Material[] WOOL = {
-            Material.WHITE_WOOL, Material.YELLOW_WOOL, Material.ORANGE_WOOL, Material.LIGHT_BLUE_WOOL,
-            Material.CYAN_WOOL, Material.MAGENTA_WOOL, Material.PINK_WOOL
+            Material.WHITE_WOOL,
+            Material.YELLOW_WOOL,
+            Material.ORANGE_WOOL,
+            Material.LIME_WOOL,
+            Material.LIGHT_BLUE_WOOL,
+            Material.CYAN_WOOL,
+            Material.MAGENTA_WOOL,
+            Material.PINK_WOOL,
+            Material.PURPLE_WOOL
     };
 
     private GeneratedVerticalJumpBuilder() {
@@ -19,122 +34,132 @@ public final class GeneratedVerticalJumpBuilder {
 
     public static Layout build(Location center, int platforms) {
         World world = center.getWorld();
-        if (world == null) return new Layout(center, center);
+        if (world == null) return new Layout(center, center, false, 0, 0);
 
         int cx = center.getBlockX();
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
         int safePlatforms = Math.max(12, Math.min(44, platforms));
-        int topY = cy + safePlatforms + 8;
+        int topY = cy + safePlatforms + 9;
 
-        clearTowerArea(world, cx, cy, cz, topY);
-        buildGlassCage(world, cx, cy, cz, topY);
-        buildCleanStart(world, cx, cy, cz);
+        buildWoolArena(world, cx, cy, cz, topY);
+        buildStartZone(world, cx, cy, cz);
 
-        int x = cx;
-        int z = cz;
-        int y = cy + 1;
-        platform(world, x, y, z, 1, Material.LIME_WOOL);
+        List<Node> nodes = route(cx, cy, cz, safePlatforms);
+        Validation validation = validateAndCorrect(nodes, cx, cz);
+        nodes = validation.nodes();
 
-        for (int i = 1; i <= safePlatforms; i++) {
-            Step step = stepFor(cx, cz, i);
-            x = step.x();
-            z = step.z();
-            y = cy + 1 + i;
-            buildStep(world, x, y, z, i, i == safePlatforms);
+        for (int i = 0; i < nodes.size(); i++) {
+            Node node = nodes.get(i);
+            boolean finish = i == nodes.size() - 1;
+            buildNode(world, node, i, finish);
         }
 
+        Node first = nodes.get(0);
+        Node last = nodes.get(nodes.size() - 1);
+        buildFinishBeacon(world, last);
+
         return new Layout(
-                new Location(world, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f),
-                new Location(world, x + 0.5, y + 1, z + 0.5, 180f, 0f)
+                new Location(world, first.x() + 0.5, first.y() + 1, first.z() + 0.5, 0f, 0f),
+                new Location(world, last.x() + 0.5, last.y() + 1, last.z() + 0.5, 180f, 0f),
+                validation.reachable(),
+                validation.corrections(),
+                nodes.size()
         );
     }
 
-    private static Step stepFor(int cx, int cz, int index) {
-        int[][] route = {
-                {1, 0}, {2, 1}, {2, 2}, {1, 3}, {0, 3}, {-1, 3}, {-2, 2}, {-2, 1},
-                {-2, 0}, {-2, -1}, {-1, -2}, {0, -2}, {1, -2}, {2, -1}, {3, 0}, {3, 1},
-                {3, 3}, {1, 4}, {-1, 4}, {-3, 3}, {-4, 1}, {-4, -1}, {-3, -3}, {-1, -4},
-                {1, -4}, {3, -3}, {4, -1}, {4, 1}, {3, 4}, {0, 5}, {-3, 4}, {-5, 1},
-                {-5, -2}, {-3, -5}, {0, -6}, {3, -5}, {5, -2}, {6, 1}, {4, 5}, {1, 6},
-                {-2, 6}, {-5, 4}, {-6, 0}, {-5, -4}
+    private static List<Node> route(int cx, int cy, int cz, int platforms) {
+        List<Node> nodes = new ArrayList<>();
+        nodes.add(new Node(cx, cy + 1, cz, 2));
+
+        int[][] pattern = {
+                {-7, -7}, {-3, -8}, {2, -7}, {7, -6}, {8, -2}, {5, 2}, {1, 5}, {-4, 7}, {-8, 5}, {-7, 1},
+                {-3, -1}, {2, -3}, {6, -1}, {7, 3}, {3, 7}, {-2, 8}, {-7, 6}, {-8, 2}, {-5, -2}, {-1, -5},
+                {4, -7}, {8, -5}, {9, 0}, {6, 5}, {2, 8}, {-3, 8}, {-8, 6}, {-9, 1}, {-7, -4}, {-2, -8},
+                {3, -8}, {8, -6}, {9, -1}, {5, 4}, {0, 8}, {-5, 7}, {-9, 4}, {-8, -1}, {-4, -6}, {1, -8},
+                {6, -7}, {9, -3}, {8, 2}, {4, 7}, {-1, 9}, {-6, 8}
         };
-        int[] point = route[(index - 1) % route.length];
-        return new Step(cx + point[0], cz + point[1]);
+
+        for (int i = 1; i <= platforms; i++) {
+            int[] point = pattern[(i - 1) % pattern.length];
+            int radius = i % 11 == 0 ? 2 : 1;
+            nodes.add(new Node(cx + point[0], cy + 1 + i, cz + point[1], radius));
+        }
+
+        Node previous = nodes.get(nodes.size() - 1);
+        nodes.add(new Node(Math.max(cx - 6, Math.min(cx + 6, previous.x())), previous.y() + 1, Math.max(cz - 6, Math.min(cz + 6, previous.z())), 3));
+        return nodes;
     }
 
-    private static void buildStep(World world, int x, int y, int z, int index, boolean finish) {
-        if (finish) {
-            platform(world, x, y, z, 2, Material.RED_WOOL);
-            world.getBlockAt(x, y + 2, z).setType(Material.SEA_LANTERN, false);
-            return;
+    private static Validation validateAndCorrect(List<Node> input, int cx, int cz) {
+        List<Node> corrected = new ArrayList<>();
+        int corrections = 0;
+        boolean reachable = true;
+        corrected.add(input.get(0));
+
+        for (int i = 1; i < input.size(); i++) {
+            Node previous = corrected.get(corrected.size() - 1);
+            Node wanted = input.get(i);
+            Node next = adapt(previous, wanted, cx, cz);
+            if (!same(next, wanted)) corrections++;
+            if (!isReachable(previous, next)) reachable = false;
+            corrected.add(next);
         }
 
-        if (index <= 3) {
-            platform(world, x, y, z, 1, WOOL[index % WOOL.length]);
-            return;
-        }
-        if (index % 12 == 0) {
-            platform(world, x, y, z, 2, Material.OAK_PLANKS);
-            fenceBack(world, x, y, z, 2);
-            return;
-        }
-        if (index % 10 == 0) {
-            platform(world, x, y, z, 1, Material.BLUE_ICE);
-            return;
-        }
-        if (index % 9 == 0) {
-            platform(world, x, y, z, 1, Material.SOUL_SAND);
-            return;
-        }
-        if (index % 8 == 0) {
-            platform(world, x, y, z, 1, Material.SLIME_BLOCK);
-            return;
-        }
-        if (index % 7 == 0) {
-            platform(world, x, y, z, 1, Material.OAK_PLANKS);
-            addLadderSupport(world, x + 1, y, z, BlockFace.WEST);
-            return;
-        }
-        if (index % 6 == 0) {
-            platform(world, x, y, z, 1, Material.MAGMA_BLOCK);
-            return;
-        }
-        platform(world, x, y, z, 1, WOOL[index % WOOL.length]);
+        return new Validation(corrected, reachable, corrections);
     }
 
-    private static void clearTowerArea(World world, int cx, int cy, int cz, int topY) {
-        for (int x = cx - 9; x <= cx + 9; x++) {
-            for (int y = cy; y <= topY + 4; y++) {
-                for (int z = cz - 9; z <= cz + 9; z++) {
-                    world.getBlockAt(x, y, z).setType(Material.AIR, false);
-                }
-            }
-        }
+    private static Node adapt(Node previous, Node wanted, int cx, int cz) {
+        int x = wanted.x();
+        int y = wanted.y();
+        int z = wanted.z();
+        int radius = wanted.radius();
+
+        int maxMove = MAX_SAFE_XZ_GAP + previous.radius() + radius;
+        x = clamp(x, previous.x() - maxMove, previous.x() + maxMove);
+        z = clamp(z, previous.z() - maxMove, previous.z() + maxMove);
+        y = Math.min(y, previous.y() + MAX_SAFE_Y_UP);
+
+        x = clamp(x, cx - HALF + 2, cx + HALF - 2);
+        z = clamp(z, cz - HALF + 2, cz + HALF - 2);
+
+        return new Node(x, y, z, radius);
     }
 
-    private static void buildGlassCage(World world, int cx, int cy, int cz, int topY) {
-        int minX = cx - 9;
-        int maxX = cx + 9;
-        int minZ = cz - 9;
-        int maxZ = cz + 9;
+    private static boolean isReachable(Node from, Node to) {
+        int xGap = Math.max(0, Math.abs(to.x() - from.x()) - from.radius() - to.radius());
+        int zGap = Math.max(0, Math.abs(to.z() - from.z()) - from.radius() - to.radius());
+        int yUp = to.y() - from.y();
+        return xGap <= MAX_SAFE_XZ_GAP && zGap <= MAX_SAFE_XZ_GAP && yUp <= MAX_SAFE_Y_UP;
+    }
+
+    private static boolean same(Node a, Node b) {
+        return a.x() == b.x() && a.y() == b.y() && a.z() == b.z() && a.radius() == b.radius();
+    }
+
+    private static void buildWoolArena(World world, int cx, int cy, int cz, int topY) {
+        int minX = cx - HALF;
+        int maxX = cx + HALF;
+        int minZ = cz - HALF;
+        int maxZ = cz + HALF;
 
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
-                world.getBlockAt(x, cy - 1, z).setType(Material.BLUE_CONCRETE, false);
+                world.getBlockAt(x, cy - 1, z).setType((x + z) % 2 == 0 ? Material.LIGHT_GRAY_WOOL : Material.GRAY_WOOL, false);
             }
         }
 
-        for (int y = cy; y <= topY + 3; y++) {
+        for (int y = cy; y <= topY + 4; y++) {
+            Material wall = WOOL[Math.floorMod(y - cy, WOOL.length)];
             for (int x = minX; x <= maxX; x++) {
-                world.getBlockAt(x, y, minZ).setType(Material.LIGHT_BLUE_STAINED_GLASS, false);
-                world.getBlockAt(x, y, maxZ).setType(Material.LIGHT_BLUE_STAINED_GLASS, false);
+                world.getBlockAt(x, y, minZ).setType(wall, false);
+                world.getBlockAt(x, y, maxZ).setType(wall, false);
             }
             for (int z = minZ; z <= maxZ; z++) {
-                world.getBlockAt(minX, y, z).setType(Material.LIGHT_BLUE_STAINED_GLASS, false);
-                world.getBlockAt(maxX, y, z).setType(Material.LIGHT_BLUE_STAINED_GLASS, false);
+                world.getBlockAt(minX, y, z).setType(wall, false);
+                world.getBlockAt(maxX, y, z).setType(wall, false);
             }
-            if (y % 5 == 0) {
+            if ((y - cy) % 5 == 0) {
                 world.getBlockAt(minX, y, minZ).setType(Material.SEA_LANTERN, false);
                 world.getBlockAt(maxX, y, minZ).setType(Material.SEA_LANTERN, false);
                 world.getBlockAt(minX, y, maxZ).setType(Material.SEA_LANTERN, false);
@@ -143,32 +168,46 @@ public final class GeneratedVerticalJumpBuilder {
         }
     }
 
-    private static void buildCleanStart(World world, int cx, int cy, int cz) {
-        for (int x = cx - 2; x <= cx + 2; x++) {
-            for (int z = cz - 4; z <= cz + 4; z++) {
-                world.getBlockAt(x, cy, z).setType(Material.BLUE_CONCRETE, false);
-                world.getBlockAt(x, cy + 1, z).setType(Material.AIR, false);
-                world.getBlockAt(x, cy + 2, z).setType(Material.AIR, false);
+    private static void buildStartZone(World world, int cx, int cy, int cz) {
+        for (int x = cx - 3; x <= cx + 3; x++) {
+            for (int z = cz - 3; z <= cz + 3; z++) {
+                world.getBlockAt(x, cy, z).setType(Material.LIME_WOOL, false);
             }
         }
-        for (int z = cz - 4; z <= cz + 4; z++) world.getBlockAt(cx, cy, z).setType(Material.LIME_WOOL, false);
-        world.getBlockAt(cx, cy + 3, cz).setType(Material.SEA_LANTERN, false);
+        world.getBlockAt(cx, cy + 2, cz).setType(Material.SEA_LANTERN, false);
     }
 
-    private static void fenceBack(World world, int cx, int y, int cz, int radius) {
-        for (int x = cx - radius; x <= cx + radius; x++) {
-            world.getBlockAt(x, y + 1, cz - radius).setType(Material.OAK_FENCE, false);
+    private static void buildNode(World world, Node node, int index, boolean finish) {
+        Material material = materialFor(index, finish);
+        platform(world, node.x(), node.y(), node.z(), node.radius(), material);
+
+        if (index > 0 && index % 9 == 0 && !finish) {
+            addLadderHint(world, node.x() + node.radius() + 1, node.y(), node.z(), BlockFace.WEST);
+        }
+        if (index > 0 && index % 12 == 0 && !finish) {
+            fenceBack(world, node.x(), node.y(), node.z(), node.radius());
         }
     }
 
-    private static void addLadderSupport(World world, int x, int y, int z, BlockFace facing) {
-        world.getBlockAt(x, y, z).setType(Material.OAK_PLANKS, false);
-        world.getBlockAt(x, y + 1, z).setType(Material.LADDER, false);
-        BlockData data = world.getBlockAt(x, y + 1, z).getBlockData();
-        if (data instanceof Directional directional) {
-            directional.setFacing(facing);
-            world.getBlockAt(x, y + 1, z).setBlockData(directional, false);
+    private static Material materialFor(int index, boolean finish) {
+        if (finish) return Material.RED_WOOL;
+        if (index == 0) return Material.LIME_WOOL;
+        if (index % 10 == 0) return Material.BLUE_ICE;
+        if (index % 8 == 0) return Material.SLIME_BLOCK;
+        if (index % 7 == 0) return Material.HONEY_BLOCK;
+        if (index % 6 == 0) return Material.OAK_PLANKS;
+        return WOOL[index % WOOL.length];
+    }
+
+    private static void buildFinishBeacon(World world, Node finish) {
+        for (int y = finish.y() + 1; y <= finish.y() + 4; y++) {
+            world.getBlockAt(finish.x() - 3, y, finish.z() - 3).setType(Material.RED_STAINED_GLASS, false);
+            world.getBlockAt(finish.x() + 3, y, finish.z() - 3).setType(Material.RED_STAINED_GLASS, false);
+            world.getBlockAt(finish.x() - 3, y, finish.z() + 3).setType(Material.RED_STAINED_GLASS, false);
+            world.getBlockAt(finish.x() + 3, y, finish.z() + 3).setType(Material.RED_STAINED_GLASS, false);
         }
+        world.getBlockAt(finish.x(), finish.y() + 1, finish.z()).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
+        world.getBlockAt(finish.x(), finish.y() + 4, finish.z()).setType(Material.SEA_LANTERN, false);
     }
 
     private static void platform(World world, int cx, int cy, int cz, int radius, Material material) {
@@ -179,9 +218,34 @@ public final class GeneratedVerticalJumpBuilder {
         }
     }
 
-    private record Step(int x, int z) {
+    private static void fenceBack(World world, int cx, int y, int cz, int radius) {
+        for (int x = cx - radius; x <= cx + radius; x++) {
+            world.getBlockAt(x, y + 1, cz - radius).setType(Material.OAK_FENCE, false);
+        }
     }
 
-    public record Layout(Location start, Location finish) {
+    private static void addLadderHint(World world, int x, int y, int z, BlockFace facing) {
+        Block support = world.getBlockAt(x, y, z);
+        support.setType(Material.OAK_PLANKS, false);
+        Block ladder = world.getBlockAt(x, y + 1, z);
+        ladder.setType(Material.LADDER, false);
+        BlockData data = ladder.getBlockData();
+        if (data instanceof Directional directional) {
+            directional.setFacing(facing);
+            ladder.setBlockData(directional, false);
+        }
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private record Node(int x, int y, int z, int radius) {
+    }
+
+    private record Validation(List<Node> nodes, boolean reachable, int corrections) {
+    }
+
+    public record Layout(Location start, Location finish, boolean reachable, int corrections, int platformCount) {
     }
 }
