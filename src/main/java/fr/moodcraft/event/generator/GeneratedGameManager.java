@@ -262,7 +262,7 @@ public final class GeneratedGameManager {
         return switch (type) {
             case SURVIE_ETAGES -> "survie_etages";
             case RUEE_OR -> "ruee_or";
-            case WATER_JUMP -> "water_jump_v2";
+            case WATER_JUMP -> "water_jump_safe_v1";
             case LABYRINTHE -> "labyrinthe_v2";
         };
     }
@@ -286,74 +286,11 @@ public final class GeneratedGameManager {
     }
 
     private static Points routeWaterJump(Location center, Spec spec) {
-        World world = center.getWorld();
-        int cx = center.getBlockX();
-        int cy = center.getBlockY();
-        int cz = center.getBlockZ();
-        int length = spec.waterLength;
-        int laneHalf = 5;
-
-        for (int x = cx - 8; x <= cx + length + 10; x++) {
-            for (int z = cz - 9; z <= cz + 9; z++) {
-                world.getBlockAt(x, cy - 2, z).setType(Material.PRISMARINE_BRICKS, false);
-                world.getBlockAt(x, cy - 1, z).setType(Material.WATER, false);
-                for (int y = cy; y <= cy + 16; y++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
-            }
-        }
-
-        buildWaterJumpWoolWall(world, cx - 9, cx + length + 11, cy, cz - 10, cz + 10, 4, Material.WHITE_WOOL);
-
-        for (int x = cx - 4; x <= cx + 4; x++) {
-            for (int z = cz - laneHalf; z <= cz + laneHalf; z++) {
-                world.getBlockAt(x, cy, z).setType(Material.LIME_CONCRETE, false);
-            }
-        }
-        for (int z = cz - laneHalf; z <= cz + laneHalf; z++) world.getBlockAt(cx - 5, cy + 1, z).setType(Material.LIME_STAINED_GLASS, false);
-        for (int x = cx - 5; x <= cx + 4; x++) {
-            world.getBlockAt(x, cy + 1, cz - laneHalf - 1).setType(Material.LIME_STAINED_GLASS, false);
-            world.getBlockAt(x, cy + 1, cz + laneHalf + 1).setType(Material.LIME_STAINED_GLASS, false);
-        }
-        for (int z = cz - laneHalf; z <= cz + laneHalf; z++) world.getBlockAt(cx + 5, cy, z).setType(Material.YELLOW_CONCRETE, false);
-        world.getBlockAt(cx, cy + 2, cz - laneHalf).setType(Material.SEA_LANTERN, false);
-        world.getBlockAt(cx, cy + 2, cz + laneHalf).setType(Material.SEA_LANTERN, false);
-
-        Material[] colors = {Material.LIGHT_BLUE_WOOL, Material.CYAN_WOOL, Material.WHITE_WOOL, Material.YELLOW_WOOL, Material.ORANGE_WOOL, Material.MAGENTA_WOOL, Material.PINK_WOOL};
-        int x = cx + 8;
-        int step = 0;
-        int lastY = cy + 1;
-        while (x < cx + length) {
-            step++;
-            int z = cz + switch (step % 7) {
-                case 0 -> -3;
-                case 1 -> 0;
-                case 2 -> 3;
-                case 3 -> 2;
-                case 4 -> -2;
-                case 5 -> 4;
-                default -> -4;
-            };
-            int y = cy + 1 + Math.min(8, step / 3) + (step % 7 == 0 ? 1 : 0);
-            int radius = step % 5 == 0 ? 2 : 1;
-            Material platform = colors[step % colors.length];
-            buildPlatform(world, x, y, z, radius, platform);
-            if (step % 3 == 0) buildPlatform(world, x + 2, y, clamp(z + 2, cz - laneHalf, cz + laneHalf), 1, colors[(step + 2) % colors.length]);
-            lastY = Math.max(lastY, y);
-            x += step % 5 == 0 ? 4 : 3;
-        }
-
-        int finishX = cx + length + 4;
-        int finishY = Math.max(cy + 2, lastY);
-        for (int x2 = finishX - 4; x2 <= finishX + 4; x2++) {
-            for (int z2 = cz - 4; z2 <= cz + 4; z2++) world.getBlockAt(x2, finishY, z2).setType(Material.RED_CONCRETE, false);
-        }
-        for (int z = cz - 4; z <= cz + 4; z++) world.getBlockAt(finishX + 5, finishY + 1, z).setType(Material.RED_STAINED_GLASS, false);
-        world.getBlockAt(finishX, finishY + 1, cz).setType(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, false);
-        world.getBlockAt(finishX, finishY + 3, cz - 4).setType(Material.SEA_LANTERN, false);
-        world.getBlockAt(finishX, finishY + 3, cz + 4).setType(Material.SEA_LANTERN, false);
-
-        Location start = new Location(world, cx, cy + 1, cz, -90f, 0f);
-        Location finish = new Location(world, finishX + 0.5, finishY + 1, cz + 0.5, -90f, 0f);
-        return new Points(start, finish, 0);
+        GeneratedWaterJumpBuilder.Layout layout = GeneratedWaterJumpBuilder.build(center, spec.waterLength);
+        config.set("water-jump.reachable", layout.reachable());
+        config.set("water-jump.corrections", layout.corrections());
+        config.set("water-jump.platforms", layout.platformCount());
+        return new Points(layout.start(), layout.finish(), 0);
     }
 
     private static Points routeLabyrinth(Location center, Spec spec) {
@@ -364,27 +301,6 @@ public final class GeneratedGameManager {
         config.set("labyrinth.reachable", layout.reachable());
         return new Points(layout.start(), layout.finish(), 0);
     }
-
-    private static void buildPlatform(World world, int cx, int cy, int cz, int radius, Material material) {
-        for (int x = cx - radius; x <= cx + radius; x++) {
-            for (int z = cz - radius; z <= cz + radius; z++) world.getBlockAt(x, cy, z).setType(material, false);
-        }
-    }
-
-    private static void buildWaterJumpWoolWall(World world, int minX, int maxX, int baseY, int minZ, int maxZ, int height, Material material) {
-        for (int y = baseY; y < baseY + height; y++) {
-            for (int x = minX; x <= maxX; x++) {
-                world.getBlockAt(x, y, minZ).setType(material, false);
-                world.getBlockAt(x, y, maxZ).setType(material, false);
-            }
-            for (int z = minZ; z <= maxZ; z++) {
-                world.getBlockAt(minX, y, z).setType(material, false);
-                world.getBlockAt(maxX, y, z).setType(material, false);
-            }
-        }
-    }
-
-    private static int clamp(int value, int min, int max) { return Math.max(min, Math.min(max, value)); }
 
     private static void configureEvent(Player player, GeneratedGameType type, Points points) {
         Location back = player.getLocation().clone().add(0, 3, 0);
@@ -406,7 +322,7 @@ public final class GeneratedGameManager {
         return switch (type) {
             case SURVIE_ETAGES -> "Survivez dans la tour pendant que les étages disparaissent.";
             case RUEE_OR -> "Minez un maximum de minerais dans le temps imparti. Vous gardez les minerais.";
-            case WATER_JUMP -> "Franchissez les plateformes au-dessus de l'eau. Chute dans l'eau = retour au départ. Top 3 à l'arrivée.";
+            case WATER_JUMP -> "Franchissez les plateformes au-dessus de l'eau. Chaque raccord est vérifié pour rester faisable.";
             case LABYRINTHE -> "Traversez le labyrinthe depuis le sas de départ jusqu'au sas d'arrivée. Top 3 à l'arrivée.";
         };
     }
@@ -546,7 +462,7 @@ public final class GeneratedGameManager {
             return switch (type) {
                 case SURVIE_ETAGES -> width + "x" + width + " §8• §7" + floors + " étages";
                 case RUEE_OR -> width + "x" + goldHeight + " §8• §7" + goldDuration + "s";
-                case WATER_JUMP -> waterLength + " blocs §8• §7montée progressive";
+                case WATER_JUMP -> waterLength + " blocs §8• §7sauts sécurisés";
                 case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7sas élargis";
             };
         }
