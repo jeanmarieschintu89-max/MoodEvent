@@ -1,6 +1,7 @@
 package fr.moodcraft.event.gui;
 
 import fr.moodcraft.event.manager.WaitingRoomManager;
+import fr.moodcraft.event.manager.WaitingRoomTheme;
 import fr.moodcraft.event.util.EventItem;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Bukkit;
@@ -11,6 +12,7 @@ import org.bukkit.inventory.Inventory;
 public final class WaitingRoomGUI {
 
     public static final String TITLE = MoodStyle.guiTitle("Salle d'attente");
+    public static final String STYLE_TITLE = MoodStyle.guiTitle("Style salle manuel");
 
     private WaitingRoomGUI() {
     }
@@ -26,8 +28,7 @@ public final class WaitingRoomGUI {
                 "§6✦ §fSalle d'attente §6✦",
                 MoodStyle.detail("État : " + (WaitingRoomManager.hasRoom() ? "§agénérée" : "§cnon générée")),
                 MoodStyle.detail("Style choisi : §e" + selectedStyle),
-                MoodStyle.detail("Zone temporaire restaurable"),
-                MoodStyle.detail("Style appliqué uniquement à la salle"),
+                MoodStyle.detail("Même choix de styles que le générateur"),
                 "",
                 MoodStyle.info("Choisis un style puis une taille")
         )));
@@ -41,12 +42,12 @@ public final class WaitingRoomGUI {
 
         inv.setItem(22, EventItem.glow(EventItem.item(
                 WaitingRoomManager.getSelectedTheme(player).accent(),
-                "§6✦ §fChanger le style §6✦",
+                "§6✦ §fChoisir le style §6✦",
                 MoodStyle.detail("Actuel : §e" + selectedStyle),
-                MoodStyle.detail("Clique pour passer au style suivant."),
+                MoodStyle.detail("Ouvre la grille complète des styles."),
                 MoodStyle.detail("20 styles disponibles."),
                 "",
-                MoodStyle.success("Style salle uniquement")
+                MoodStyle.success("Ouvrir les styles")
         )));
 
         inv.setItem(33, EventItem.item(
@@ -73,6 +74,41 @@ public final class WaitingRoomGUI {
         ));
 
         player.openInventory(inv);
+    }
+
+    public static void openStyle(Player player) {
+        Inventory inv = Bukkit.createInventory(null, 54, STYLE_TITLE);
+        fill(inv);
+
+        inv.setItem(4, EventItem.glow(EventItem.item(
+                Material.PAINTING,
+                "§6✦ §fStyle de salle d'attente §6✦",
+                MoodStyle.detail("Choix manuel de la salle."),
+                MoodStyle.detail("Même grille que le générateur de pack."),
+                MoodStyle.detail("Après ce choix : retour aux tailles."),
+                "",
+                MoodStyle.info("Choisis un thème")
+        )));
+
+        WaitingRoomTheme[] themes = WaitingRoomTheme.values();
+        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33};
+        for (int i = 0; i < themes.length && i < slots.length; i++) {
+            addTheme(inv, slots[i], themes[i], WaitingRoomManager.getSelectedTheme(player) == themes[i]);
+        }
+
+        inv.setItem(49, EventItem.item(Material.ARROW, "§6✦ §fRetour §6✦", MoodStyle.detail("Revenir aux tailles de salle")));
+        player.openInventory(inv);
+    }
+
+    private static void addTheme(Inventory inv, int slot, WaitingRoomTheme theme, boolean selected) {
+        inv.setItem(slot, EventItem.item(
+                selected ? Material.EMERALD_BLOCK : theme.accent(),
+                (selected ? "§a✔ §f" : "§6✦ §f") + theme.displayName() + " §6✦",
+                MoodStyle.detail("Salle uniquement."),
+                MoodStyle.detail("Après ce choix : §etaille de salle."),
+                "",
+                selected ? MoodStyle.success("Sélectionné") : MoodStyle.info("Choisir ce style")
+        ));
     }
 
     private static void addSize(Inventory inv, int slot, Material material, String name, String size, String capacity, String selectedStyle) {
