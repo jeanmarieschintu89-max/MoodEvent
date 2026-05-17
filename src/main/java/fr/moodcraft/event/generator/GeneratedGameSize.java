@@ -34,28 +34,28 @@ public enum GeneratedGameSize {
 
     public int getGoldRushWidth() {
         return switch (this) {
-            case PETIT -> 15;
-            case MOYEN -> 21;
-            case GRAND -> 27;
-            case GEANT -> 31;
+            case PETIT -> 19;
+            case MOYEN -> 25;
+            case GRAND -> 33;
+            case GEANT -> 39;
         };
     }
 
     public int getGoldRushHeight() {
         return switch (this) {
-            case PETIT -> 9;
-            case MOYEN -> 10;
-            case GRAND -> 12;
-            case GEANT -> 13;
+            case PETIT -> 11;
+            case MOYEN -> 13;
+            case GRAND -> 15;
+            case GEANT -> 17;
         };
     }
 
-    public int getGoldRushDurationSeconds() {
+    public String getConfigKey() {
         return switch (this) {
-            case PETIT -> 60;
-            case MOYEN -> 100;
-            case GRAND -> 140;
-            case GEANT -> 180;
+            case PETIT -> "petit";
+            case MOYEN -> "moyen";
+            case GRAND -> "grand";
+            case GEANT -> "geant";
         };
     }
 
@@ -63,7 +63,7 @@ public enum GeneratedGameSize {
         if (type == null) return displayName;
         return switch (type) {
             case SURVIE_ETAGES -> survivalWidth + "x" + survivalWidth + " §8• §7" + survivalFloors + " étages";
-            case RUEE_OR -> getGoldRushWidth() + "x" + getGoldRushHeight() + " §8• §7" + getGoldRushDurationSeconds() + "s";
+            case RUEE_OR -> getGoldRushWidth() + "x" + getGoldRushHeight() + " §8• §7durée config";
             case WATER_JUMP -> waterLength + " blocs §8• §7hauteur progressive";
             case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7carré avec sas";
             case LABYRINTHE_ROND -> mazeWidth + " blocs §8• §7rond, départ au centre";
