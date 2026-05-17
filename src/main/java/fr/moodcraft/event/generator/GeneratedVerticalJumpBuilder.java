@@ -64,26 +64,16 @@ public final class GeneratedVerticalJumpBuilder {
             if (!sameNode(wanted, next)) corrections++;
             if (!isReachable(previous, next)) reachable = false;
 
-            platform(world, next.x(), next.y(), next.z(), next.radius(), WOOL[i % WOOL.length]);
-            addPlatformMarker(world, next, i);
+            Material material = i == safePlatforms ? Material.RED_WOOL : WOOL[i % WOOL.length];
+            platform(world, next.x(), next.y(), next.z(), next.radius(), material);
+            if (i < safePlatforms) addPlatformMarker(world, next, i);
             nodes.add(next);
             previous = next;
         }
 
-        int finishY = previous.y() + 1;
-        JumpNode finishNode = new JumpNode(cx, finishY, cz, 4);
-        if (!isReachable(previous, finishNode)) {
-            finishNode = adaptReachableNode(previous, finishNode, cx, cz);
-            corrections++;
-        }
-        reachable = reachable && isReachable(previous, finishNode);
-
-        drawGroundLine(world, finishNode.x(), finishNode.y(), finishNode.z(), 5, Material.RED_WOOL);
-        buildFinishMark(world, finishNode.x(), finishNode.y(), finishNode.z());
-
         return new Layout(
                 new Location(world, cx + 0.5, cy + 1, cz + 0.5, 0f, 0f),
-                new Location(world, finishNode.x() + 0.5, finishNode.y() + 1, finishNode.z() + 0.5, 180f, 0f),
+                new Location(world, previous.x() + 0.5, previous.y() + 1, previous.z() + 0.5, 180f, 0f),
                 reachable,
                 corrections,
                 nodes.size()
@@ -163,11 +153,6 @@ public final class GeneratedVerticalJumpBuilder {
 
     private static void buildStartMark(World world, int x, int y, int z) {
         for (int dz = -5; dz <= 5; dz++) world.getBlockAt(x - 1, y, z + dz).setType(Material.LIME_WOOL, false);
-        world.getBlockAt(x, y + 3, z).setType(Material.SEA_LANTERN, false);
-    }
-
-    private static void buildFinishMark(World world, int x, int y, int z) {
-        for (int dz = -5; dz <= 5; dz++) world.getBlockAt(x + 1, y, z + dz).setType(Material.RED_WOOL, false);
         world.getBlockAt(x, y + 3, z).setType(Material.SEA_LANTERN, false);
     }
 
