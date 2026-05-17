@@ -36,8 +36,8 @@ public final class GoldRushClosure {
         Bukkit.broadcastMessage(MoodStyle.header(MoodStyle.MODULE));
         Bukkit.broadcastMessage(MoodStyle.success("Mine en folie clôturée."));
         Bukkit.broadcastMessage(MoodStyle.detail("Joueurs renvoyés : §e" + returned));
-        Bukkit.broadcastMessage(MoodStyle.detail("Les minerais récoltés restent aux joueurs."));
-        Bukkit.broadcastMessage(MoodStyle.detail(restoredGenerated ? "Mine restaurée automatiquement." : "Aucune mine à restaurer."));
+        Bukkit.broadcastMessage(MoodStyle.detail("Les minerais restent aux joueurs."));
+        Bukkit.broadcastMessage(MoodStyle.detail("La zone a été restaurée."));
         Bukkit.broadcastMessage(MoodStyle.FRAME);
     }
 
@@ -53,7 +53,7 @@ public final class GoldRushClosure {
                 Location location = entry.getValue();
                 if (player == null || !player.isOnline() || location == null || location.getWorld() == null) continue;
                 player.teleport(location);
-                player.sendTitle("§aRetour", "§fMerci d'avoir miné", 0, 35, 10);
+                player.sendTitle("§aRetour", "§fMerci d'avoir participé", 0, 35, 10);
                 player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.2f);
                 returned++;
             }
