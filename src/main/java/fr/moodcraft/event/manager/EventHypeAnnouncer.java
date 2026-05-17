@@ -9,6 +9,8 @@ import org.bukkit.scheduler.BukkitTask;
 
 public final class EventHypeAnnouncer {
 
+    private static final int REMINDER_INTERVAL_SECONDS = 120;
+
     private static BukkitTask task;
     private static boolean wasQueueOpen;
     private static int reminderSeconds;
@@ -50,7 +52,7 @@ public final class EventHypeAnnouncer {
         }
 
         reminderSeconds++;
-        if (reminderSeconds % 60 == 0) {
+        if (reminderSeconds % REMINDER_INTERVAL_SECONDS == 0) {
             broadcastReminder();
         }
     }
