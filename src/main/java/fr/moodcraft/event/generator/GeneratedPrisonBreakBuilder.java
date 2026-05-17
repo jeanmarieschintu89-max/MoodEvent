@@ -12,6 +12,7 @@ public final class GeneratedPrisonBreakBuilder {
     private static final int ROOM_HALF = 4;
     private static final int ROOM_GAP = 11;
     private static final int COLUMNS = 3;
+    private static final Material PUZZLE_MARKER = Material.LODESTONE;
 
     private GeneratedPrisonBreakBuilder() {}
 
@@ -45,7 +46,7 @@ public final class GeneratedPrisonBreakBuilder {
             if (i > 0) {
                 connectRooms(world, xs[i - 1], cy, zs[i - 1], xs[i], zs[i], random);
                 buildPuzzleGate(world, xs[i], cy, zs[i], xs[i - 1], zs[i - 1]);
-                placePuzzleClue(world, xs[i - 1], cy, zs[i - 1], i, random);
+                placeHiddenPuzzle(world, xs[i - 1], cy, zs[i - 1], i, random);
                 buildFakeDoor(world, xs[i], cy, zs[i], random);
             }
         }
@@ -53,7 +54,17 @@ public final class GeneratedPrisonBreakBuilder {
         buildExit(world, xs[rooms - 1], cy, zs[rooms - 1]);
         Location start = new Location(world, xs[0] + 0.5, cy + 1.0, zs[0] + 0.5, 180f, 0f);
         Location finish = new Location(world, xs[rooms - 1] + 0.5, cy + 1.0, zs[rooms - 1] - ROOM_HALF + 1.5, 0f, 0f);
-        return new Layout(start, finish, rooms, true);
+        return new Layout(start, finish, rooms, verifyFeasible(rooms, xs, zs));
+    }
+
+    private static boolean verifyFeasible(int rooms, int[] xs, int[] zs) {
+        if (rooms < 2 || xs == null || zs == null || xs.length < rooms || zs.length < rooms) return false;
+        for (int i = 1; i < rooms; i++) {
+            int dx = Math.abs(xs[i] - xs[i - 1]);
+            int dz = Math.abs(zs[i] - zs[i - 1]);
+            if (dx > ROOM_GAP + 4 || dz > ROOM_GAP + 4) return false;
+        }
+        return true;
     }
 
     private static int roomsFor(int cellsWide) {
@@ -99,8 +110,8 @@ public final class GeneratedPrisonBreakBuilder {
         openDoor(world, cx, cy, cz + 2);
         world.getBlockAt(cx - 2, cy + 1, cz - 2).setType(Material.GRAY_BED, false);
         world.getBlockAt(cx + 2, cy + 1, cz - 2).setType(Material.CAULDRON, false);
-        world.getBlockAt(cx, cy + 1, cz + 1).setType(Material.STONE_BUTTON, false);
         world.getBlockAt(cx - 3, cy + 1, cz + 3).setType(Material.CHEST, false);
+        placeHiddenPuzzle(world, cx, cy, cz, 0, new Random(cx ^ cz));
     }
 
     private static void decorateRoom(World world, int cx, int cy, int cz, int index, Random random) {
@@ -224,11 +235,22 @@ public final class GeneratedPrisonBreakBuilder {
         world.getBlockAt(x, cy + 2, z).setType(Material.AIR, false);
     }
 
-    private static void placePuzzleClue(World world, int cx, int cy, int cz, int index, Random random) {
-        int x = cx + random.nextInt(ROOM_HALF * 2 - 2) - ROOM_HALF + 1;
-        int z = cz + random.nextInt(ROOM_HALF * 2 - 2) - ROOM_HALF + 1;
-        world.getBlockAt(x, cy + 1, z).setType(index % 2 == 0 ? Material.STONE_BUTTON : Material.LEVER, false);
-        world.getBlockAt(x, cy, z).setType(Material.GOLD_BLOCK, false);
+    private static void placeHiddenPuzzle(World world, int cx, int cy, int cz, int index, Random random) {
+        int[][] candidates = {
+                {-3, -3}, {3, -3}, {-3, 3}, {3, 3},
+                {-2, 0}, {2, 0}, {0, -2}, {0, 2}
+        };
+        int[] offset = candidates[Math.floorMod(index + random.nextInt(candidates.length), candidates.length)];
+        int x = cx + offset[0];
+        int z = cz + offset[1];
+        Material mechanism = index % 2 == 0 ? Material.STONE_BUTTON : Material.LEVER;
+
+        world.getBlockAt(x, cy + 1, z).setType(mechanism, false);
+        world.getBlockAt(x, cy, z).setType(floorFor(index), false);
+        world.getBlockAt(x, cy - 1, z).setType(PUZZLE_MARKER, false);
+
+        if (world.getBlockAt(x + 1, cy + 1, z).getType() == Material.AIR) world.getBlockAt(x + 1, cy + 1, z).setType(Material.BARREL, false);
+        if (world.getBlockAt(x, cy + 1, z + 1).getType() == Material.AIR) world.getBlockAt(x, cy + 1, z + 1).setType(Material.CHAIN, false);
     }
 
     private static void buildFakeDoor(World world, int cx, int cy, int cz, Random random) {
