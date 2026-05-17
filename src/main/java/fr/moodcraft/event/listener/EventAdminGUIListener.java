@@ -41,6 +41,7 @@ public class EventAdminGUIListener implements Listener {
         if (title.equals("generateur de mini jeux")) { handleGeneratorMainClick(event, player); return; }
         if (title.equals("style salle attente")) { handleGeneratorStyleClick(event, player); return; }
         if (title.equals("taille pack event")) { handleGeneratorSizeClick(event, player); return; }
+        if (title.equals("duree mine en folie")) { handleGoldDurationClick(event, player); return; }
         if (title.equals("confirmation pack event")) { handleGeneratorConfirmClick(event, player); return; }
         if (title.equals("loot mini jeux")) { handleLootClick(event, player); }
     }
@@ -181,6 +182,25 @@ public class EventAdminGUIListener implements Listener {
         }
     }
 
+    private void handleGoldDurationClick(InventoryClickEvent event, Player player) {
+        event.setCancelled(true);
+        int slot = event.getRawSlot();
+        if (!top(event, slot)) return;
+        switch (slot) {
+            case 10 -> openGoldConfirm(player, 60);
+            case 11 -> openGoldConfirm(player, 90);
+            case 12 -> openGoldConfirm(player, 120);
+            case 14 -> openGoldConfirm(player, 180);
+            case 15 -> openGoldConfirm(player, 240);
+            case 16 -> openGoldConfirm(player, 300);
+            case 22 -> {
+                click(player);
+                MiniGameGeneratorGUI.openSize(player, GeneratedGameType.RUEE_OR);
+            }
+            default -> { }
+        }
+    }
+
     private void handleGeneratorConfirmClick(InventoryClickEvent event, Player player) {
         event.setCancelled(true);
         int slot = event.getRawSlot();
@@ -192,14 +212,16 @@ public class EventAdminGUIListener implements Listener {
             case 10 -> {
                 click(player);
                 if (pending.isCustom()) GeneratedGameManager.generateCustom(player, pending.type(), pending.customValue());
+                else if (pending.type() == GeneratedGameType.RUEE_OR && pending.goldDurationSeconds() != null) EventPackManager.generatePack(player, pending.type(), pending.size(), pending.goldDurationSeconds());
                 else EventPackManager.generatePack(player, pending.type(), pending.size());
-                EventLogManager.log(player, "Pack généré", pending.type().getDisplayName() + " - " + pending.describe() + " - salle " + WaitingRoomManager.getSelectedTheme(player).displayName());
+                EventLogManager.log(player, "Pack généré", pending.type().getDisplayName() + " - " + pending.describe() + (pending.goldDurationSeconds() != null ? " - " + pending.goldDurationSeconds() + "s" : "") + " - salle " + WaitingRoomManager.getSelectedTheme(player).displayName());
                 MiniGameGeneratorGUI.clearPending(player);
                 MiniGameGeneratorGUI.openMain(player);
             }
             case 16 -> {
                 click(player);
-                MiniGameGeneratorGUI.openSize(player, pending.type());
+                if (pending.type() == GeneratedGameType.RUEE_OR) MiniGameGeneratorGUI.openDuration(player, pending.size());
+                else MiniGameGeneratorGUI.openSize(player, pending.type());
             }
             case 22 -> {
                 no(player);
@@ -280,6 +302,11 @@ public class EventAdminGUIListener implements Listener {
     private void openConfirm(Player player, GeneratedGameType type, GeneratedGameSize size) {
         click(player);
         MiniGameGeneratorGUI.openConfirm(player, type, size);
+    }
+
+    private void openGoldConfirm(Player player, int seconds) {
+        click(player);
+        MiniGameGeneratorGUI.openConfirmGoldDuration(player, seconds);
     }
 
     private void openItems(Player player, int place) {
