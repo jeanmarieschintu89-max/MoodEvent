@@ -21,6 +21,7 @@ public final class MiniGameGeneratorGUI {
     public static final String MAIN_TITLE = MoodStyle.guiTitle("Générateur de mini jeux");
     public static final String STYLE_TITLE = MoodStyle.guiTitle("Style salle attente");
     public static final String SIZE_TITLE = MoodStyle.guiTitle("Taille pack event");
+    public static final String GOLD_DURATION_TITLE = MoodStyle.guiTitle("Durée Mine en folie");
     public static final String CONFIRM_TITLE = MoodStyle.guiTitle("Confirmation pack event");
 
     private static final Map<UUID, GeneratedGameType> SELECTED_TYPE = new HashMap<>();
@@ -36,14 +37,14 @@ public final class MiniGameGeneratorGUI {
                 Material.COMPASS,
                 "§6✦ §fCréation de pack événement §6✦",
                 MoodStyle.detail("Parcours clair : §ejeu §8→ §estyle salle §8→ §etaille §8→ §econfirmation"),
+                MoodStyle.detail("Mine en folie ajoute une étape durée."),
                 MoodStyle.detail("Le style de salle se choisit après le mini-jeu."),
-                MoodStyle.detail("Aucun bouton de thème ici pour éviter la confusion."),
                 "",
                 MoodStyle.info("Sélectionne d'abord une épreuve")
         )));
 
         addType(inv, 10, GeneratedGameType.SURVIE_ETAGES, "Salle d'attente + Tour Infernale.");
-        addType(inv, 12, GeneratedGameType.RUEE_OR, "Salle d'attente + Mine en folie.");
+        addType(inv, 12, GeneratedGameType.RUEE_OR, "Salle d'attente + Mine en folie avec durée au choix.");
         addType(inv, 14, GeneratedGameType.WATER_JUMP, "Salle d'attente + Water Jump.");
         addType(inv, 16, GeneratedGameType.LABYRINTHE, "Labyrinthe carré avec sas opposés.");
         inv.setItem(22, EventItem.item(
@@ -115,7 +116,7 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Mini-jeu : §e" + type.getDisplayName()),
                 MoodStyle.detail("Style salle : §e" + WaitingRoomManager.getSelectedTheme(player).displayName()),
                 MoodStyle.detail("Choix 3/4 : §etaille du pack"),
-                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Jeu : modèles plus hauts, moins étalés.") : type == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Jeu : plateformes au-dessus de l'eau.") : type == GeneratedGameType.LABYRINTHE ? MoodStyle.detail("Jeu : forme carrée avec sas opposés.") : type == GeneratedGameType.LABYRINTHE_ROND ? MoodStyle.detail("Jeu : forme ronde, départ au centre.") : MoodStyle.detail("Jeu : durée calculée automatiquement."),
+                type == GeneratedGameType.SURVIE_ETAGES ? MoodStyle.detail("Jeu : modèles plus hauts, moins étalés.") : type == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Jeu : plateformes au-dessus de l'eau.") : type == GeneratedGameType.LABYRINTHE ? MoodStyle.detail("Jeu : forme carrée avec sas opposés.") : type == GeneratedGameType.LABYRINTHE_ROND ? MoodStyle.detail("Jeu : forme ronde, départ au centre.") : MoodStyle.detail("Jeu : durée choisie à l'étape suivante."),
                 "",
                 MoodStyle.info("Choisis la taille")
         )));
@@ -138,10 +139,53 @@ public final class MiniGameGeneratorGUI {
         player.openInventory(inv);
     }
 
+    public static void openDuration(Player player, GeneratedGameSize size) {
+        PendingGeneration pending = PendingGeneration.preset(GeneratedGameType.RUEE_OR, size);
+        PENDING.put(player.getUniqueId(), pending);
+
+        Inventory inv = Bukkit.createInventory(null, 27, GOLD_DURATION_TITLE);
+        fill(inv);
+
+        inv.setItem(4, EventItem.glow(EventItem.item(
+                Material.CLOCK,
+                "§6✦ §fDurée Mine en folie §6✦",
+                MoodStyle.detail("Taille mine : §e" + size.getDisplayName()),
+                MoodStyle.detail("Choisis le chrono de cette génération."),
+                MoodStyle.detail("La durée sera enregistrée dans la structure générée."),
+                "",
+                MoodStyle.info("Choix 4/5 : durée")
+        )));
+
+        addDuration(inv, 10, 60);
+        addDuration(inv, 11, 90);
+        addDuration(inv, 12, 120);
+        addDuration(inv, 14, 180);
+        addDuration(inv, 15, 240);
+        addDuration(inv, 16, 300);
+
+        inv.setItem(22, EventItem.item(Material.ARROW, "§6✦ §fRetour taille §6✦", MoodStyle.detail("Modifier la taille avant la durée.")));
+        player.openInventory(inv);
+    }
+
     public static void openConfirm(Player player, GeneratedGameType type, GeneratedGameSize size) {
+        if (type == GeneratedGameType.RUEE_OR) {
+            openDuration(player, size);
+            return;
+        }
         PendingGeneration pending = PendingGeneration.preset(type, size);
         PENDING.put(player.getUniqueId(), pending);
         openConfirmInventory(player, pending);
+    }
+
+    public static void openConfirmGoldDuration(Player player, int seconds) {
+        PendingGeneration pending = getPending(player);
+        if (pending == null || pending.type() != GeneratedGameType.RUEE_OR || pending.size() == null) {
+            openMain(player);
+            return;
+        }
+        PendingGeneration next = pending.withGoldDuration(seconds);
+        PENDING.put(player.getUniqueId(), next);
+        openConfirmInventory(player, next);
     }
 
     public static void openConfirmCustom(Player player, GeneratedGameType type, int value) {
@@ -160,20 +204,31 @@ public final class MiniGameGeneratorGUI {
         inv.setItem(13, EventItem.glow(EventItem.item(
                 pending.type().getIcon(),
                 "§6✦ §fConfirmation du pack §6✦",
-                MoodStyle.detail("Choix 4/4 : §evalider la génération"),
+                pending.type() == GeneratedGameType.RUEE_OR ? MoodStyle.detail("Choix 5/5 : §evalider la génération") : MoodStyle.detail("Choix 4/4 : §evalider la génération"),
                 MoodStyle.detail("Mini-jeu : §e" + pending.type().getDisplayName()),
                 MoodStyle.detail("Taille jeu : §e" + pending.describe()),
+                pending.goldDurationSeconds() != null ? MoodStyle.detail("Durée : §e" + pending.goldDurationSeconds() + "s") : MoodStyle.detail("Durée : §7non utilisée"),
                 MoodStyle.detail("Style salle : §e" + WaitingRoomManager.getSelectedTheme(player).displayName()),
                 MoodStyle.detail("Le style sera appliqué uniquement à la salle."),
-                pending.type() == GeneratedGameType.WATER_JUMP ? MoodStyle.detail("Water Jump : départ, eau, plateformes, arrivée.") : pending.type() == GeneratedGameType.LABYRINTHE ? MoodStyle.detail("Labyrinthe carré : sas opposés.") : pending.type() == GeneratedGameType.LABYRINTHE_ROND ? MoodStyle.detail("Labyrinthe rond : centre vers sortie rouge.") : pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : prudence.") : MoodStyle.detail("Restauration possible avec /eventstop."),
+                confirmDetail(pending),
                 "",
                 MoodStyle.info("Vérifie avant de générer")
         )));
 
         inv.setItem(10, EventItem.item(Material.EMERALD_BLOCK, "§a✦ §fConfirmer §a✦", MoodStyle.detail("Génère salle + mini-jeu."), MoodStyle.detail("Configure l'événement automatiquement."), "", MoodStyle.success("Générer le pack")));
-        inv.setItem(16, EventItem.item(Material.ARROW, "§6✦ §fRetour taille §6✦", MoodStyle.detail("Modifier la taille avant de générer."), "", MoodStyle.info("Revenir")));
+        inv.setItem(16, EventItem.item(Material.ARROW, pending.type() == GeneratedGameType.RUEE_OR ? "§6✦ §fRetour durée §6✦" : "§6✦ §fRetour taille §6✦", pending.type() == GeneratedGameType.RUEE_OR ? MoodStyle.detail("Modifier la durée avant de générer.") : MoodStyle.detail("Modifier la taille avant de générer."), "", MoodStyle.info("Revenir")));
         inv.setItem(22, EventItem.item(Material.BARRIER, "§c✦ §fAnnuler §c✦", MoodStyle.detail("Ne génère rien."), MoodStyle.detail("Retour au générateur."), "", MoodStyle.error("Annuler")));
         player.openInventory(inv);
+    }
+
+    private static String confirmDetail(PendingGeneration pending) {
+        return switch (pending.type()) {
+            case WATER_JUMP -> MoodStyle.detail("Water Jump : départ, eau, plateformes, arrivée.");
+            case LABYRINTHE -> MoodStyle.detail("Labyrinthe carré : sas opposés.");
+            case LABYRINTHE_ROND -> MoodStyle.detail("Labyrinthe rond : centre vers sortie rouge.");
+            case RUEE_OR -> MoodStyle.detail("Mine en folie : chrono choisi dans le menu.");
+            default -> pending.size() == GeneratedGameSize.GEANT ? MoodStyle.detail("Géant : prudence.") : MoodStyle.detail("Restauration possible avec /eventstop.");
+        };
     }
 
     private static void addType(Inventory inv, int slot, GeneratedGameType type, String detail) {
@@ -205,8 +260,20 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Jeu : §e" + size.describeFor(type)),
                 MoodStyle.detail("Salle liée : §e" + waitingSizeLabel(size)),
                 size == GeneratedGameSize.GEANT ? MoodStyle.detail("Très lourd : prudence.") : size == GeneratedGameSize.GRAND ? MoodStyle.detail("Plus lourd : prudence.") : MoodStyle.detail("Taille sûre."),
+                type == GeneratedGameType.RUEE_OR ? MoodStyle.detail("Étape suivante : §edurée") : "",
                 "",
                 MoodStyle.info("Préparer la confirmation")
+        ));
+    }
+
+    private static void addDuration(Inventory inv, int slot, int seconds) {
+        inv.setItem(slot, EventItem.item(
+                Material.CLOCK,
+                "§6✦ §f" + seconds + " secondes §6✦",
+                MoodStyle.detail("Durée de Mine en folie."),
+                seconds <= 90 ? MoodStyle.detail("Format court et nerveux.") : seconds >= 240 ? MoodStyle.detail("Format long pour grosse mine.") : MoodStyle.detail("Format équilibré."),
+                "",
+                MoodStyle.info("Choisir " + seconds + "s")
         ));
     }
 
@@ -223,10 +290,11 @@ public final class MiniGameGeneratorGUI {
         for (int i = 0; i < inv.getSize(); i++) inv.setItem(i, EventItem.item(Material.BLACK_STAINED_GLASS_PANE, " "));
     }
 
-    public record PendingGeneration(GeneratedGameType type, GeneratedGameSize size, Integer customValue) {
-        public static PendingGeneration preset(GeneratedGameType type, GeneratedGameSize size) { return new PendingGeneration(type, size, null); }
-        public static PendingGeneration custom(GeneratedGameType type, int value) { return new PendingGeneration(type, null, value); }
+    public record PendingGeneration(GeneratedGameType type, GeneratedGameSize size, Integer customValue, Integer goldDurationSeconds) {
+        public static PendingGeneration preset(GeneratedGameType type, GeneratedGameSize size) { return new PendingGeneration(type, size, null, null); }
+        public static PendingGeneration custom(GeneratedGameType type, int value) { return new PendingGeneration(type, null, value, null); }
         public boolean isCustom() { return customValue != null; }
+        public PendingGeneration withGoldDuration(int seconds) { return new PendingGeneration(type, size, customValue, seconds); }
         public String describe() { return isCustom() ? GeneratedGameManager.describeCustom(type, customValue) : size.describeFor(type); }
     }
 }
