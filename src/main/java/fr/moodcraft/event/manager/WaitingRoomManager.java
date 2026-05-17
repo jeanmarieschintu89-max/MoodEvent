@@ -307,6 +307,11 @@ public final class WaitingRoomManager {
         world.getBlockAt(cx, cy + 1, cz).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
         buildCornerCouches(world, cx, cy, cz, radius, theme);
 
+        if (theme == WaitingRoomTheme.NEON_LOUNGE) {
+            NeonLoungeWaitingRoomDecorator.decorate(world, cx, cy, cz, radius, height);
+            return;
+        }
+
         if (radius >= 9) {
             world.getBlockAt(cx + radius - 2, cy + 1, cz).setType(solidBlockFor(theme.accent()), false);
             world.getBlockAt(cx - radius + 2, cy + 1, cz).setType(solidBlockFor(theme.accent()), false);
