@@ -7,6 +7,7 @@ public enum EventType {
     WATER_JUMP("§bWater Jump", "§b≈"),
     MUR_ESCALADE("§eMur d'escalade", "§e▲"),
     LABYRINTHE("§aLabyrinthe", "§a⌘"),
+    PRISON_BREAK("§8Prison Break", "§8▦"),
     CUSTOM("§fÉvénement libre", "§f✦");
 
     private final String displayName;
@@ -26,7 +27,7 @@ public enum EventType {
     }
 
     public boolean usesFinishLine() {
-        return this == WATER_JUMP || this == LABYRINTHE || this == MUR_ESCALADE;
+        return this == WATER_JUMP || this == LABYRINTHE || this == MUR_ESCALADE || this == PRISON_BREAK;
     }
 
     public boolean usesSurvivalRanking() {
@@ -55,6 +56,7 @@ public enum EventType {
             case "waterjump", "water_jump", "water", "eau", "jump_eau", "saut_eau", "water_jumps" -> WATER_JUMP;
             case "mur_escalade", "mur_d_escalade", "escalade", "climb", "climbing", "jump", "jump_vertical", "vertical_jump", "parkour" -> MUR_ESCALADE;
             case "labyrinthe", "laby", "maze", "mazes", "labyrinth", "dedale", "dédale" -> LABYRINTHE;
+            case "prison_break", "prison", "prisonbreak", "evasion", "escape_prison", "jailbreak", "jail_break" -> PRISON_BREAK;
             default -> CUSTOM;
         };
     }
