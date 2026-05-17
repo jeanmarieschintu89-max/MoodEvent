@@ -225,7 +225,7 @@ public final class WaitingRoomManager {
                     Block block = world.getBlockAt(x, y, z);
 
                     if (floor) block.setType(floorMaterial(theme, cx, cz, x, z), false);
-                    else if (roof) block.setType((x == cx || z == cz) ? slabFor(theme.accent()) : slabFor(theme.primary()), false);
+                    else if (roof) block.setType(roofMaterial(theme, cx, cz, x, z), false);
                     else if (corner) block.setType(theme.accent(), false);
                     else if (border) block.setType(wallMaterial(theme, y, cy, height), false);
                     else block.setType(Material.AIR, false);
@@ -239,16 +239,34 @@ public final class WaitingRoomManager {
     private static Material floorMaterial(WaitingRoomTheme theme, int cx, int cz, int x, int z) {
         int dx = Math.abs(x - cx);
         int dz = Math.abs(z - cz);
-        if (dx <= 1 && dz <= 1) return theme.light();
-        if (dx == dz || dx == 0 || dz == 0) return theme.accent();
-        return (x + z) % 2 == 0 ? theme.primary() : Material.SMOOTH_STONE;
+        if (dx <= 1 && dz <= 1) return solidLightFor(theme);
+        if (dx == dz || dx == 0 || dz == 0) return solidBlockFor(theme.accent());
+        return (x + z) % 2 == 0 ? solidBlockFor(theme.primary()) : Material.SMOOTH_STONE;
+    }
+
+    private static Material roofMaterial(WaitingRoomTheme theme, int cx, int cz, int x, int z) {
+        return x == cx || z == cz ? solidBlockFor(theme.accent()) : solidBlockFor(theme.primary());
     }
 
     private static Material wallMaterial(WaitingRoomTheme theme, int y, int cy, int height) {
         int relative = y - cy;
-        if (relative == 1 || relative == height - 1) return theme.primary();
+        if (relative == 1 || relative == height - 1) return solidBlockFor(theme.primary());
         if (relative == 2 || relative == 3) return theme.glass();
-        return theme.accent();
+        return solidBlockFor(theme.accent());
+    }
+
+    private static Material solidLightFor(WaitingRoomTheme theme) {
+        return switch (theme.light()) {
+            case GLOWSTONE, SHROOMLIGHT, SEA_LANTERN, REDSTONE_LAMP -> theme.light();
+            default -> Material.SEA_LANTERN;
+        };
+    }
+
+    private static Material solidBlockFor(Material material) {
+        return switch (material) {
+            case LANTERN, SOUL_LANTERN, END_ROD -> Material.SEA_LANTERN;
+            default -> material;
+        };
     }
 
     private static void decorate(World world, int cx, int cy, int cz, int radius, int height, WaitingRoomTheme theme) {
@@ -275,28 +293,11 @@ public final class WaitingRoomManager {
         }
 
         if (radius >= 9) {
-            world.getBlockAt(cx + radius - 2, cy + 1, cz).setType(theme.accent(), false);
-            world.getBlockAt(cx - radius + 2, cy + 1, cz).setType(theme.accent(), false);
+            world.getBlockAt(cx + radius - 2, cy + 1, cz).setType(solidBlockFor(theme.accent()), false);
+            world.getBlockAt(cx - radius + 2, cy + 1, cz).setType(solidBlockFor(theme.accent()), false);
             world.getBlockAt(cx, cy + 1, cz + radius - 2).setType(Material.CRAFTING_TABLE, false);
             world.getBlockAt(cx, cy + 1, cz - radius + 2).setType(Material.CARTOGRAPHY_TABLE, false);
         }
-    }
-
-    private static Material slabFor(Material material) {
-        return switch (material) {
-            case QUARTZ_BLOCK, SMOOTH_QUARTZ, WHITE_CONCRETE -> Material.QUARTZ_SLAB;
-            case PURPUR_BLOCK -> Material.PURPUR_SLAB;
-            case OAK_LOG, OAK_PLANKS, JUNGLE_LOG, JUNGLE_PLANKS -> Material.OAK_SLAB;
-            case SPRUCE_LOG, PACKED_ICE, SNOW_BLOCK -> Material.SPRUCE_SLAB;
-            case SANDSTONE, SMOOTH_SANDSTONE, CHISELED_SANDSTONE -> Material.SANDSTONE_SLAB;
-            case PRISMARINE_BRICKS, DARK_PRISMARINE -> Material.PRISMARINE_SLAB;
-            case CUT_COPPER, COPPER_BLOCK -> Material.CUT_COPPER_SLAB;
-            case POLISHED_BLACKSTONE, BLACKSTONE, POLISHED_BLACKSTONE_BRICKS, GILDED_BLACKSTONE -> Material.BLACKSTONE_SLAB;
-            case WARPED_PLANKS, WARPED_WART_BLOCK -> Material.WARPED_SLAB;
-            case CRIMSON_PLANKS, CRIMSON_NYLIUM -> Material.CRIMSON_SLAB;
-            case STONE_BRICKS, MOSSY_COBBLESTONE, DEEPSLATE_BRICKS -> Material.STONE_BRICK_SLAB;
-            default -> Material.SMOOTH_STONE_SLAB;
-        };
     }
 
     private static Material stairFor(Material material) {
