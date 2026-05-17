@@ -142,6 +142,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> MoodStyle.detail("Largeur entre §e15 §7et §e61§7, étages automatiques.");
             case RUEE_OR -> MoodStyle.detail("Largeur mine entre §e15 §7et §e51§7. Temps calculé automatiquement.");
             case WATER_JUMP -> MoodStyle.detail("Longueur entre §e40 §7et §e140 §7blocs.");
+            case MUR_ESCALADE -> MoodStyle.detail("Nombre de plateformes entre §e8 §7et §e42§7.");
             case LABYRINTHE, LABYRINTHE_ROND -> MoodStyle.detail("Largeur impaire entre §e15 §7et §e61 §7blocs.");
         };
     }
@@ -192,6 +193,7 @@ public final class GeneratedGameManager {
         config.set("survival", null);
         config.set("gold-rush", null);
         config.set("water-jump", null);
+        config.set("climb", null);
         config.set("labyrinth", null);
         active = false;
         activeType = null;
@@ -228,6 +230,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> routeCollapse(center, spec);
             case RUEE_OR -> routeMine(center, spec);
             case WATER_JUMP -> routeWaterJump(center, spec);
+            case MUR_ESCALADE -> routeClimb(center, spec);
             case LABYRINTHE -> routeLabyrinth(center, spec);
             case LABYRINTHE_ROND -> routeRoundLabyrinth(center, spec);
         };
@@ -249,6 +252,7 @@ public final class GeneratedGameManager {
         }
         if (type == GeneratedGameType.RUEE_OR) config.set("gold-rush.duration-seconds", spec.goldDuration);
         if (type == GeneratedGameType.WATER_JUMP) config.set("water-jump.fall-y", points.start().getY() - 1.5);
+        if (type == GeneratedGameType.MUR_ESCALADE) config.set("climb.platforms", spec.waterLength);
         save();
 
         configureEvent(player, type, points);
@@ -264,6 +268,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> "survie_etages";
             case RUEE_OR -> "ruee_or";
             case WATER_JUMP -> "water_jump_safe_v1";
+            case MUR_ESCALADE -> "mur_escalade_v1";
             case LABYRINTHE -> "labyrinthe_carre_v2";
             case LABYRINTHE_ROND -> "labyrinthe_rond_v1";
         };
@@ -292,6 +297,11 @@ public final class GeneratedGameManager {
         config.set("water-jump.reachable", layout.reachable());
         config.set("water-jump.corrections", layout.corrections());
         config.set("water-jump.platforms", layout.platformCount());
+        return new Points(layout.start(), layout.finish(), 0);
+    }
+
+    private static Points routeClimb(Location center, Spec spec) {
+        GeneratedVerticalJumpBuilder.Layout layout = GeneratedVerticalJumpBuilder.build(center, spec.waterLength);
         return new Points(layout.start(), layout.finish(), 0);
     }
 
@@ -338,6 +348,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> "Survivez dans la tour pendant que les étages disparaissent.";
             case RUEE_OR -> "Minez un maximum de minerais dans le temps imparti. Vous gardez les minerais.";
             case WATER_JUMP -> "Franchissez les plateformes au-dessus de l'eau. Chaque raccord est vérifié pour rester faisable.";
+            case MUR_ESCALADE -> "Grimpez de plateforme en plateforme jusqu'au sommet. Top 3 à l'arrivée.";
             case LABYRINTHE -> "Traversez le labyrinthe carré depuis le sas de départ jusqu'au sas d'arrivée. Top 3 à l'arrivée.";
             case LABYRINTHE_ROND -> "Partez du centre du labyrinthe rond et trouvez l'unique sortie extérieure. Top 3 à l'arrivée.";
         };
@@ -350,6 +361,7 @@ public final class GeneratedGameManager {
             case SURVIE_ETAGES -> new Region(world, cx - spec.width / 2 - 4, cy - 2, cz - spec.width / 2 - 4, cx + spec.width / 2 + 4, cy + 10 + spec.floors * 5, cz + spec.width / 2 + 4);
             case RUEE_OR -> new Region(world, cx - spec.width / 2 - 2, cy - 1, cz - spec.width / 2 - 2, cx + spec.width / 2 + 2, cy + spec.goldHeight + 2, cz + spec.width / 2 + 2);
             case WATER_JUMP -> new Region(world, cx - 10, cy - 3, cz - 11, cx + spec.waterLength + 18, cy + 22, cz + 11);
+            case MUR_ESCALADE -> new Region(world, cx - 14, cy - 2, cz - 14, cx + 14, cy + spec.waterLength + 12, cz + 14);
             case LABYRINTHE, LABYRINTHE_ROND -> new Region(world, cx - spec.mazeWidth / 2 - 12, cy - 2, cz - spec.mazeWidth / 2 - 12, cx + spec.mazeWidth / 2 + 12, cy + 8, cz + spec.mazeWidth / 2 + 12);
         };
     }
@@ -453,6 +465,7 @@ public final class GeneratedGameManager {
                 case SURVIE_ETAGES -> new Spec(size.getSurvivalWidth(), size.getSurvivalFloors(), 0, 0, 0, 0);
                 case RUEE_OR -> new Spec(size.getGoldRushWidth(), 0, size.getGoldRushHeight(), size.getGoldRushDurationSeconds(), 0, 0);
                 case WATER_JUMP -> new Spec(0, 0, 0, 0, size.getWaterLength(), 0);
+                case MUR_ESCALADE -> new Spec(0, 0, 0, 0, size.getClimbPlatforms(), 0);
                 case LABYRINTHE, LABYRINTHE_ROND -> new Spec(0, 0, 0, 0, 0, size.getMazeWidth());
             };
         }
@@ -462,6 +475,7 @@ public final class GeneratedGameManager {
                 case SURVIE_ETAGES -> value >= 15 && value <= 61 ? new Spec(value % 2 == 1 ? value : value + 1, floors(value), 0, 0, 0, 0) : null;
                 case RUEE_OR -> value >= 15 && value <= 51 ? new Spec(value % 2 == 1 ? value : value + 1, 0, Math.max(9, value / 3), Math.max(60, Math.min(240, value * 4)), 0, 0) : null;
                 case WATER_JUMP -> value >= 40 && value <= 140 ? new Spec(0, 0, 0, 0, value, 0) : null;
+                case MUR_ESCALADE -> value >= 8 && value <= 42 ? new Spec(0, 0, 0, 0, value, 0) : null;
                 case LABYRINTHE, LABYRINTHE_ROND -> value >= 15 && value <= 61 ? new Spec(0, 0, 0, 0, 0, value % 2 == 1 ? value : value + 1) : null;
             };
         }
@@ -479,6 +493,7 @@ public final class GeneratedGameManager {
                 case SURVIE_ETAGES -> width + "x" + width + " §8• §7" + floors + " étages";
                 case RUEE_OR -> width + "x" + goldHeight + " §8• §7" + goldDuration + "s";
                 case WATER_JUMP -> waterLength + " blocs §8• §7sauts sécurisés";
+                case MUR_ESCALADE -> waterLength + " plateformes §8• §7jump vertical";
                 case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7carré avec sas";
                 case LABYRINTHE_ROND -> mazeWidth + " blocs §8• §7rond, départ au centre";
             };
