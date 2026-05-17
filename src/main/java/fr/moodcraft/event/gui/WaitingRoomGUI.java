@@ -14,6 +14,8 @@ public final class WaitingRoomGUI {
     public static final String TITLE = MoodStyle.guiTitle("Salle d'attente");
     public static final String STYLE_TITLE = MoodStyle.guiTitle("Style salle manuel");
 
+    private static final int[] STYLE_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37};
+
     private WaitingRoomGUI() {
     }
 
@@ -45,7 +47,7 @@ public final class WaitingRoomGUI {
                 "§6✦ §fChoisir le style §6✦",
                 MoodStyle.detail("Actuel : §e" + selectedStyle),
                 MoodStyle.detail("Ouvre la grille complète des styles."),
-                MoodStyle.detail("21 styles disponibles."),
+                MoodStyle.detail("22 styles disponibles."),
                 "",
                 MoodStyle.success("Ouvrir les styles")
         )));
@@ -91,9 +93,8 @@ public final class WaitingRoomGUI {
         )));
 
         WaitingRoomTheme[] themes = WaitingRoomTheme.values();
-        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
-        for (int i = 0; i < themes.length && i < slots.length; i++) {
-            addTheme(inv, slots[i], themes[i], WaitingRoomManager.getSelectedTheme(player) == themes[i]);
+        for (int i = 0; i < themes.length && i < STYLE_SLOTS.length; i++) {
+            addTheme(inv, STYLE_SLOTS[i], themes[i], WaitingRoomManager.getSelectedTheme(player) == themes[i]);
         }
 
         inv.setItem(49, EventItem.item(Material.ARROW, "§6✦ §fRetour §6✦", MoodStyle.detail("Revenir aux tailles de salle")));
