@@ -23,27 +23,33 @@ public final class WaitingRoomGUI {
         Inventory inv = Bukkit.createInventory(null, 54, TITLE);
         fill(inv);
 
-        String selectedStyle = WaitingRoomManager.getSelectedTheme(player).displayName();
+        WaitingRoomTheme selectedTheme = WaitingRoomManager.getSelectedTheme(player);
+        String selectedStyle = selectedTheme.displayName();
+        boolean trainTunnel = selectedTheme == WaitingRoomTheme.TRAIN_TUNNEL;
 
         inv.setItem(4, EventItem.glow(EventItem.item(
                 Material.ENDER_EYE,
                 "§6✦ §fSalle d'attente §6✦",
                 MoodStyle.detail("État : " + (WaitingRoomManager.hasRoom() ? "§agénérée" : "§cnon générée")),
                 MoodStyle.detail("Style choisi : §e" + selectedStyle),
-                MoodStyle.detail("Même choix de styles que le générateur"),
+                trainTunnel ? MoodStyle.detail("Train Tunnel utilise une taille unique optimisée.") : MoodStyle.detail("Même choix de styles que le générateur"),
                 "",
-                MoodStyle.info("Choisis un style puis une taille")
+                trainTunnel ? MoodStyle.info("Génère la taille unique Train Tunnel") : MoodStyle.info("Choisis un style puis une taille")
         )));
 
-        addSize(inv, 10, Material.OAK_DOOR, "Mini", "7x7", "3 à 8 joueurs", selectedStyle);
-        addSize(inv, 12, Material.SPRUCE_DOOR, "Petite", "9x9", "5 à 15 joueurs", selectedStyle);
-        addSize(inv, 14, Material.DARK_OAK_DOOR, "Moyenne", "11x11", "10 à 25 joueurs", selectedStyle);
-        addSize(inv, 16, Material.IRON_DOOR, "Grande", "15x15", "20 à 40 joueurs", selectedStyle);
-        addSize(inv, 28, Material.COPPER_DOOR, "Très grande", "19x19", "40 à 70 joueurs", selectedStyle);
-        addSize(inv, 30, Material.WARPED_DOOR, "Festival", "23x23", "70 joueurs et plus", selectedStyle);
+        if (trainTunnel) {
+            addTrainSize(inv, 14, selectedStyle);
+        } else {
+            addSize(inv, 10, Material.OAK_DOOR, "Mini", "7x7", "3 à 8 joueurs", selectedStyle);
+            addSize(inv, 12, Material.SPRUCE_DOOR, "Petite", "9x9", "5 à 15 joueurs", selectedStyle);
+            addSize(inv, 14, Material.DARK_OAK_DOOR, "Moyenne", "11x11", "10 à 25 joueurs", selectedStyle);
+            addSize(inv, 16, Material.IRON_DOOR, "Grande", "15x15", "20 à 40 joueurs", selectedStyle);
+            addSize(inv, 28, Material.COPPER_DOOR, "Très grande", "19x19", "40 à 70 joueurs", selectedStyle);
+            addSize(inv, 30, Material.WARPED_DOOR, "Festival", "23x23", "70 joueurs et plus", selectedStyle);
+        }
 
         inv.setItem(22, EventItem.glow(EventItem.item(
-                WaitingRoomManager.getSelectedTheme(player).accent(),
+                selectedTheme.accent(),
                 "§6✦ §fChoisir le style §6✦",
                 MoodStyle.detail("Actuel : §e" + selectedStyle),
                 MoodStyle.detail("Ouvre la grille complète des styles."),
@@ -106,10 +112,22 @@ public final class WaitingRoomGUI {
                 selected ? Material.EMERALD_BLOCK : theme.accent(),
                 (selected ? "§a✔ §f" : "§6✦ §f") + theme.displayName() + " §6✦",
                 MoodStyle.detail("Salle uniquement."),
-                MoodStyle.detail("Après ce choix : §etaille de salle."),
+                theme == WaitingRoomTheme.TRAIN_TUNNEL ? MoodStyle.detail("Taille unique optimisée.") : MoodStyle.detail("Après ce choix : §etaille de salle."),
                 "",
                 selected ? MoodStyle.success("Sélectionné") : MoodStyle.info("Choisir ce style")
         ));
+    }
+
+    private static void addTrainSize(Inventory inv, int slot, String selectedStyle) {
+        inv.setItem(slot, EventItem.glow(EventItem.item(
+                Material.MINECART,
+                "§6✦ §fTrain Tunnel §6✦",
+                MoodStyle.detail("Taille : §eunique optimisée"),
+                MoodStyle.detail("Style : §e" + selectedStyle),
+                MoodStyle.detail("Format léger et stable."),
+                "",
+                WaitingRoomManager.hasRoom() ? MoodStyle.error("Restaure d'abord l'ancienne salle") : MoodStyle.success("Générer la salle Train")
+        )));
     }
 
     private static void addSize(Inventory inv, int slot, Material material, String name, String size, String capacity, String selectedStyle) {
