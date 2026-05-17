@@ -65,7 +65,8 @@ public enum GeneratedGameSize {
             case SURVIE_ETAGES -> survivalWidth + "x" + survivalWidth + " §8• §7" + survivalFloors + " étages";
             case RUEE_OR -> getGoldRushWidth() + "x" + getGoldRushHeight() + " §8• §7" + getGoldRushDurationSeconds() + "s";
             case WATER_JUMP -> waterLength + " blocs §8• §7hauteur progressive";
-            case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7sas opposés aléatoires";
+            case LABYRINTHE -> mazeWidth + "x" + mazeWidth + " §8• §7carré avec sas";
+            case LABYRINTHE_ROND -> mazeWidth + " blocs §8• §7rond, départ au centre";
         };
     }
 }
