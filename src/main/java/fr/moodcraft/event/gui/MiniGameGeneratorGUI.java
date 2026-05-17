@@ -46,7 +46,14 @@ public final class MiniGameGeneratorGUI {
         addType(inv, 12, GeneratedGameType.RUEE_OR, "Salle d'attente + Mine en folie.");
         addType(inv, 14, GeneratedGameType.WATER_JUMP, "Salle d'attente + Water Jump.");
         addType(inv, 16, GeneratedGameType.LABYRINTHE, "Labyrinthe carré avec sas opposés.");
-        addType(inv, 22, GeneratedGameType.LABYRINTHE_ROND, "Labyrinthe rond, départ au centre et sortie unique.");
+        inv.setItem(22, EventItem.item(
+                Material.GRAY_DYE,
+                "§8✦ §fLabyrinthe rond §8✦",
+                MoodStyle.detail("Mode mis en attente."),
+                MoodStyle.detail("Il reviendra quand le parcours sera vraiment jouable."),
+                "",
+                MoodStyle.detail("Indisponible")
+        ));
 
         inv.setItem(29, EventItem.item(
                 Material.CHEST,
