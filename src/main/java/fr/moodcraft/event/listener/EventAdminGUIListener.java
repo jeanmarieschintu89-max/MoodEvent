@@ -130,11 +130,6 @@ public class EventAdminGUIListener implements Listener {
             case 16 -> openStyle(player, GeneratedGameType.MUR_ESCALADE);
             case 22 -> openStyle(player, GeneratedGameType.LABYRINTHE);
             case 24 -> openStyle(player, GeneratedGameType.LABYRINTHE_ROND);
-            case 29 -> {
-                click(player);
-                MoodStyle.infoMessage(player, MoodStyle.MODULE, "Loot coffres déplacé.", MoodStyle.detail("Utilise §eCentre Événementiel §7→ §eLoot coffres mini-jeux§7."));
-                MiniGameGeneratorGUI.openMain(player);
-            }
             case 33 -> {
                 no(player);
                 if (WaitingRoomManager.hasRoom()) WaitingRoomManager.restore(player);
