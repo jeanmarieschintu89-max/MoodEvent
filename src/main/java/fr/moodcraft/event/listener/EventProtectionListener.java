@@ -25,7 +25,7 @@ import java.util.Set;
 
 public class EventProtectionListener implements Listener {
 
-    private static final String GOLD_RUSH_PICKAXE_NAME = "§6✦ §fPioche Ruée vers l'or §6✦";
+    private static final String GOLD_RUSH_PICKAXE_NAME = GoldRushTask.PICKAXE_NAME;
     private static final int WAITING_ROOM_PROTECTION_RADIUS = 13;
     private static final int WAITING_ROOM_PROTECTION_HEIGHT = 13;
 
@@ -51,7 +51,7 @@ public class EventProtectionListener implements Listener {
         if (!EventManager.isEventPlayer(victim) && !EventManager.isEventPlayer(damager)) return;
         if (!EventManager.isNonPvpEventRunning()) return;
         event.setCancelled(true);
-        MoodStyle.errorMessage(damager, MoodStyle.MODULE, "PvP désactivé pendant cet événement.", MoodStyle.detail("MoodEvent garde uniquement Mine en folie et Tour Infernale."));
+        MoodStyle.errorMessage(damager, MoodStyle.MODULE, "PvP désactivé pendant cet événement.", MoodStyle.detail("L'épreuve doit rester équitable pour tous."));
     }
 
     @EventHandler
