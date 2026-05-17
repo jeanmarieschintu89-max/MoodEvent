@@ -125,8 +125,7 @@ public final class EventManager {
         MoodStyle.successMessage(player, MoodStyle.MODULE,
                 "Événement créé.",
                 MoodStyle.detail("Nom : §e" + name),
-                MoodStyle.detail("Types disponibles : §emine_en_folie§7, §etour_infernale§7, §ewater_jump§7, §elabyrinthe"),
-                MoodStyle.detail("Départ : §e/eventdepart"));
+                MoodStyle.detail("Prochaine étape : §e/eventtype §7puis §e/eventdepart"));
     }
 
     public static void setDescription(Player player, String rawDescription) {
@@ -145,13 +144,13 @@ public final class EventManager {
         if (!ensureEvent(player)) return;
         EventType next = sanitizeType(EventType.fromText(rawType));
         if (next == EventType.CUSTOM) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type non disponible.", MoodStyle.detail("Modes actifs : §emine_en_folie§7, §etour_infernale§7, §ewater_jump§7, §elabyrinthe"));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type non disponible.", MoodStyle.detail("Modes : §emine_en_folie§7, §etour_infernale§7, §ewater_jump§7, §elabyrinthe"));
             return;
         }
         type = next;
         if (!type.usesFinishLine()) finishLocation = null;
         save();
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Type d'événement défini.", MoodStyle.detail("Type : " + getType().getDisplayName()));
+        MoodStyle.successMessage(player, MoodStyle.MODULE, "Type d'événement défini.", MoodStyle.detail("Épreuve : " + getType().getDisplayName()));
     }
 
     public static void cycleType(Player player) {
@@ -164,7 +163,7 @@ public final class EventManager {
         };
         if (!type.usesFinishLine()) finishLocation = null;
         save();
-        MoodStyle.successMessage(player, MoodStyle.MODULE, "Type changé.", MoodStyle.detail("Type : " + getType().getDisplayName()));
+        MoodStyle.successMessage(player, MoodStyle.MODULE, "Type changé.", MoodStyle.detail("Épreuve : " + getType().getDisplayName()));
     }
 
     public static void setLocation(Player player) {
@@ -178,7 +177,7 @@ public final class EventManager {
         if (!ensureEvent(player)) return;
         if (!getType().usesFinishLine()) {
             clearFinishLocation(player);
-            MoodStyle.infoMessage(player, MoodStyle.MODULE, "Arrivée classique non utilisée.", MoodStyle.detail("Water Jump et Labyrinthe utilisent une arrivée."));
+            MoodStyle.infoMessage(player, MoodStyle.MODULE, "Arrivée non utilisée pour cette épreuve.", MoodStyle.detail("Water Jump et Labyrinthe utilisent une arrivée."));
             return;
         }
         finishLocation = player.getLocation().clone();
@@ -196,7 +195,7 @@ public final class EventManager {
     public static void openQueue(Player player) {
         if (!ensureEvent(player) || !ensureLocation(player)) return;
         if (getType() == EventType.CUSTOM) {
-            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type d'événement non défini.", MoodStyle.detail("Utilise le générateur ou §e/eventtype mine_en_folie|tour_infernale|water_jump|labyrinthe"));
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Type d'événement non défini.", MoodStyle.detail("Utilise §e/eventtype mine_en_folie|tour_infernale|water_jump|labyrinthe"));
             return;
         }
         queueOpen = true;
@@ -205,12 +204,7 @@ public final class EventManager {
         clearCollections();
         cancelSurvivalTask();
         save();
-        broadcastEvent(MoodStyle.hype("Un événement vient d'ouvrir !"),
-                MoodStyle.detail("Épreuve : " + getType().getDisplayName() + " §8• §e" + name),
-                MoodStyle.detail(shortGoal()),
-                MoodStyle.detail("Top 1 : §6" + rewardLine(1)),
-                MoodStyle.detail("Participation : §a" + participationLine()),
-                MoodStyle.info("Tape §e/event §fpour rejoindre la file et tenter le podium."));
+        broadcastOpenQueue();
     }
 
     public static void closeQueue(Player player) {
@@ -226,21 +220,19 @@ public final class EventManager {
         queueOpen = false;
         int sent = sendQueueToWaitingRoom();
         save();
-        broadcastEvent(MoodStyle.success("File fermée, départ en approche."),
-                MoodStyle.detail("Épreuve : " + getType().getDisplayName() + " §8• §e" + name),
-                MoodStyle.detail("Joueurs envoyés en salle d'attente : §e" + sent),
-                MoodStyle.detail("Objectif : §f" + shortGoal()),
-                MoodStyle.info("Lancement automatique dans §e60s"));
+        broadcastEvent(MoodStyle.success("La file est fermée."),
+                MoodStyle.detail("Joueurs prêts : §e" + sent),
+                MoodStyle.detail("Départ dans : §e60 secondes"));
     }
 
     public static void cancelEvent(Player player) {
         Player actor = resolveActor(player);
         if (actor == null || !ensureEvent(actor)) return;
         autoClosing = false;
-        int returned = returnParticipants(false);
+        returnParticipants(false);
         restoreGeneratedZones(actor);
         broadcastEvent(MoodStyle.error("Événement annulé."),
-                MoodStyle.detail("Participants renvoyés : §e" + returned),
+                MoodStyle.detail("Les joueurs ont été renvoyés."),
                 MoodStyle.detail("Aucune récompense distribuée."));
         clearEvent();
         save();
@@ -250,24 +242,20 @@ public final class EventManager {
         Player actor = resolveActor(player);
         if (actor == null || !ensureEvent(actor)) return;
         autoClosing = false;
-
         boolean rankedMode = getType().usesSurvivalRanking() || getType().usesFinishLine();
         if (getType().usesSurvivalRanking()) finalizeInfernalRanking();
         if (getType().usesSurvivalRanking()) announceAndRewardTopPlayers(true);
-
-        String resultLine = rankedMode ? MoodStyle.detail("Classement final confirmé.") : MoodStyle.detail("Récompenses de participation distribuées.");
-        String line1 = rankedMode ? rankLine(1) : MoodStyle.detail("Mode : §eMine en folie");
-        String line2 = rankedMode ? rankLine(2) : MoodStyle.detail("Minerais conservés par les joueurs.");
-        String line3 = rankedMode ? rankLine(3) : MoodStyle.detail("Fin du minage.");
-
-        int returned = returnParticipants(true);
+        String line1 = rankedMode ? rankLine(1) : MoodStyle.detail("Mine en folie terminée.");
+        String line2 = rankedMode ? rankLine(2) : MoodStyle.detail("Les minerais restent aux joueurs.");
+        String line3 = rankedMode ? rankLine(3) : MoodStyle.detail("Merci à tous les participants.");
+        returnParticipants(true);
         restoreGeneratedZones(actor);
-        broadcastEvent(MoodStyle.success("Événement terminé."),
-                MoodStyle.detail("Participants renvoyés : §e" + returned),
-                resultLine,
+        broadcastEvent(MoodStyle.success("Événement terminé !"),
+                MoodStyle.detail("Merci à tous les participants."),
                 line1,
                 line2,
-                line3);
+                line3,
+                MoodStyle.info("Les joueurs sont renvoyés à leur position."));
         clearEvent();
         save();
     }
@@ -287,16 +275,16 @@ public final class EventManager {
         }
         if (queue.add(player.getUniqueId())) {
             MoodStyle.successMessage(player, MoodStyle.MODULE,
-                    "Tu as rejoint l'événement !",
-                    MoodStyle.detail("Épreuve : " + getType().getDisplayName() + " §8• §e" + name),
+                    "Inscription confirmée !",
+                    MoodStyle.detail("Épreuve : " + getType().getDisplayName()),
                     MoodStyle.detail("But : §f" + shortGoal()),
-                    MoodStyle.detail("Ta position : §e" + queuePositionLabel(player)),
-                    MoodStyle.detail("Top 1 : §6" + rewardLine(1)),
-                    MoodStyle.detail("Participation : §a" + participationLine()),
-                    MoodStyle.info("Reste prêt, tu seras envoyé en salle d'attente à la fermeture."));
+                    MoodStyle.detail("Position : §e" + queuePositionLabel(player)),
+                    MoodStyle.info("Reste prêt, tu seras téléporté en salle d'attente."));
             player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.8f, 1.2f);
         } else {
-            MoodStyle.infoMessage(player, MoodStyle.MODULE, "Tu es déjà dans la file d'attente.", MoodStyle.detail("Position : §e" + queuePositionLabel(player)));
+            MoodStyle.infoMessage(player, MoodStyle.MODULE,
+                    "Tu es déjà inscrit à l'événement.",
+                    MoodStyle.detail("Position : §e" + queuePositionLabel(player)));
         }
     }
 
@@ -306,16 +294,15 @@ public final class EventManager {
             return;
         }
         MoodStyle.send(player, MoodStyle.MODULE,
-                queueOpen ? MoodStyle.hype("Un événement est ouvert !") : MoodStyle.info("Événement en préparation."),
-                MoodStyle.detail("Épreuve : " + getType().getDisplayName() + " §8• §e" + name),
+                queueOpen ? MoodStyle.hype("Nouvel événement disponible !") : MoodStyle.info("Événement en préparation."),
+                MoodStyle.detail("Épreuve : " + getType().getDisplayName()),
                 MoodStyle.detail("But : §f" + shortGoal()),
                 MoodStyle.detail("Description : §7" + getDescription()),
                 MoodStyle.detail("Top 1 : §6" + rewardLine(1)),
                 MoodStyle.detail("Top 2 : §e" + rewardLine(2)),
                 MoodStyle.detail("Top 3 : §e" + rewardLine(3)),
                 MoodStyle.detail("Participation : §a" + participationLine()),
-                MoodStyle.detail("Salle d'attente : " + (WaitingRoomManager.hasRoom() ? "§agénérée" : "§cnon générée")),
-                queueOpen ? MoodStyle.info("Tape §e/event §fpour rejoindre maintenant.") : MoodStyle.detail("Attends l'ouverture par le staff."));
+                queueOpen ? MoodStyle.info("Rejoins maintenant avec §e/event") : MoodStyle.info("Attends l'ouverture de la file."));
     }
 
     public static void startEvent(Player player) {
@@ -342,11 +329,11 @@ public final class EventManager {
         eliminationOrder.clear();
         finalRanking.clear();
         save();
-        broadcastEvent(MoodStyle.success("L'événement commence !"),
-                MoodStyle.detail("Épreuve : " + getType().getDisplayName() + " §8• §e" + name),
+        broadcastEvent(MoodStyle.hype("L'événement commence !"),
+                MoodStyle.detail("Épreuve : " + getType().getDisplayName()),
                 MoodStyle.detail("Participants : §e" + queue.size()),
                 MoodStyle.detail("Objectif : §f" + shortGoal()),
-                getType().usesFinishLine() || getType().usesSurvivalRanking() ? MoodStyle.detail("Podium : §6Top 1 §7/ §eTop 2 §7/ §eTop 3") : MoodStyle.detail("Gain : §6tu gardes ce que tu récoltes"));
+                MoodStyle.info("Bonne chance à tous !"));
         teleportQueue();
     }
 
@@ -358,14 +345,20 @@ public final class EventManager {
         finalRanking.add(uuid);
         int place = finalRanking.size();
         WaitingRoomManager.teleport(player);
-        player.sendTitle(place <= 3 ? "§6Top " + place : "§aArrivée", "§f" + cleanDisplay(getType().getDisplayName()), 0, 50, 10);
-        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
         if (place <= 3) {
-            player.sendActionBar("§6" + formatPlace(place) + " §8• §fRécompense reçue");
+            player.sendTitle("§6Top " + place, "§fRécompense reçue", 0, 50, 10);
+            player.sendActionBar("§6" + formatPlace(place) + " §8• §fBravo !");
             RewardManager.giveTopReward(player, place);
+            MoodStyle.successMessage(player, MoodStyle.MODULE,
+                    "Tu as terminé !",
+                    MoodStyle.detail("Classement : §6Top " + place),
+                    MoodStyle.detail("Récompense reçue."),
+                    MoodStyle.info("Retour en salle d'attente."));
         } else {
+            player.sendTitle("§aArrivée", "§fBien joué !", 0, 50, 10);
             player.sendActionBar("§aArrivée §8• §7Retour en salle d'attente");
         }
+        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.1f);
         if (finishedPlayers.containsAll(participants)) scheduleAutoStop(player, "Tous les joueurs ont terminé " + cleanDisplay(getType().getDisplayName()) + ".");
     }
 
@@ -383,8 +376,8 @@ public final class EventManager {
                 "Tu es éliminé.",
                 MoodStyle.detail("Retour en salle d'attente."),
                 MoodStyle.detail("Joueurs encore en jeu : §e" + remaining));
-        broadcastEvent(MoodStyle.info("Tour Infernale."),
-                MoodStyle.detail("§c" + player.getName() + " §7est tombé."),
+        broadcastEvent(MoodStyle.info("Tour Infernale"),
+                MoodStyle.detail("§c" + player.getName() + " §fest tombé."),
                 MoodStyle.detail("Joueurs restants : §e" + remaining));
         if (remaining <= 0 || (remaining == 1 && eliminated.size() > 0)) {
             for (UUID survivor : new HashSet<>(participants)) {
@@ -393,7 +386,7 @@ public final class EventManager {
                     WaitingRoomManager.teleport(survivorPlayer);
                     survivorPlayer.sendTitle("§6Victoire", "§fDernier survivant", 0, 55, 12);
                     survivorPlayer.playSound(survivorPlayer.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.15f);
-                    survivorPlayer.sendActionBar("§6Victoire §8• §fTop 3 calculé à la clôture");
+                    survivorPlayer.sendActionBar("§6Victoire §8• §fTop 3 calculé à la fin");
                 }
             }
             cancelSurvivalTask();
@@ -408,12 +401,22 @@ public final class EventManager {
                 MoodStyle.detail("/eventtype <mine_en_folie|tour_infernale|water_jump|labyrinthe>"),
                 MoodStyle.detail("/eventdepart"),
                 MoodStyle.detail("/eventsalleattente <mini|petite|moyenne|grande|tresgrande|festival>"),
-                MoodStyle.detail("/eventrestaurersalle"),
                 MoodStyle.detail("/eventouvrir"),
                 MoodStyle.detail("/eventfermer"),
                 MoodStyle.detail("/eventlancer"),
                 MoodStyle.detail("/eventstop"),
                 MoodStyle.detail("/eventmenu"));
+    }
+
+    private static void broadcastOpenQueue() {
+        broadcastEvent(MoodStyle.hype("Nouvel événement disponible !"),
+                MoodStyle.detail("Épreuve : " + getType().getDisplayName()),
+                MoodStyle.detail("But : §f" + shortGoal()),
+                MoodStyle.detail("Top 1 : §6" + rewardLine(1)),
+                MoodStyle.detail("Top 2 : §e" + rewardLine(2)),
+                MoodStyle.detail("Top 3 : §e" + rewardLine(3)),
+                MoodStyle.detail("Participation : §a" + participationLine()),
+                MoodStyle.info("Rejoins maintenant avec §e/event"));
     }
 
     private static int sendQueueToWaitingRoom() {
@@ -423,13 +426,13 @@ public final class EventManager {
             if (player == null || !player.isOnline()) continue;
             returnLocations.putIfAbsent(player.getUniqueId(), player.getLocation().clone());
             WaitingRoomManager.teleport(player);
-            player.sendTitle("§6Salle d'attente", "§fL'événement va bientôt commencer", 0, 45, 10);
-            MoodStyle.infoMessage(player, MoodStyle.MODULE,
-                    "La file d'attente est fermée.",
-                    MoodStyle.detail("Tu es en salle d'attente."),
-                    MoodStyle.detail("Objectif : §f" + shortGoal()),
-                    MoodStyle.detail("Récompense possible : §6" + rewardLine(1)),
-                    MoodStyle.info("Prépare-toi, départ imminent."));
+            player.sendTitle("§6Salle d'attente", "§fPrépare-toi, ça commence bientôt", 0, 45, 10);
+            MoodStyle.successMessage(player, MoodStyle.MODULE,
+                    "Tu es en salle d'attente.",
+                    MoodStyle.detail("Épreuve : " + getType().getDisplayName()),
+                    MoodStyle.detail("But : §f" + shortGoal()),
+                    MoodStyle.detail("Départ automatique : §e60 secondes"),
+                    MoodStyle.info("Reste prêt, le départ approche."));
             sent++;
         }
         return sent;
@@ -443,7 +446,7 @@ public final class EventManager {
             participants.add(player.getUniqueId());
             returnLocations.putIfAbsent(player.getUniqueId(), player.getLocation().clone());
             player.teleport(startLocation);
-            player.sendTitle("§aGOOO!", "§f" + name, 0, 40, 10);
+            player.sendTitle("§aGO !", "§fBonne chance", 0, 40, 10);
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.1f);
             sendLaunchInstructions(player);
             teleported++;
@@ -457,24 +460,24 @@ public final class EventManager {
         switch (getType()) {
             case SURVIE_ETAGES -> MoodStyle.send(player, MoodStyle.MODULE,
                     MoodStyle.info("Tour Infernale lancée."),
-                    MoodStyle.detail("Objectif : rester le dernier survivant."),
-                    MoodStyle.detail("Les étages disparaissent progressivement."),
-                    MoodStyle.detail("Le Top 3 final sera récompensé."));
+                    MoodStyle.detail("Le sol va disparaître petit à petit."),
+                    MoodStyle.detail("Reste en vie le plus longtemps possible."),
+                    MoodStyle.detail("Le Top 3 sera récompensé."));
             case RUEE_OR -> MoodStyle.send(player, MoodStyle.MODULE,
                     MoodStyle.info("Mine en folie lancée."),
-                    MoodStyle.detail("Objectif : miner un maximum de minerais."),
-                    MoodStyle.detail("Tu gardes les minerais obtenus."),
-                    MoodStyle.detail("Pioche événement + vision nocturne."));
+                    MoodStyle.detail("Mine un maximum de minerais."),
+                    MoodStyle.detail("Tu gardes tout ce que tu récoltes."),
+                    MoodStyle.detail("Une pioche spéciale t'est donnée."));
             case WATER_JUMP -> MoodStyle.send(player, MoodStyle.MODULE,
                     MoodStyle.info("Water Jump lancé."),
-                    MoodStyle.detail("Objectif : franchir les plateformes."),
-                    MoodStyle.detail("Chute : retour au départ."),
-                    MoodStyle.detail("Top 3 à l'arrivée rouge."));
+                    MoodStyle.detail("Saute de plateforme en plateforme."),
+                    MoodStyle.detail("Si tu tombes, retour au départ."),
+                    MoodStyle.detail("Les 3 premiers à l'arrivée gagnent."));
             case LABYRINTHE -> MoodStyle.send(player, MoodStyle.MODULE,
                     MoodStyle.info("Labyrinthe lancé."),
-                    MoodStyle.detail("Objectif : trouver la sortie avant les autres."),
-                    MoodStyle.detail("Départ et arrivée dans des sas."),
-                    MoodStyle.detail("Top 3 au sas d'arrivée."));
+                    MoodStyle.detail("Trouve la sortie avant les autres."),
+                    MoodStyle.detail("Les 3 premiers à l'arrivée gagnent."),
+                    MoodStyle.detail("Reste rapide et attentif."));
             default -> MoodStyle.infoMessage(player, MoodStyle.MODULE, "Tu es entré dans l'événement.");
         }
     }
@@ -506,27 +509,16 @@ public final class EventManager {
             Player player = Bukkit.getPlayer(finalRanking.get(index));
             if (player == null || !player.isOnline()) continue;
             int place = index + 1;
-            player.sendTitle(place == 1 ? "§6Victoire" : "§6Top " + place, "§f" + cleanDisplay(getType().getDisplayName()), 0, 50, 10);
-            player.sendActionBar("§6" + formatPlace(place) + " §8• §fRécompense reçue");
+            player.sendTitle(place == 1 ? "§6Victoire" : "§6Top " + place, "§fRécompense reçue", 0, 50, 10);
+            player.sendActionBar("§6" + formatPlace(place) + " §8• §fBravo !");
             if (reward) RewardManager.giveTopReward(player, place);
         }
-    }
-
-    private static void broadcastEndSummary(int returned, boolean rankedMode) {
-        String line1 = rankedMode ? rankLine(1) : MoodStyle.detail("Mode : §eMine en folie");
-        String line2 = rankedMode ? rankLine(2) : MoodStyle.detail("Minerais conservés par les joueurs.");
-        String line3 = rankedMode ? rankLine(3) : MoodStyle.detail("Fin du minage.");
-        broadcastEvent(MoodStyle.success("Événement terminé."),
-                MoodStyle.detail("Participants renvoyés : §e" + returned),
-                line1,
-                line2,
-                line3);
     }
 
     private static String rankLine(int place) {
         if (finalRanking.size() < place) return MoodStyle.detail("Top " + place + " : §7Aucun joueur");
         Player player = Bukkit.getPlayer(finalRanking.get(place - 1));
-        return MoodStyle.detail("§e" + formatPlace(place) + " §8- §a" + (player == null ? "Joueur hors ligne" : player.getName()));
+        return MoodStyle.detail("Top " + place + " : " + (place == 1 ? "§6" : "§e") + (player == null ? "Joueur hors ligne" : player.getName()));
     }
 
     private static String formatPlace(int place) {
@@ -544,11 +536,11 @@ public final class EventManager {
 
     private static String shortGoal() {
         return switch (getType()) {
-            case WATER_JUMP -> "saute de plateforme en plateforme et atteins l'arrivée rouge";
-            case LABYRINTHE -> "trouve la sortie avant les autres joueurs";
-            case SURVIE_ETAGES -> "survis pendant que les étages disparaissent";
+            case WATER_JUMP -> "saute de plateforme en plateforme et atteins l'arrivée";
+            case LABYRINTHE -> "trouve la sortie avant les autres";
+            case SURVIE_ETAGES -> "reste en vie pendant que le sol disparaît";
             case RUEE_OR -> "mine un maximum de minerais pendant le chrono";
-            default -> "participe, vise le podium et repars récompensé";
+            default -> "participe et vise la victoire";
         };
     }
 
@@ -560,11 +552,11 @@ public final class EventManager {
         if (!moneyText.isBlank() && !itemText.isBlank()) return moneyText + " + " + itemText;
         if (!moneyText.isBlank()) return moneyText;
         if (!itemText.isBlank()) return itemText;
-        return "à configurer par le staff";
+        return "à configurer";
     }
 
     private static String participationLine() {
-        if (getType() == EventType.RUEE_OR) return "tu gardes les minerais récoltés";
+        if (getType() == EventType.RUEE_OR) return "Tu gardes les minerais récoltés";
         int items = RewardManager.countRewardItems(RewardManager.PARTICIPATION);
         double money = RewardManager.getMoney(RewardManager.PARTICIPATION);
         String moneyText = money > 0 ? RewardManager.formatMoney(money) : "";
@@ -572,7 +564,7 @@ public final class EventManager {
         if (!moneyText.isBlank() && !itemText.isBlank()) return moneyText + " + " + itemText;
         if (!moneyText.isBlank()) return moneyText;
         if (!itemText.isBlank()) return itemText;
-        return "à configurer par le staff";
+        return "à configurer";
     }
 
     private static String queuePositionLabel(Player player) {
@@ -593,7 +585,7 @@ public final class EventManager {
             if (giveParticipation) RewardManager.giveParticipationReward(player);
             player.teleport(returnLocation);
             player.sendTitle("§aRetour", "§fMerci d'avoir participé", 0, 35, 10);
-            player.sendActionBar("§aRetour effectué §8• §7Merci d'avoir participé");
+            player.sendActionBar("§aRetour effectué §8• §7À bientôt pour le prochain event");
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.2f);
             returned++;
         }
@@ -613,4 +605,103 @@ public final class EventManager {
         autoClosing = true;
         broadcastEvent(MoodStyle.success("Épreuve terminée."), MoodStyle.detail(reason), MoodStyle.info("Retour automatique dans §e30 secondes"));
         Bukkit.getScheduler().runTaskLater(Main.getInstance(), () -> {
-            if (!running || !hasEvent()) { autoClosing = false; return... (truncated due to tool response token budget)
+            if (!running || !hasEvent()) { autoClosing = false; return; }
+            Player closer = resolveActor(actor);
+            if (closer != null) stopEvent(closer);
+            autoClosing = false;
+        }, 20L * 30L);
+    }
+
+    private static void clearEvent() {
+        name = "";
+        description = "";
+        type = EventType.CUSTOM;
+        startLocation = null;
+        finishLocation = null;
+        clearRuntime();
+    }
+
+    private static void clearRuntime() {
+        queueOpen = false;
+        running = false;
+        autoClosing = false;
+        clearCollections();
+        cancelSurvivalTask();
+    }
+
+    private static void clearCollections() {
+        queue.clear();
+        participants.clear();
+        eliminated.clear();
+        finishedPlayers.clear();
+        eliminationOrder.clear();
+        finalRanking.clear();
+        returnLocations.clear();
+    }
+
+    private static void cancelSurvivalTask() {
+        if (survivalTask != null) {
+            survivalTask.cancel();
+            survivalTask = null;
+        }
+    }
+
+    private static boolean hasEvent() {
+        return name != null && !name.isBlank();
+    }
+
+    private static boolean ensureEvent(Player player) {
+        if (hasEvent()) return true;
+        MoodStyle.errorMessage(player, MoodStyle.MODULE, "Aucun événement configuré.");
+        return false;
+    }
+
+    private static boolean ensureLocation(Player player) {
+        if (hasLocation()) return true;
+        MoodStyle.errorMessage(player, MoodStyle.MODULE, "Point de départ manquant.", MoodStyle.detail("Utilise §e/eventdepart"));
+        return false;
+    }
+
+    private static boolean ensureFinishLocation(Player player) {
+        if (hasFinishLocation()) return true;
+        MoodStyle.errorMessage(player, MoodStyle.MODULE, "Point d'arrivée manquant.", MoodStyle.detail("Utilise §e/eventarrivee"));
+        return false;
+    }
+
+    private static Player resolveActor(Player player) {
+        if (player != null && player.isOnline()) return player;
+        for (Player online : Bukkit.getOnlinePlayers()) return online;
+        return null;
+    }
+
+    private static void broadcastEvent(String... lines) {
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            MoodStyle.send(online, MoodStyle.MODULE, lines);
+        }
+    }
+
+    private static EventType sanitizeType(EventType value) {
+        return value == null ? EventType.CUSTOM : value;
+    }
+
+    private static Location readLocation(FileConfiguration config, String path) {
+        String worldName = config.getString(path + ".world", "");
+        if (worldName == null || worldName.isBlank()) return null;
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) return null;
+        return new Location(world, config.getDouble(path + ".x"), config.getDouble(path + ".y"), config.getDouble(path + ".z"), (float) config.getDouble(path + ".yaw"), (float) config.getDouble(path + ".pitch"));
+    }
+
+    private static void writeLocation(FileConfiguration config, String path, Location location) {
+        if (location == null || location.getWorld() == null) {
+            config.set(path, null);
+            return;
+        }
+        config.set(path + ".world", location.getWorld().getName());
+        config.set(path + ".x", location.getX());
+        config.set(path + ".y", location.getY());
+        config.set(path + ".z", location.getZ());
+        config.set(path + ".yaw", location.getYaw());
+        config.set(path + ".pitch", location.getPitch());
+    }
+}
