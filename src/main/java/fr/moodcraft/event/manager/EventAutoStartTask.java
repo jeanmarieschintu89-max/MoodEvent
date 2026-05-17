@@ -65,11 +65,17 @@ public final class EventAutoStartTask {
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!EventManager.isEventPlayer(player)) continue;
-            player.sendTitle("§6" + remaining + "s", "§fL'événement commence bientôt", 0, 30, 8);
+            player.sendTitle("§6" + remaining + "s", "§fPrépare-toi", 0, 30, 8);
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.7f, 1.1f);
-            MoodStyle.infoMessage(player, MoodStyle.MODULE,
-                    "Lancement automatique dans §e" + remaining + "s§f.",
-                    MoodStyle.detail("Le vrai départ arrive avec le compteur final."));
+            if (remaining == 10) {
+                MoodStyle.send(player, MoodStyle.MODULE,
+                        MoodStyle.hype("Départ dans §e10 secondes !"),
+                        MoodStyle.detail("Prépare-toi."));
+            } else {
+                MoodStyle.send(player, MoodStyle.MODULE,
+                        MoodStyle.info("Départ dans §e30 secondes."),
+                        MoodStyle.detail("Prépare-toi."));
+            }
         }
     }
 
