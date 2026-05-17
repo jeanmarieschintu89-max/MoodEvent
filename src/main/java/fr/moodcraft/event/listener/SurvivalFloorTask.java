@@ -3,6 +3,7 @@ package fr.moodcraft.event.listener;
 import fr.moodcraft.event.Main;
 import fr.moodcraft.event.generator.GeneratedGameManager;
 import fr.moodcraft.event.generator.GeneratedGameType;
+import fr.moodcraft.event.manager.EventLaunchBufferManager;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.model.EventType;
 import org.bukkit.Bukkit;
@@ -20,10 +21,9 @@ import java.io.File;
 
 public class SurvivalFloorTask implements Listener {
 
-    private static final int START_DELAY_SECONDS = 10;
-
     private int tick = 0;
     private int wave = 0;
+    private boolean announcedStart;
 
     public SurvivalFloorTask() {
         new BukkitRunnable() {
@@ -41,24 +41,24 @@ public class SurvivalFloorTask implements Listener {
                 || GeneratedGameManager.getActiveType() != GeneratedGameType.SURVIE_ETAGES) {
             tick = 0;
             wave = 0;
+            announcedStart = false;
+            return;
+        }
+
+        forEachSurvivor(EventManager::checkSurvivalFloorElimination);
+
+        if (!EventLaunchBufferManager.hasBufferedThisRun() || EventLaunchBufferManager.isBufferActive()) {
             return;
         }
 
         tick++;
 
-        if (tick == 1) {
+        if (!announcedStart) {
+            announcedStart = true;
             forEachSurvivor(player -> {
-                player.sendTitle("§dEffondrement", "§fPréparez-vous", 0, 35, 10);
-                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.9f, 0.8f);
+                player.sendActionBar("§d▣ §fEffondrement lancé §8• §7reste en vie");
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.7f, 0.9f);
             });
-        }
-
-        forEachSurvivor(EventManager::checkSurvivalFloorElimination);
-
-        if (tick < START_DELAY_SECONDS) {
-            int countdown = Math.max(1, START_DELAY_SECONDS - tick);
-            forEachSurvivor(player -> player.sendActionBar("§d▣ §fEffondrement §8• §e" + countdown + "s §7avant effondrement"));
-            return;
         }
 
         wave++;
