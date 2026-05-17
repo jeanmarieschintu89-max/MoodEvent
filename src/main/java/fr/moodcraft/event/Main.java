@@ -19,6 +19,7 @@ import fr.moodcraft.event.listener.GoldRushTask;
 import fr.moodcraft.event.listener.SurvivalFloorTask;
 import fr.moodcraft.event.loot.EventLootManager;
 import fr.moodcraft.event.manager.EventAutoStartTask;
+import fr.moodcraft.event.manager.EventHypeAnnouncer;
 import fr.moodcraft.event.manager.EventLaunchBufferManager;
 import fr.moodcraft.event.manager.EventLogManager;
 import fr.moodcraft.event.manager.EventManager;
@@ -52,6 +53,7 @@ public class Main extends JavaPlugin {
         EventSecurityManager.load();
         EventReturnSafety.start();
         EventAutoStartTask.start();
+        EventHypeAnnouncer.start();
         EventLaunchBufferManager.start();
         SurvivalFloorLagGuard.start();
 
@@ -94,6 +96,7 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        EventHypeAnnouncer.stop();
         EventManager.save();
         WaitingRoomManager.save();
         RewardManager.save();
