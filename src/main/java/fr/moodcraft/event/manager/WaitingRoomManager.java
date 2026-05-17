@@ -104,7 +104,12 @@ public final class WaitingRoomManager {
             return;
         }
         player.teleport(spawn);
-        player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.2f);
+        if (currentTheme() == WaitingRoomTheme.TRAIN_TUNNEL) {
+            TrainTunnelWaitingRoomBuilder.board(player, spawn);
+            player.playSound(player.getLocation(), Sound.ENTITY_MINECART_RIDING, 0.8f, 1.1f);
+        } else {
+            player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.2f);
+        }
     }
 
     public static void build(Player player, String rawSize) {
@@ -114,8 +119,9 @@ public final class WaitingRoomManager {
         }
 
         WaitingRoomTheme theme = getSelectedTheme(player);
-        int radius = radius(rawSize);
-        int height = height(radius);
+        boolean trainTunnel = theme == WaitingRoomTheme.TRAIN_TUNNEL;
+        int radius = trainTunnel ? TrainTunnelWaitingRoomBuilder.radius() : radius(rawSize);
+        int height = trainTunnel ? TrainTunnelWaitingRoomBuilder.height() : height(radius);
         Location center = player.getLocation().getBlock().getLocation().add(0.5, 0, 0.5);
         World world = center.getWorld();
         if (world == null) {
@@ -128,10 +134,15 @@ public final class WaitingRoomManager {
 
         prepareChunks(world, cx, cz, radius);
         backup(center, radius, height);
-        generate(center, radius, height, theme);
+        if (trainTunnel) {
+            TrainTunnelWaitingRoomBuilder.build(center);
+            spawn = TrainTunnelWaitingRoomBuilder.spawn(center);
+        } else {
+            generate(center, radius, height, theme);
+            spawn = center.clone().add(0, 1, 0);
+        }
         refreshChunks(world, cx, cz, radius);
 
-        spawn = center.clone().add(0, 1, 0);
         spawn.setYaw(player.getLocation().getYaw());
         spawn.setPitch(player.getLocation().getPitch());
         active = true;
@@ -140,19 +151,20 @@ public final class WaitingRoomManager {
         config.set("radius", radius);
         config.set("height", height);
         config.set("style", theme.key());
-        config.set("size-name", rawSize == null ? "moyenne" : rawSize.toLowerCase(Locale.ROOT));
+        config.set("size-name", trainTunnel ? "train_tunnel" : rawSize == null ? "moyenne" : rawSize.toLowerCase(Locale.ROOT));
         writeLocation("spawn", spawn);
         save();
 
         player.teleport(spawn);
+        if (trainTunnel) TrainTunnelWaitingRoomBuilder.board(player, spawn);
         player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.25f);
         MoodStyle.successMessage(
                 player,
                 MoodStyle.MODULE,
-                "Salle d'attente générée.",
-                MoodStyle.detail("Taille : §e" + ((radius * 2) + 1) + "x" + ((radius * 2) + 1)),
+                trainTunnel ? "Salle Train Tunnel générée." : "Salle d'attente générée.",
+                trainTunnel ? MoodStyle.detail("Type : §eTunnel carré 3D avec wagons") : MoodStyle.detail("Taille : §e" + ((radius * 2) + 1) + "x" + ((radius * 2) + 1)),
                 MoodStyle.detail("Style salle : §e" + theme.displayName()),
-                MoodStyle.detail("Zone sauvegardée avant construction."),
+                trainTunnel ? MoodStyle.detail("Les joueurs seront placés directement dans un wagon.") : MoodStyle.detail("Zone sauvegardée avant construction."),
                 MoodStyle.detail("Restauration : §e/eventrestaurersalle")
         );
     }
@@ -190,6 +202,11 @@ public final class WaitingRoomManager {
         MoodStyle.successMessage(player, MoodStyle.MODULE, "Salle d'attente restaurée.", MoodStyle.detail("Blocs restaurés : §e" + restored), MoodStyle.detail("La zone d'attente a été supprimée."));
     }
 
+    private static WaitingRoomTheme currentTheme() {
+        if (config == null) return WaitingRoomTheme.MOODCRAFT;
+        return WaitingRoomTheme.of(config.getString("style", DEFAULT_STYLE_KEY));
+    }
+
     private static void backup(Location center, int radius, int height) {
         config.set("backup", null);
         World world = center.getWorld();
@@ -199,7 +216,7 @@ public final class WaitingRoomManager {
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
         for (int x = cx - radius; x <= cx + radius; x++) {
-            for (int y = cy; y <= cy + height; y++) {
+            for (int y = cy - 2; y <= cy + height; y++) {
                 for (int z = cz - radius; z <= cz + radius; z++) {
                     Block block = world.getBlockAt(x, y, z);
                     String path = "backup.blocks." + index++;
