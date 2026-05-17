@@ -27,7 +27,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 
 public class EventAdminGUIListener implements Listener {
 
-    private static final int[] THEME_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
+    private static final int[] THEME_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37};
 
     @EventHandler
     public void onClick(InventoryClickEvent event) {
