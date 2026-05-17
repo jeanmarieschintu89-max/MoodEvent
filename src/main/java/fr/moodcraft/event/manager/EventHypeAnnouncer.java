@@ -47,7 +47,6 @@ public final class EventHypeAnnouncer {
             wasQueueOpen = true;
             reminderSeconds = 0;
             lastEventKey = eventKey;
-            broadcastOpen();
             return;
         }
 
@@ -55,30 +54,6 @@ public final class EventHypeAnnouncer {
         if (reminderSeconds % REMINDER_INTERVAL_SECONDS == 0) {
             broadcastReminder();
         }
-    }
-
-    private static void broadcastOpen() {
-        EventType type = EventManager.getType();
-        String eventName = EventManager.getName();
-        Bukkit.broadcastMessage("");
-        Bukkit.broadcastMessage("§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        Bukkit.broadcastMessage("§d✦ §5MOOD EVENT §d✦");
-        Bukkit.broadcastMessage("§aUn événement vient d'ouvrir !");
-        Bukkit.broadcastMessage("");
-        Bukkit.broadcastMessage("§fÉpreuve : " + type.getDisplayName() + " §8• §e" + eventName);
-        Bukkit.broadcastMessage(goalLine(type));
-        Bukkit.broadcastMessage(objectiveLine(type));
-        Bukkit.broadcastMessage("");
-        Bukkit.broadcastMessage("§6Récompenses à gagner :");
-        Bukkit.broadcastMessage("§e🥇 Top 1 §7» §f" + rewardLine(1));
-        Bukkit.broadcastMessage("§e🥈 Top 2 §7» §f" + rewardLine(2));
-        Bukkit.broadcastMessage("§e🥉 Top 3 §7» §f" + rewardLine(3));
-        Bukkit.broadcastMessage("§aParticipation §7» §f" + participationLine(type));
-        Bukkit.broadcastMessage("");
-        Bukkit.broadcastMessage("§e➜ Tape §6/event §epour rejoindre la file !");
-        Bukkit.broadcastMessage("§cDépart bientôt, ne rate pas ta place.");
-        Bukkit.broadcastMessage("§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        playPing();
     }
 
     private static void broadcastReminder() {
@@ -92,26 +67,7 @@ public final class EventHypeAnnouncer {
         Bukkit.broadcastMessage("§e➜ Tape §6/event §epour rejoindre maintenant !");
         Bukkit.broadcastMessage("§7Joueurs en file : §e" + EventManager.getQueueSize());
         Bukkit.broadcastMessage("§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    }
-
-    private static String goalLine(EventType type) {
-        return switch (type) {
-            case WATER_JUMP -> "§7Saute de plateforme en plateforme au-dessus de l'eau.";
-            case LABYRINTHE -> "§7Trouve la sortie avant les autres joueurs.";
-            case SURVIE_ETAGES -> "§7Survis dans la tour pendant que les étages disparaissent.";
-            case RUEE_OR -> "§7Mine un maximum de minerais pendant le chrono.";
-            default -> "§7Participe à l'épreuve et vise la victoire.";
-        };
-    }
-
-    private static String objectiveLine(EventType type) {
-        return switch (type) {
-            case WATER_JUMP -> "§7Si tu tombes, retour au départ. Les plus rapides gagnent.";
-            case LABYRINTHE -> "§7Les 3 premiers à atteindre l'arrivée gagnent le podium.";
-            case SURVIE_ETAGES -> "§7Reste debout le plus longtemps possible pour viser le Top 3.";
-            case RUEE_OR -> "§7Tu gardes les minerais récoltés dans la mine spéciale.";
-            default -> "§7Objectif : faire mieux que les autres et repartir récompensé.";
-        };
+        playPing();
     }
 
     private static String shortGoal(EventType type) {
@@ -148,7 +104,7 @@ public final class EventHypeAnnouncer {
 
     private static void playPing() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.45f, 1.25f);
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.35f, 1.25f);
         }
     }
 }
