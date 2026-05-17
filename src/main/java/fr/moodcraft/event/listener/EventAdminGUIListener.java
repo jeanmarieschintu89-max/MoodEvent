@@ -256,6 +256,19 @@ public class EventAdminGUIListener implements Listener {
         int slot = event.getRawSlot();
         if (!top(event, slot)) return;
 
+        boolean trainTunnel = WaitingRoomManager.getSelectedTheme(player) == WaitingRoomTheme.TRAIN_TUNNEL;
+        if (trainTunnel) {
+            switch (slot) {
+                case 14 -> buildRoom(player, "train_tunnel");
+                case 22 -> { click(player); WaitingRoomGUI.openStyle(player); }
+                case 33 -> { click(player); WaitingRoomManager.teleport(player); WaitingRoomGUI.open(player); }
+                case 35 -> { no(player); WaitingRoomManager.restore(player); WaitingRoomGUI.open(player); }
+                case 49 -> { click(player); EventAdvancedGUI.open(player); }
+                default -> { }
+            }
+            return;
+        }
+
         switch (slot) {
             case 10 -> buildRoom(player, "mini");
             case 12 -> buildRoom(player, "petite");
