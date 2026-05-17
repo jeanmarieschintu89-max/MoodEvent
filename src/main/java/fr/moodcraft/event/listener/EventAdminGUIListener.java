@@ -125,7 +125,11 @@ public class EventAdminGUIListener implements Listener {
             case 12 -> openStyle(player, GeneratedGameType.RUEE_OR);
             case 14 -> openStyle(player, GeneratedGameType.WATER_JUMP);
             case 16 -> openStyle(player, GeneratedGameType.LABYRINTHE);
-            case 22 -> openStyle(player, GeneratedGameType.LABYRINTHE_ROND);
+            case 22 -> {
+                no(player);
+                MoodStyle.infoMessage(player, MoodStyle.MODULE, "Labyrinthe rond mis en attente.", MoodStyle.detail("Le générateur reste désactivé tant qu'il n'est pas assez jouable."));
+                MiniGameGeneratorGUI.openMain(player);
+            }
             case 29 -> { click(player); EventLootGUI.open(player); }
             case 33 -> {
                 no(player);
