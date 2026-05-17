@@ -24,6 +24,7 @@ public final class MiniGameGeneratorGUI {
     public static final String GOLD_DURATION_TITLE = MoodStyle.guiTitle("Durée Mine en folie");
     public static final String CONFIRM_TITLE = MoodStyle.guiTitle("Confirmation pack event");
 
+    private static final int[] STYLE_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37};
     private static final Map<UUID, GeneratedGameType> SELECTED_TYPE = new HashMap<>();
     private static final Map<UUID, PendingGeneration> PENDING = new HashMap<>();
 
@@ -74,15 +75,14 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Mini-jeu choisi : §e" + type.getDisplayName()),
                 MoodStyle.detail("Choix 2/4 : §ele thème de la salle"),
                 MoodStyle.detail("Le style sera appliqué seulement à la salle."),
-                MoodStyle.detail("21 styles disponibles."),
+                MoodStyle.detail("22 styles disponibles."),
                 "",
                 MoodStyle.info("Choisis un thème")
         )));
 
         WaitingRoomTheme[] themes = WaitingRoomTheme.values();
-        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
-        for (int i = 0; i < themes.length && i < slots.length; i++) {
-            addTheme(inv, slots[i], themes[i], WaitingRoomManager.getSelectedTheme(player) == themes[i]);
+        for (int i = 0; i < themes.length && i < STYLE_SLOTS.length; i++) {
+            addTheme(inv, STYLE_SLOTS[i], themes[i], WaitingRoomManager.getSelectedTheme(player) == themes[i]);
         }
 
         inv.setItem(49, EventItem.item(Material.ARROW, "§6✦ §fRetour §6✦", MoodStyle.detail("Revenir au choix du mini-jeu")));
