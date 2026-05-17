@@ -83,13 +83,13 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Mini-jeu choisi : §e" + type.getDisplayName()),
                 MoodStyle.detail("Choix 2/4 : §ele thème de la salle"),
                 MoodStyle.detail("Le style sera appliqué seulement à la salle."),
-                MoodStyle.detail("Aucun style ne modifie les jeux."),
+                MoodStyle.detail("21 styles disponibles."),
                 "",
                 MoodStyle.info("Choisis un thème")
         )));
 
         WaitingRoomTheme[] themes = WaitingRoomTheme.values();
-        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33};
+        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
         for (int i = 0; i < themes.length && i < slots.length; i++) {
             addTheme(inv, slots[i], themes[i], WaitingRoomManager.getSelectedTheme(player) == themes[i]);
         }
