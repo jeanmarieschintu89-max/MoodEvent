@@ -31,7 +31,7 @@ public final class EventAdminGUI {
                 MoodStyle.detail("File : " + (EventManager.isQueueOpen() ? "§aouverte" : "§cfermée")),
                 MoodStyle.detail("En file : §e" + EventManager.getQueueSize() + " §8• §7En jeu : §e" + EventManager.getParticipantSize()),
                 "",
-                MoodStyle.info("Modes actifs : Mine en folie / Tour Infernale / Water Jump")
+                MoodStyle.info("Centre de contrôle des événements")
         )));
 
         inv.setItem(20, EventItem.glow(EventItem.item(
@@ -69,10 +69,20 @@ public final class EventAdminGUI {
                 Material.CHEST,
                 "§d✦ §fRécompenses §d✦",
                 MoodStyle.detail("Participation + Top 3"),
-                MoodStyle.detail("Top 3 : Tour Infernale / Water Jump"),
                 MoodStyle.detail("Items + argent"),
+                MoodStyle.detail("Mine en folie garde ses minerais."),
                 "",
                 MoodStyle.info("Configurer")
+        ));
+
+        inv.setItem(30, EventItem.item(
+                Material.ENDER_CHEST,
+                "§d✦ §fLoot coffres mini-jeux §d✦",
+                MoodStyle.detail("Coffres du Labyrinthe et autres jeux."),
+                MoodStyle.detail("Commun, rare, épique."),
+                MoodStyle.detail("Items + argent Vault."),
+                "",
+                MoodStyle.info("Configurer les coffres")
         ));
 
         inv.setItem(31, EventItem.item(
