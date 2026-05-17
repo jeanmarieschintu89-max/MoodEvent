@@ -10,9 +10,6 @@ import org.bukkit.entity.Player;
 
 public final class EventPackManager {
 
-    private static final int WAITING_ROOM_OFFSET_X = -35;
-    private static final int GAME_OFFSET_X = 35;
-
     private EventPackManager() {
     }
 
@@ -36,11 +33,12 @@ public final class EventPackManager {
         if (type == GeneratedGameType.RUEE_OR && !validGoldRushDuration(player, goldRushDurationSeconds)) return;
 
         WaitingRoomTheme waitingTheme = WaitingRoomManager.getSelectedTheme(player);
-        String waitingSize = waitingSizeFor(size);
+        String waitingSize = waitingSizeFor(type, size);
+        int spacing = spacingFor(type, size);
 
         Location original = player.getLocation().clone();
-        Location waitingCenter = original.clone().add(WAITING_ROOM_OFFSET_X, 0, 0);
-        Location gameCenter = original.clone().add(GAME_OFFSET_X, 0, 0);
+        Location waitingCenter = original.clone().add(-spacing, 0, 0);
+        Location gameCenter = original.clone().add(spacing, 0, 0);
 
         WaitingRoomManager.setSelectedStyle(player, waitingTheme.key());
         player.teleport(waitingCenter);
@@ -69,13 +67,13 @@ public final class EventPackManager {
                 MoodStyle.detail("Taille jeu : §e" + size.getDisplayName()),
                 type == GeneratedGameType.RUEE_OR ? MoodStyle.detail("Durée : §e" + goldRushDurationSeconds + "s") : MoodStyle.detail("Durée : §7standard"),
                 MoodStyle.detail("Salle : §e" + waitingSize + " §8• §7" + waitingTheme.displayName()),
-                MoodStyle.detail("Style appliqué uniquement à la salle d'attente."),
+                MoodStyle.detail("Écart sécurisé : §e" + spacing + " blocs"),
                 MoodStyle.detail("Salle à gauche §8• §7Mini-jeu à droite"),
                 MoodStyle.info("Ouvre la file avec §e/eventouvrir")
         );
 
         String durationLog = type == GeneratedGameType.RUEE_OR ? " - " + goldRushDurationSeconds + "s" : "";
-        EventLogManager.log(player, "Pack événement", type.getDisplayName() + " - " + size.getDisplayName() + durationLog + " - salle " + waitingTheme.displayName());
+        EventLogManager.log(player, "Pack événement", type.getDisplayName() + " - " + size.getDisplayName() + durationLog + " - salle " + waitingSize + " - écart " + spacing + " blocs");
     }
 
     private static boolean validGoldRushDuration(Player player, int seconds) {
@@ -84,12 +82,30 @@ public final class EventPackManager {
         return false;
     }
 
-    private static String waitingSizeFor(GeneratedGameSize size) {
+    private static String waitingSizeFor(GeneratedGameType type, GeneratedGameSize size) {
+        if (type == GeneratedGameType.JUMP && size == GeneratedGameSize.GEANT) return "festival";
+        if ((type == GeneratedGameType.WATER_JUMP || type == GeneratedGameType.LABYRINTHE) && size == GeneratedGameSize.GEANT) return "festival";
         return switch (size) {
             case PETIT -> "petite";
             case MOYEN -> "moyenne";
             case GRAND -> "grande";
             case GEANT -> "tresgrande";
+        };
+    }
+
+    private static int spacingFor(GeneratedGameType type, GeneratedGameSize size) {
+        int base = switch (size) {
+            case PETIT -> 42;
+            case MOYEN -> 52;
+            case GRAND -> 68;
+            case GEANT -> 84;
+        };
+        return switch (type) {
+            case WATER_JUMP -> base + 30;
+            case LABYRINTHE, LABYRINTHE_ROND -> base + 22;
+            case JUMP -> base + 18;
+            case SURVIE_ETAGES -> base + 12;
+            case RUEE_OR -> base;
         };
     }
 }
