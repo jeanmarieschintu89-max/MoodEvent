@@ -38,6 +38,14 @@ public final class EventLaunchBufferManager {
         return player != null && LOCKS.containsKey(player.getUniqueId());
     }
 
+    public static boolean isBufferActive() {
+        return !LOCKS.isEmpty();
+    }
+
+    public static boolean hasBufferedThisRun() {
+        return bufferedThisRun;
+    }
+
     public static Location getLockLocation(Player player) {
         if (player == null) return null;
         Location location = LOCKS.get(player.getUniqueId());
