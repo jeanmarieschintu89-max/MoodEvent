@@ -38,6 +38,7 @@ public class EventAdminGUIListener implements Listener {
         if (title.equals("mode avance")) { handleAdvancedClick(event, player); return; }
         if (title.equals("recompenses event")) { handleRewardClick(event, player); return; }
         if (title.equals("salle dattente")) { handleWaitingRoomClick(event, player); return; }
+        if (title.equals("style salle manuel")) { handleManualWaitingRoomStyleClick(event, player); return; }
         if (title.equals("generateur de mini jeux")) { handleGeneratorMainClick(event, player); return; }
         if (title.equals("style salle attente")) { handleGeneratorStyleClick(event, player); return; }
         if (title.equals("taille pack event")) { handleGeneratorSizeClick(event, player); return; }
@@ -164,6 +165,27 @@ public class EventAdminGUIListener implements Listener {
         if (slot == 49) { click(player); MiniGameGeneratorGUI.openMain(player); }
     }
 
+    private void handleManualWaitingRoomStyleClick(InventoryClickEvent event, Player player) {
+        event.setCancelled(true);
+        int slot = event.getRawSlot();
+        if (!top(event, slot)) return;
+
+        WaitingRoomTheme[] themes = WaitingRoomTheme.values();
+        for (int i = 0; i < THEME_SLOTS.length && i < themes.length; i++) {
+            if (slot == THEME_SLOTS[i]) {
+                click(player);
+                WaitingRoomManager.setSelectedStyle(player, themes[i].key());
+                WaitingRoomGUI.open(player);
+                return;
+            }
+        }
+
+        if (slot == 49) {
+            click(player);
+            WaitingRoomGUI.open(player);
+        }
+    }
+
     private void handleGeneratorSizeClick(InventoryClickEvent event, Player player) {
         event.setCancelled(true);
         int slot = event.getRawSlot();
@@ -242,7 +264,7 @@ public class EventAdminGUIListener implements Listener {
             case 12 -> buildRoom(player, "petite");
             case 14 -> buildRoom(player, "moyenne");
             case 16 -> buildRoom(player, "grande");
-            case 22 -> { click(player); WaitingRoomManager.cycleSelectedStyle(player); WaitingRoomGUI.open(player); }
+            case 22 -> { click(player); WaitingRoomGUI.openStyle(player); }
             case 28 -> buildRoom(player, "tresgrande");
             case 30 -> buildRoom(player, "festival");
             case 33 -> { click(player); WaitingRoomManager.teleport(player); WaitingRoomGUI.open(player); }
