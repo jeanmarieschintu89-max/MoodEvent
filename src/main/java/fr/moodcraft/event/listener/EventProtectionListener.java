@@ -7,16 +7,22 @@ import fr.moodcraft.event.manager.WaitingRoomManager;
 import fr.moodcraft.event.util.MoodStyle;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.vehicle.VehicleDestroyEvent;
+import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -26,12 +32,40 @@ import java.util.Set;
 public class EventProtectionListener implements Listener {
 
     private static final String GOLD_RUSH_PICKAXE_NAME = GoldRushTask.PICKAXE_NAME;
-    private static final int WAITING_ROOM_PROTECTION_RADIUS = 13;
-    private static final int WAITING_ROOM_PROTECTION_HEIGHT = 13;
+    private static final int WAITING_ROOM_PROTECTION_RADIUS = 48;
+    private static final int WAITING_ROOM_PROTECTION_HEIGHT = 24;
 
     private static final Set<String> BLOCKED_COMMANDS = Set.of(
             "/spawn", "/home", "/homes", "/tpa", "/tpahere", "/warp", "/warps", "/rtp", "/tpr"
     );
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
+    public void onMinecartExit(VehicleExitEvent event) {
+        if (!(event.getExited() instanceof Player player)) return;
+        if (!(event.getVehicle() instanceof Minecart)) return;
+        if (!EventManager.isEventPlayer(player) && !isInsideWaitingRoom(event.getVehicle().getLocation())) return;
+
+        event.setCancelled(true);
+        player.sendActionBar("§6🚋 §fReste dans ton wagon jusqu'au départ");
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
+    public void onVehicleDestroy(VehicleDestroyEvent event) {
+        if (!isInsideWaitingRoom(event.getVehicle().getLocation())) return;
+        event.setCancelled(true);
+        if (event.getAttacker() instanceof Player player) {
+            MoodStyle.errorMessage(player, MoodStyle.MODULE, "Wagon protégé.", MoodStyle.detail("Les wagons restent actifs jusqu'au départ."));
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
+    public void onEntityDamage(EntityDamageEvent event) {
+        Entity entity = event.getEntity();
+        if (!(entity instanceof Minecart)) return;
+        if (!isInsideWaitingRoom(entity.getLocation())) return;
+        event.setCancelled(true);
+        event.setDamage(0.0);
+    }
 
     @EventHandler
     public void onEnderPearlUse(PlayerInteractEvent event) {
@@ -147,11 +181,11 @@ public class EventProtectionListener implements Listener {
 
         int dx = Math.abs(location.getBlockX() - spawn.getBlockX());
         int dz = Math.abs(location.getBlockZ() - spawn.getBlockZ());
-        int dy = location.getBlockY() - (spawn.getBlockY() - 1);
+        int dy = location.getBlockY() - (spawn.getBlockY() - 4);
 
         return dx <= WAITING_ROOM_PROTECTION_RADIUS
                 && dz <= WAITING_ROOM_PROTECTION_RADIUS
-                && dy >= -1
+                && dy >= -3
                 && dy <= WAITING_ROOM_PROTECTION_HEIGHT;
     }
 
