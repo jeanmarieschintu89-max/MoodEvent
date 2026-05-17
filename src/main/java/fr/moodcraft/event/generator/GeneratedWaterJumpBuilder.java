@@ -9,9 +9,9 @@ import java.util.List;
 
 public final class GeneratedWaterJumpBuilder {
 
-    private static final int LANE_HALF = 5;
+    private static final int LANE_HALF = 12;
     private static final int MAX_SAFE_X_GAP = 4;
-    private static final int MAX_SAFE_Z_GAP = 4;
+    private static final int MAX_SAFE_Z_GAP = 5;
     private static final int MAX_SAFE_Y_UP = 1;
 
     private GeneratedWaterJumpBuilder() {}
@@ -26,26 +26,26 @@ public final class GeneratedWaterJumpBuilder {
         int corrections = 0;
 
         for (int x = cx - 8; x <= cx + length + 10; x++) {
-            for (int z = cz - 9; z <= cz + 9; z++) {
+            for (int z = cz - LANE_HALF - 4; z <= cz + LANE_HALF + 4; z++) {
                 world.getBlockAt(x, cy - 2, z).setType(Material.PRISMARINE_BRICKS, false);
                 world.getBlockAt(x, cy - 1, z).setType(Material.WATER, false);
                 for (int y = cy; y <= cy + 16; y++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
             }
         }
 
-        buildWaterJumpWoolWall(world, cx - 9, cx + length + 11, cy, cz - 10, cz + 10, 4, Material.WHITE_WOOL);
+        buildWaterJumpWoolWall(world, cx - 9, cx + length + 11, cy, cz - LANE_HALF - 5, cz + LANE_HALF + 5, 4, Material.WHITE_WOOL);
 
         for (int x = cx - 4; x <= cx + 4; x++) {
-            for (int z = cz - LANE_HALF; z <= cz + LANE_HALF; z++) world.getBlockAt(x, cy, z).setType(Material.LIME_CONCRETE, false);
+            for (int z = cz - 4; z <= cz + 4; z++) world.getBlockAt(x, cy, z).setType(Material.LIME_CONCRETE, false);
         }
-        for (int z = cz - LANE_HALF; z <= cz + LANE_HALF; z++) world.getBlockAt(cx - 5, cy + 1, z).setType(Material.LIME_STAINED_GLASS, false);
+        for (int z = cz - 4; z <= cz + 4; z++) world.getBlockAt(cx - 5, cy + 1, z).setType(Material.LIME_STAINED_GLASS, false);
         for (int x = cx - 5; x <= cx + 4; x++) {
-            world.getBlockAt(x, cy + 1, cz - LANE_HALF - 1).setType(Material.LIME_STAINED_GLASS, false);
-            world.getBlockAt(x, cy + 1, cz + LANE_HALF + 1).setType(Material.LIME_STAINED_GLASS, false);
+            world.getBlockAt(x, cy + 1, cz - 5).setType(Material.LIME_STAINED_GLASS, false);
+            world.getBlockAt(x, cy + 1, cz + 5).setType(Material.LIME_STAINED_GLASS, false);
         }
-        for (int z = cz - LANE_HALF; z <= cz + LANE_HALF; z++) world.getBlockAt(cx + 5, cy, z).setType(Material.YELLOW_CONCRETE, false);
-        world.getBlockAt(cx, cy + 2, cz - LANE_HALF).setType(Material.SEA_LANTERN, false);
-        world.getBlockAt(cx, cy + 2, cz + LANE_HALF).setType(Material.SEA_LANTERN, false);
+        for (int z = cz - 4; z <= cz + 4; z++) world.getBlockAt(cx + 5, cy, z).setType(Material.YELLOW_CONCRETE, false);
+        world.getBlockAt(cx, cy + 2, cz - 4).setType(Material.SEA_LANTERN, false);
+        world.getBlockAt(cx, cy + 2, cz + 4).setType(Material.SEA_LANTERN, false);
 
         Material[] colors = {
                 Material.LIGHT_BLUE_WOOL,
@@ -57,6 +57,7 @@ public final class GeneratedWaterJumpBuilder {
                 Material.PINK_WOOL
         };
 
+        int[] spreadPattern = {0, 4, 8, 11, 7, 2, -3, -8, -11, -6, -1, 5, 10, 6, 0, -5, -10, -7};
         PlatformNode previous = new PlatformNode(cx + 5, cy, cz, 2);
         int x = cx + 8;
         int step = 0;
@@ -64,17 +65,9 @@ public final class GeneratedWaterJumpBuilder {
 
         while (x < cx + length) {
             step++;
-            int wantedZ = cz + switch (step % 7) {
-                case 0 -> -3;
-                case 1 -> 0;
-                case 2 -> 3;
-                case 3 -> 2;
-                case 4 -> -2;
-                case 5 -> 4;
-                default -> -4;
-            };
-            int wantedY = cy + 1 + Math.min(8, step / 3) + (step % 7 == 0 ? 1 : 0);
-            int radius = step % 5 == 0 ? 2 : 1;
+            int wantedZ = cz + spreadPattern[step % spreadPattern.length];
+            int wantedY = cy + 1 + Math.min(8, step / 4) + (step % 8 == 0 ? 1 : 0);
+            int radius = step % 6 == 0 ? 2 : 1;
             int wantedX = x;
 
             PlatformNode next = adaptReachableNode(previous, wantedX, wantedY, wantedZ, radius, cz - LANE_HALF, cz + LANE_HALF);
