@@ -78,6 +78,7 @@ public class EventAdminGUIListener implements Listener {
                 EventAdminGUI.open(player);
             }
             case 29 -> { click(player); RewardGUI.open(player); }
+            case 30 -> { click(player); EventLootGUI.open(player); }
             case 31 -> {
                 click(player);
                 EventManager.stopEvent(player);
@@ -128,7 +129,11 @@ public class EventAdminGUIListener implements Listener {
             case 14 -> openStyle(player, GeneratedGameType.WATER_JUMP);
             case 16 -> openStyle(player, GeneratedGameType.LABYRINTHE);
             case 22 -> openStyle(player, GeneratedGameType.LABYRINTHE_ROND);
-            case 29 -> { click(player); EventLootGUI.open(player); }
+            case 29 -> {
+                click(player);
+                MoodStyle.infoMessage(player, MoodStyle.MODULE, "Loot coffres déplacé.", MoodStyle.detail("Utilise §eCentre Événementiel §7→ §eLoot coffres mini-jeux§7."));
+                MiniGameGeneratorGUI.openMain(player);
+            }
             case 33 -> {
                 no(player);
                 if (WaitingRoomManager.hasRoom()) WaitingRoomManager.restore(player);
@@ -283,7 +288,7 @@ public class EventAdminGUIListener implements Listener {
             case 31 -> { click(player); EventLootManager.startMoneyInput(player, LootTier.EPIQUE); }
             case 42 -> { no(player); EventLootManager.resetGeneratedClaims(player); EventLootGUI.open(player); }
             case 43 -> { no(player); EventLootManager.resetLootConfig(player); }
-            case 49 -> { click(player); MiniGameGeneratorGUI.openMain(player); }
+            case 49 -> { click(player); EventAdminGUI.open(player); }
             default -> { }
         }
     }
@@ -335,6 +340,11 @@ public class EventAdminGUIListener implements Listener {
     private void editMoney(Player player, int place) {
         click(player);
         RewardManager.startMoneyInput(player, place);
+    }
+
+    private boolean top(InventoryClickEvent event) {
+        int slot = event.getRawSlot();
+        return top(event, slot);
     }
 
     private boolean top(InventoryClickEvent event, int slot) {
