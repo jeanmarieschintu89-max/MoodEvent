@@ -37,8 +37,7 @@ public final class EventLootManager {
     private static FileConfiguration lootConfig;
     private static FileConfiguration claimConfig;
 
-    private EventLootManager() {
-    }
+    private EventLootManager() {}
 
     public static void load() {
         lootFile = new File(Main.getInstance().getDataFolder(), "loot.yml");
@@ -142,7 +141,7 @@ public final class EventLootManager {
 
     public static void registerLootChest(Location location, GeneratedGameType type, LootTier tier) {
         if (location == null || location.getWorld() == null || type == null || tier == null) return;
-        if (type != GeneratedGameType.WATER_JUMP) return;
+        if (type != GeneratedGameType.WATER_JUMP && type != GeneratedGameType.LABYRINTHE && type != GeneratedGameType.LABYRINTHE_ROND) return;
         String id = key(location);
         claimConfig.set("chests." + id + ".tier", tier.name());
         claimConfig.set("chests." + id + ".type", type.name());
