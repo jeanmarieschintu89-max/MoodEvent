@@ -290,13 +290,13 @@ public final class EventManager {
                     "Tu as rejoint l'événement !",
                     MoodStyle.detail("Épreuve : " + getType().getDisplayName() + " §8• §e" + name),
                     MoodStyle.detail("But : §f" + shortGoal()),
-                    MoodStyle.detail("Ta position : §e" + queue.size()),
+                    MoodStyle.detail("Ta position : §e" + queuePositionLabel(player)),
                     MoodStyle.detail("Top 1 : §6" + rewardLine(1)),
                     MoodStyle.detail("Participation : §a" + participationLine()),
                     MoodStyle.info("Reste prêt, tu seras envoyé en salle d'attente à la fermeture."));
             player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.8f, 1.2f);
         } else {
-            MoodStyle.infoMessage(player, MoodStyle.MODULE, "Tu es déjà dans la file d'attente.", MoodStyle.detail("Position : §e" + queuePosition(player)));
+            MoodStyle.infoMessage(player, MoodStyle.MODULE, "Tu es déjà dans la file d'attente.", MoodStyle.detail("Position : §e" + queuePositionLabel(player)));
         }
     }
 
@@ -573,13 +573,13 @@ public final class EventManager {
         return "à configurer par le staff";
     }
 
-    private static int queuePosition(Player player) {
+    private static String queuePositionLabel(Player player) {
         int position = 1;
         for (UUID uuid : queue) {
-            if (uuid.equals(player.getUniqueId())) return position;
+            if (uuid.equals(player.getUniqueId())) return "#" + position + " / " + Math.max(queue.size(), position);
             position++;
         }
-        return queue.size();
+        return "#" + Math.max(1, queue.size()) + " / " + Math.max(1, queue.size());
     }
 
     private static int returnParticipants(boolean giveParticipation) {
