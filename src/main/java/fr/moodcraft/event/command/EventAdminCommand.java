@@ -1,11 +1,13 @@
 package fr.moodcraft.event.command;
 
+import fr.moodcraft.event.generator.GeneratedWaitingRoomLocator;
 import fr.moodcraft.event.gui.EventAdminGUI;
 import fr.moodcraft.event.manager.EventManager;
 import fr.moodcraft.event.manager.WaitingRoomManager;
 import fr.moodcraft.event.util.MoodStyle;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -53,7 +55,15 @@ public class EventAdminCommand implements CommandExecutor {
             }
             case "eventdepart", "eventdépart", "eventset", "eventspawn", "eventpos" -> { EventManager.setLocation(player); return true; }
             case "eventarrivee", "eventarrivée", "eventsetfinish", "eventfinishset" -> { EventManager.setFinishLocation(player); return true; }
-            case "eventsalleattente", "eventsalle", "eventattente", "eventbuildwaiting", "eventgenerersalle", "eventgénérersalle" -> { WaitingRoomManager.build(player, args.length == 0 ? "medium" : args[0]); return true; }
+            case "eventsalleattente", "eventsalle", "eventattente", "eventbuildwaiting", "eventgenerersalle", "eventgénérersalle" -> {
+                String size = args.length == 0 ? "medium" : args[0];
+                Location nearGame = GeneratedWaitingRoomLocator.nearActiveGame(player, size);
+                if (nearGame != null) {
+                    player.teleport(nearGame);
+                }
+                WaitingRoomManager.build(player, size);
+                return true;
+            }
             case "eventrestaurersalle", "eventrestaurerattente", "eventrestorewaiting", "eventclearwaiting" -> { WaitingRoomManager.restore(player); return true; }
             case "eventtpsalle", "eventtpattente", "eventwaitingtp" -> { WaitingRoomManager.teleport(player); MoodStyle.successMessage(player, MoodStyle.MODULE, "Téléportation en salle d'attente."); return true; }
             case "eventfinirjoueur", "eventfinishplayer" -> {
