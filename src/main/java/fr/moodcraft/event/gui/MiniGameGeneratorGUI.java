@@ -24,7 +24,7 @@ public final class MiniGameGeneratorGUI {
     public static final String GOLD_DURATION_TITLE = MoodStyle.guiTitle("Durée Mine en folie");
     public static final String CONFIRM_TITLE = MoodStyle.guiTitle("Confirmation pack event");
 
-    private static final int[] STYLE_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37};
+    private static final int[] STYLE_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38};
     private static final Map<UUID, GeneratedGameType> SELECTED_TYPE = new HashMap<>();
     private static final Map<UUID, PendingGeneration> PENDING = new HashMap<>();
 
@@ -76,7 +76,7 @@ public final class MiniGameGeneratorGUI {
                 MoodStyle.detail("Mini-jeu choisi : §e" + type.getDisplayName()),
                 MoodStyle.detail("Choix 2/4 : §ele thème de la salle"),
                 MoodStyle.detail("Le style sera appliqué seulement à la salle."),
-                MoodStyle.detail("22 styles disponibles."),
+                MoodStyle.detail("23 styles disponibles."),
                 "",
                 MoodStyle.info("Choisis un thème")
         )));
@@ -234,7 +234,7 @@ public final class MiniGameGeneratorGUI {
                 selected ? Material.EMERALD_BLOCK : theme.accent(),
                 (selected ? "§a✔ §f" : "§6✦ §f") + theme.displayName() + " §6✦",
                 MoodStyle.detail("Salle uniquement."),
-                MoodStyle.detail("Après ce choix : §etaille du pack."),
+                theme == WaitingRoomTheme.PRISON_CELL ? MoodStyle.detail("Cellule décorée pour Prison Escape.") : MoodStyle.detail("Après ce choix : §etaille du pack."),
                 "",
                 selected ? MoodStyle.success("Sélectionné, continuer") : MoodStyle.info("Choisir ce style")
         ));
