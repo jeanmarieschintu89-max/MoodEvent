@@ -97,6 +97,7 @@ public final class GeneratedPrisonBreakBuilder {
                 for (int y = cy + 1; y <= cy + WALL_HEIGHT; y++) {
                     world.getBlockAt(x, y, z).setType(border ? wallFor(x + y + z) : Material.AIR, false);
                 }
+                world.getBlockAt(x, cy + WALL_HEIGHT + 1, z).setType(border ? wallFor(x + z) : Material.POLISHED_ANDESITE, false);
             }
         }
         world.getBlockAt(cx, cy + WALL_HEIGHT, cz).setType(Material.SEA_LANTERN, false);
@@ -186,31 +187,42 @@ public final class GeneratedPrisonBreakBuilder {
     }
 
     private static void connectRooms(World world, int x1, int cy, int z1, int x2, int z2, Random random) {
-        carveCorridorZ(world, x1, cy, z1, z2, 1, Material.POLISHED_ANDESITE);
-        carveCorridorX(world, x1, x2, cy, z2, 1, Material.POLISHED_ANDESITE);
+        buildCorridorZ(world, x1, cy, z1, z2, Material.POLISHED_ANDESITE);
+        buildCorridorX(world, x1, x2, cy, z2, Material.POLISHED_ANDESITE);
         if (random.nextBoolean()) carveFakeSide(world, x1, cy, (z1 + z2) / 2, random);
     }
 
-    private static void carveCorridorZ(World world, int x, int cy, int z1, int z2, int halfWidth, Material floor) {
+    private static void buildCorridorZ(World world, int x, int cy, int z1, int z2, Material floor) {
         int min = Math.min(z1, z2);
         int max = Math.max(z1, z2);
-        for (int z = min; z <= max; z++) for (int dx = -halfWidth; dx <= halfWidth; dx++) carveColumn(world, x + dx, cy, z, floor);
+        for (int z = min; z <= max; z++) buildTunnelSlice(world, x, cy, z, true, floor);
     }
 
-    private static void carveCorridorX(World world, int x1, int x2, int cy, int z, int halfWidth, Material floor) {
+    private static void buildCorridorX(World world, int x1, int x2, int cy, int z, Material floor) {
         int min = Math.min(x1, x2);
         int max = Math.max(x1, x2);
-        for (int x = min; x <= max; x++) for (int dz = -halfWidth; dz <= halfWidth; dz++) carveColumn(world, x, cy, z + dz, floor);
+        for (int x = min; x <= max; x++) buildTunnelSlice(world, x, cy, z, false, floor);
     }
 
-    private static void carveColumn(World world, int x, int cy, int z, Material floor) {
-        world.getBlockAt(x, cy, z).setType(floor, false);
-        for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(x, y, z).setType(Material.AIR, false);
+    private static void buildTunnelSlice(World world, int cx, int cy, int cz, boolean alongZ, Material floor) {
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                boolean inside = alongZ ? Math.abs(dx) <= 1 : Math.abs(dz) <= 1;
+                boolean edge = alongZ ? Math.abs(dx) == 2 : Math.abs(dz) == 2;
+                int x = cx + dx;
+                int z = cz + dz;
+                world.getBlockAt(x, cy - 1, z).setType(Material.POLISHED_ANDESITE, false);
+                world.getBlockAt(x, cy, z).setType(inside ? floor : wallFor(x + z), false);
+                for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(x, y, z).setType(inside ? Material.AIR : wallFor(x + y + z), false);
+                world.getBlockAt(x, cy + 4, z).setType(edge || inside ? Material.POLISHED_ANDESITE : wallFor(x + z), false);
+            }
+        }
+        if (Math.floorMod(cx + cz, 9) == 0) world.getBlockAt(cx, cy + 4, cz).setType(Material.SEA_LANTERN, false);
     }
 
     private static void carveFakeSide(World world, int cx, int cy, int cz, Random random) {
         int dir = random.nextBoolean() ? 1 : -1;
-        for (int x = cx; x != cx + dir * 7; x += dir) carveColumn(world, x, cy, cz, Material.CRACKED_STONE_BRICKS);
+        for (int x = cx; x != cx + dir * 7; x += dir) buildTunnelSlice(world, x, cy, cz, false, Material.CRACKED_STONE_BRICKS);
         buildFakeGate(world, cx + dir * 7, cy, cz, true);
         world.getBlockAt(cx + dir * 5, cy + 1, cz).setType(Material.CHEST, false);
     }
@@ -247,10 +259,7 @@ public final class GeneratedPrisonBreakBuilder {
     }
 
     private static void placeHiddenPuzzle(World world, int cx, int cy, int cz, int index, Random random) {
-        int[][] candidates = {
-                {-3, -3}, {3, -3}, {-3, 3}, {3, 3},
-                {-2, 0}, {2, 0}, {0, -2}, {0, 2}
-        };
+        int[][] candidates = {{-3, -3}, {3, -3}, {-3, 3}, {3, 3}, {-2, 0}, {2, 0}, {0, -2}, {0, 2}};
         int[] offset = candidates[Math.floorMod(index + random.nextInt(candidates.length), candidates.length)];
         int x = cx + offset[0];
         int z = cz + offset[1];
