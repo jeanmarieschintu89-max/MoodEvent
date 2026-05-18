@@ -45,7 +45,7 @@ public final class GeneratedPrisonBreakBuilder {
             if (i == 0) buildStartCell(world, xs[i], cy, zs[i]);
             else decorateRoom(world, xs[i], cy, zs[i], i, random);
             if (i > 0) {
-                connectRooms(world, xs[i - 1], cy, zs[i - 1], xs[i], zs[i], random);
+                connectRooms(world, xs[i - 1], cy, zs[i - 1], xs[i], zs[i]);
                 buildPuzzleGate(world, xs[i], cy, zs[i], xs[i - 1], zs[i - 1]);
                 placeHiddenPuzzle(world, xs[i - 1], cy, zs[i - 1], i, random);
                 buildFakeDoor(world, xs[i], cy, zs[i], random);
@@ -97,7 +97,7 @@ public final class GeneratedPrisonBreakBuilder {
                 for (int y = cy + 1; y <= cy + WALL_HEIGHT; y++) {
                     world.getBlockAt(x, y, z).setType(border ? wallFor(x + y + z) : Material.AIR, false);
                 }
-                world.getBlockAt(x, cy + WALL_HEIGHT + 1, z).setType(border ? wallFor(x + z) : Material.POLISHED_ANDESITE, false);
+                world.getBlockAt(x, cy + WALL_HEIGHT + 1, z).setType(Material.POLISHED_ANDESITE, false);
             }
         }
         world.getBlockAt(cx, cy + WALL_HEIGHT, cz).setType(Material.SEA_LANTERN, false);
@@ -186,10 +186,26 @@ public final class GeneratedPrisonBreakBuilder {
         }
     }
 
-    private static void connectRooms(World world, int x1, int cy, int z1, int x2, int z2, Random random) {
-        buildCorridorZ(world, x1, cy, z1, z2, Material.POLISHED_ANDESITE);
-        buildCorridorX(world, x1, x2, cy, z2, Material.POLISHED_ANDESITE);
-        if (random.nextBoolean()) carveFakeSide(world, x1, cy, (z1 + z2) / 2, random);
+    private static void connectRooms(World world, int x1, int cy, int z1, int x2, int z2) {
+        int dx = x2 - x1;
+        int dz = z2 - z1;
+        if (Math.abs(dx) >= Math.abs(dz)) {
+            int sx = x1 + Integer.signum(dx) * (ROOM_HALF + 1);
+            int ex = x2 - Integer.signum(dx) * (ROOM_HALF + 1);
+            buildCorridorX(world, sx, ex, cy, z1, Material.POLISHED_ANDESITE);
+            if (dz != 0) {
+                int turnZ = z2 - Integer.signum(dz) * (ROOM_HALF + 1);
+                buildCorridorZ(world, ex, cy, z1, turnZ, Material.POLISHED_ANDESITE);
+            }
+        } else {
+            int sz = z1 + Integer.signum(dz) * (ROOM_HALF + 1);
+            int ez = z2 - Integer.signum(dz) * (ROOM_HALF + 1);
+            buildCorridorZ(world, x1, cy, sz, ez, Material.POLISHED_ANDESITE);
+            if (dx != 0) {
+                int turnX = x2 - Integer.signum(dx) * (ROOM_HALF + 1);
+                buildCorridorX(world, x1, turnX, cy, ez, Material.POLISHED_ANDESITE);
+            }
+        }
     }
 
     private static void buildCorridorZ(World world, int x, int cy, int z1, int z2, Material floor) {
@@ -208,13 +224,12 @@ public final class GeneratedPrisonBreakBuilder {
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 boolean inside = alongZ ? Math.abs(dx) <= 1 : Math.abs(dz) <= 1;
-                boolean edge = alongZ ? Math.abs(dx) == 2 : Math.abs(dz) == 2;
                 int x = cx + dx;
                 int z = cz + dz;
                 world.getBlockAt(x, cy - 1, z).setType(Material.POLISHED_ANDESITE, false);
                 world.getBlockAt(x, cy, z).setType(inside ? floor : wallFor(x + z), false);
                 for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(x, y, z).setType(inside ? Material.AIR : wallFor(x + y + z), false);
-                world.getBlockAt(x, cy + 4, z).setType(edge || inside ? Material.POLISHED_ANDESITE : wallFor(x + z), false);
+                world.getBlockAt(x, cy + 4, z).setType(Material.POLISHED_ANDESITE, false);
             }
         }
         if (Math.floorMod(cx + cz, 9) == 0) world.getBlockAt(cx, cy + 4, cz).setType(Material.SEA_LANTERN, false);
@@ -247,9 +262,9 @@ public final class GeneratedPrisonBreakBuilder {
 
     private static void buildGateBars(World world, int cx, int cy, int cz, boolean alongX) {
         if (alongX) {
-            for (int x = cx - 2; x <= cx + 2; x++) for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(x, y, cz).setType(Material.IRON_BARS, false);
+            for (int x = cx - 1; x <= cx + 1; x++) for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(x, y, cz).setType(Material.IRON_BARS, false);
         } else {
-            for (int z = cz - 2; z <= cz + 2; z++) for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(cx, y, z).setType(Material.IRON_BARS, false);
+            for (int z = cz - 1; z <= cz + 1; z++) for (int y = cy + 1; y <= cy + 3; y++) world.getBlockAt(cx, y, z).setType(Material.IRON_BARS, false);
         }
     }
 
@@ -263,7 +278,11 @@ public final class GeneratedPrisonBreakBuilder {
         int[] offset = candidates[Math.floorMod(index + random.nextInt(candidates.length), candidates.length)];
         int x = cx + offset[0];
         int z = cz + offset[1];
-        Material mechanism = index % 2 == 0 ? Material.STONE_BUTTON : Material.LEVER;
+        Material mechanism = switch (Math.floorMod(index + random.nextInt(3), 3)) {
+            case 0 -> Material.STONE_BUTTON;
+            case 1 -> Material.LEVER;
+            default -> Material.STONE_PRESSURE_PLATE;
+        };
 
         world.getBlockAt(x, cy + 1, z).setType(mechanism, false);
         world.getBlockAt(x, cy, z).setType(floorFor(index), false);
