@@ -34,8 +34,9 @@ public class PrisonEscapeListener implements Listener {
 
     private static final int SEARCH_RADIUS = 9;
     private static final int GATE_RADIUS = 3;
-    private static final int OPEN_HEIGHT = 4;
+    private static final int OPEN_HEIGHT = 5;
     private static final Material PUZZLE_MARKER = Material.LODESTONE;
+    private static final Material GATE_MARKER = Material.RESPAWN_ANCHOR;
 
     private final Map<UUID, Integer> roomProgress = new HashMap<>();
     private final Map<UUID, Long> startTimes = new HashMap<>();
@@ -70,10 +71,10 @@ public class PrisonEscapeListener implements Listener {
             return;
         }
 
-        int opened = openNearestGate(clicked.getLocation());
+        int opened = openMarkedGate(clicked.getLocation());
         if (opened <= 0) {
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.8f);
-            player.sendActionBar("§c✖ §fLe mécanisme grince, mais rien ne s'ouvre.");
+            player.sendActionBar("§c✖ §fLe mécanisme grince, mais aucune vraie grille n'est liée.");
             return;
         }
 
@@ -84,7 +85,7 @@ public class PrisonEscapeListener implements Listener {
                 player,
                 MoodStyle.MODULE,
                 "Mécanisme activé.",
-                MoodStyle.detail("La grille suivante s'ouvre."),
+                MoodStyle.detail("La bonne grille s'ouvre."),
                 MoodStyle.detail("Salle : §e" + currentRoom(player) + "§7/§e" + totalRooms()),
                 MoodStyle.info("Continue l'évasion, cherche la sortie rouge.")
         );
@@ -194,45 +195,47 @@ public class PrisonEscapeListener implements Listener {
         if (marker.getType() == PUZZLE_MARKER) marker.setType(Material.POLISHED_ANDESITE, false);
     }
 
-    private int openNearestGate(Location center) {
-        World world = center.getWorld();
+    private int openMarkedGate(Location mechanism) {
+        World world = mechanism.getWorld();
         if (world == null) return 0;
 
-        Block nearest = null;
+        Block marker = null;
         double best = Double.MAX_VALUE;
-        int cx = center.getBlockX();
-        int cy = center.getBlockY();
-        int cz = center.getBlockZ();
+        int cx = mechanism.getBlockX();
+        int cy = mechanism.getBlockY();
+        int cz = mechanism.getBlockZ();
 
         for (int x = cx - SEARCH_RADIUS; x <= cx + SEARCH_RADIUS; x++) {
-            for (int y = cy - 1; y <= cy + OPEN_HEIGHT; y++) {
+            for (int y = cy - 4; y <= cy + 2; y++) {
                 for (int z = cz - SEARCH_RADIUS; z <= cz + SEARCH_RADIUS; z++) {
                     Block block = world.getBlockAt(x, y, z);
-                    if (block.getType() != Material.IRON_BARS) continue;
+                    if (block.getType() != GATE_MARKER) continue;
                     if (!GeneratedGameManager.isInsideStructure(block.getLocation())) continue;
-                    double distance = block.getLocation().distanceSquared(center);
+                    double distance = block.getLocation().distanceSquared(mechanism);
                     if (distance < best) {
                         best = distance;
-                        nearest = block;
+                        marker = block;
                     }
                 }
             }
         }
 
-        if (nearest == null) return 0;
-        return openGateAround(nearest.getLocation());
+        if (marker == null) return 0;
+        int opened = openGateAround(marker.getLocation());
+        if (opened > 0) marker.setType(Material.POLISHED_ANDESITE, false);
+        return opened;
     }
 
-    private int openGateAround(Location center) {
-        World world = center.getWorld();
+    private int openGateAround(Location markerLocation) {
+        World world = markerLocation.getWorld();
         if (world == null) return 0;
         int opened = 0;
-        int cx = center.getBlockX();
-        int cy = center.getBlockY();
-        int cz = center.getBlockZ();
+        int cx = markerLocation.getBlockX();
+        int cy = markerLocation.getBlockY();
+        int cz = markerLocation.getBlockZ();
 
         for (int x = cx - GATE_RADIUS; x <= cx + GATE_RADIUS; x++) {
-            for (int y = cy - 1; y <= cy + OPEN_HEIGHT; y++) {
+            for (int y = cy; y <= cy + OPEN_HEIGHT; y++) {
                 for (int z = cz - GATE_RADIUS; z <= cz + GATE_RADIUS; z++) {
                     Block block = world.getBlockAt(x, y, z);
                     if (block.getType() != Material.IRON_BARS) continue;
