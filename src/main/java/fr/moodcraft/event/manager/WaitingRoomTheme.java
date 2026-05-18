@@ -27,7 +27,8 @@ public enum WaitingRoomTheme {
     TOWNY("towny", "Maison Communale", Material.STONE_BRICKS, Material.OAK_LOG, Material.WHITE_STAINED_GLASS, Material.LANTERN),
     FESTIVAL("festival", "Dôme Festival", Material.PURPLE_CONCRETE, Material.LIGHT_BLUE_CONCRETE, Material.MAGENTA_STAINED_GLASS, Material.SEA_LANTERN),
     NEON_LOUNGE("neon_lounge", "Neon Lounge", Material.POLISHED_BLACKSTONE_BRICKS, Material.CRYING_OBSIDIAN, Material.CYAN_STAINED_GLASS, Material.SEA_LANTERN),
-    TRAIN_TUNNEL("train_tunnel", "Train Tunnel", Material.SMOOTH_STONE, Material.RED_CONCRETE, Material.LIGHT_BLUE_STAINED_GLASS, Material.TORCH);
+    TRAIN_TUNNEL("train_tunnel", "Train Tunnel", Material.SMOOTH_STONE, Material.RED_CONCRETE, Material.LIGHT_BLUE_STAINED_GLASS, Material.TORCH),
+    PRISON_CELL("prison_cell", "Cellule Prison", Material.STONE_BRICKS, Material.POLISHED_DEEPSLATE, Material.IRON_BARS, Material.SOUL_LANTERN);
 
     private final String key;
     private final String displayName;
