@@ -57,9 +57,11 @@ public class EventAdminCommand implements CommandExecutor {
             case "eventarrivee", "eventarrivée", "eventsetfinish", "eventfinishset" -> { EventManager.setFinishLocation(player); return true; }
             case "eventsalleattente", "eventsalle", "eventattente", "eventbuildwaiting", "eventgenerersalle", "eventgénérersalle" -> {
                 String size = args.length == 0 ? "medium" : args[0];
-                Location nearGame = GeneratedWaitingRoomLocator.nearActiveGame(player, size);
-                if (nearGame != null) {
-                    player.teleport(nearGame);
+                if (!WaitingRoomManager.hasRoom()) {
+                    Location nearGame = GeneratedWaitingRoomLocator.nearActiveGame(player, size);
+                    if (nearGame != null) {
+                        player.teleport(nearGame);
+                    }
                 }
                 WaitingRoomManager.build(player, size);
                 return true;
