@@ -84,13 +84,7 @@ public final class WaitingRoomManager {
     public static WaitingRoomTheme cycleSelectedStyle(Player player) {
         WaitingRoomTheme next = getSelectedTheme(player).next();
         setSelectedStyle(player, next.key());
-        MoodStyle.successMessage(
-                player,
-                MoodStyle.MODULE,
-                "Style de salle sélectionné.",
-                MoodStyle.detail("Style : §e" + next.displayName()),
-                MoodStyle.detail("Ce choix touche uniquement la salle d'attente.")
-        );
+        MoodStyle.successMessage(player, MoodStyle.MODULE, "Style de salle sélectionné.", MoodStyle.detail("Style : §e" + next.displayName()), MoodStyle.detail("Ce choix touche uniquement la salle d'attente."));
         return next;
     }
 
@@ -158,15 +152,12 @@ public final class WaitingRoomManager {
         player.teleport(spawn);
         if (trainTunnel) TrainTunnelWaitingRoomBuilder.board(player, spawn);
         player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.25f);
-        MoodStyle.successMessage(
-                player,
-                MoodStyle.MODULE,
+        MoodStyle.successMessage(player, MoodStyle.MODULE,
                 trainTunnel ? "Salle Train Tunnel générée." : "Salle d'attente générée.",
                 trainTunnel ? MoodStyle.detail("Type : §eTunnel carré 3D avec wagons") : MoodStyle.detail("Taille : §e" + ((radius * 2) + 1) + "x" + ((radius * 2) + 1)),
                 MoodStyle.detail("Style salle : §e" + theme.displayName()),
                 trainTunnel ? MoodStyle.detail("Les joueurs seront placés directement dans un wagon.") : MoodStyle.detail("Zone sauvegardée avant construction."),
-                MoodStyle.detail("Restauration : §e/eventrestaurersalle")
-        );
+                MoodStyle.detail("Restauration : §e/eventrestaurersalle"));
     }
 
     public static void restore(Player player) {
@@ -215,18 +206,14 @@ public final class WaitingRoomManager {
         int cx = center.getBlockX();
         int cy = center.getBlockY();
         int cz = center.getBlockZ();
-        for (int x = cx - radius; x <= cx + radius; x++) {
-            for (int y = cy - 2; y <= cy + height; y++) {
-                for (int z = cz - radius; z <= cz + radius; z++) {
-                    Block block = world.getBlockAt(x, y, z);
-                    String path = "backup.blocks." + index++;
-                    config.set(path + ".world", world.getName());
-                    config.set(path + ".x", x);
-                    config.set(path + ".y", y);
-                    config.set(path + ".z", z);
-                    config.set(path + ".data", block.getBlockData().getAsString());
-                }
-            }
+        for (int x = cx - radius; x <= cx + radius; x++) for (int y = cy - 2; y <= cy + height; y++) for (int z = cz - radius; z <= cz + radius; z++) {
+            Block block = world.getBlockAt(x, y, z);
+            String path = "backup.blocks." + index++;
+            config.set(path + ".world", world.getName());
+            config.set(path + ".x", x);
+            config.set(path + ".y", y);
+            config.set(path + ".z", z);
+            config.set(path + ".data", block.getBlockData().getAsString());
         }
     }
 
@@ -246,20 +233,13 @@ public final class WaitingRoomManager {
                     boolean floor = y == cy;
                     boolean roof = y == cy + height;
                     Block block = world.getBlockAt(x, y, z);
-
-                    if (floor) {
-                        block.setType(floorMaterial(theme, cx, cz, x, z), false);
-                    } else if (roof) {
-                        block.setType(roofMaterial(theme, cx, cz, x, z), false);
-                    } else if (border) {
-                        block.setType(wallBlock(theme, x, y, z, cx, cy, cz, radius, height), false);
-                    } else {
-                        block.setType(Material.AIR, false);
-                    }
+                    if (floor) block.setType(floorMaterial(theme, cx, cz, x, z), false);
+                    else if (roof) block.setType(roofMaterial(theme, cx, cz, x, z), false);
+                    else if (border) block.setType(wallBlock(theme, x, y, z, cx, cy, cz, radius, height), false);
+                    else block.setType(Material.AIR, false);
                 }
             }
         }
-
         decorate(world, cx, cy, cz, radius, height, theme);
     }
 
@@ -309,26 +289,21 @@ public final class WaitingRoomManager {
     }
 
     private static void decorate(World world, int cx, int cy, int cz, int radius, int height, WaitingRoomTheme theme) {
-        int[][] corners = {
-                {cx - radius + 1, cz - radius + 1},
-                {cx + radius - 1, cz - radius + 1},
-                {cx - radius + 1, cz + radius - 1},
-                {cx + radius - 1, cz + radius - 1}
-        };
-
+        int[][] corners = {{cx - radius + 1, cz - radius + 1}, {cx + radius - 1, cz - radius + 1}, {cx - radius + 1, cz + radius - 1}, {cx + radius - 1, cz + radius - 1}};
         for (int[] point : corners) {
             world.getBlockAt(point[0], cy + 1, point[1]).setType(theme.light(), false);
             world.getBlockAt(point[0], cy + height - 1, point[1]).setType(theme.light(), false);
         }
-
         world.getBlockAt(cx, cy + 1, cz).setType(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, false);
         buildCornerCouches(world, cx, cy, cz, radius, theme);
-
         if (theme == WaitingRoomTheme.NEON_LOUNGE) {
             NeonLoungeWaitingRoomDecorator.decorate(world, cx, cy, cz, radius, height);
             return;
         }
-
+        if (theme == WaitingRoomTheme.PRISON_CELL) {
+            PrisonCellWaitingRoomDecorator.decorate(world, cx, cy, cz, radius, height);
+            return;
+        }
         if (radius >= 9) {
             world.getBlockAt(cx + radius - 2, cy + 1, cz).setType(solidBlockFor(theme.accent()), false);
             world.getBlockAt(cx - radius + 2, cy + 1, cz).setType(solidBlockFor(theme.accent()), false);
@@ -339,14 +314,12 @@ public final class WaitingRoomManager {
 
     private static void buildCornerCouches(World world, int cx, int cy, int cz, int radius, WaitingRoomTheme theme) {
         if (radius < 3) return;
-
         int seatY = cy + 1;
         int westSeatX = cx - radius + 1;
         int eastSeatX = cx + radius - 1;
         int northSeatZ = cz - radius + 1;
         int southSeatZ = cz + radius - 1;
         boolean withInnerArm = radius >= 4;
-
         buildTwoSeatCouch(world, westSeatX, seatY, northSeatZ, 1, 0, CouchSide.NORTH, theme, withInnerArm);
         buildTwoSeatCouch(world, eastSeatX, seatY, northSeatZ, -1, 0, CouchSide.NORTH, theme, withInnerArm);
         buildTwoSeatCouch(world, westSeatX, seatY, southSeatZ, 1, 0, CouchSide.SOUTH, theme, withInnerArm);
@@ -357,14 +330,12 @@ public final class WaitingRoomManager {
         Material stair = stairFor(theme.primary());
         Material frame = solidBlockFor(theme.primary());
         Material accent = solidBlockFor(theme.accent());
-
         for (int i = 0; i < 2; i++) {
             int x = startX + (stepX * i);
             int z = startZ + (stepZ * i);
             setCouchSeat(world, x, seatY, z, stair, side);
             setCouchBack(world, x, seatY, z, side, frame);
         }
-
         if (withInnerArm) {
             int armX = startX + (stepX * 2);
             int armZ = startZ + (stepZ * 2);
@@ -380,33 +351,15 @@ public final class WaitingRoomManager {
         world.getBlockAt(backX, y + 1, backZ).setType(frame, false);
     }
 
-    private static int backOffsetX(CouchSide side) {
-        return switch (side) {
-            case WEST -> -1;
-            case EAST -> 1;
-            default -> 0;
-        };
-    }
-
-    private static int backOffsetZ(CouchSide side) {
-        return switch (side) {
-            case NORTH -> -1;
-            case SOUTH -> 1;
-            default -> 0;
-        };
-    }
+    private static int backOffsetX(CouchSide side) { return switch (side) { case WEST -> -1; case EAST -> 1; default -> 0; }; }
+    private static int backOffsetZ(CouchSide side) { return switch (side) { case NORTH -> -1; case SOUTH -> 1; default -> 0; }; }
 
     private static void setCouchSeat(World world, int x, int y, int z, Material stairMaterial, CouchSide side) {
         Block block = world.getBlockAt(x, y, z);
         block.setType(stairMaterial, false);
         BlockData data = block.getBlockData();
         if (data instanceof Stairs stairs) {
-            switch (side) {
-                case NORTH -> stairs.setFacing(BlockFace.NORTH);
-                case SOUTH -> stairs.setFacing(BlockFace.SOUTH);
-                case WEST -> stairs.setFacing(BlockFace.WEST);
-                case EAST -> stairs.setFacing(BlockFace.EAST);
-            }
+            switch (side) { case NORTH -> stairs.setFacing(BlockFace.NORTH); case SOUTH -> stairs.setFacing(BlockFace.SOUTH); case WEST -> stairs.setFacing(BlockFace.WEST); case EAST -> stairs.setFacing(BlockFace.EAST); }
             stairs.setHalf(Stairs.Half.BOTTOM);
             block.setBlockData(stairs, false);
         }
@@ -429,12 +382,7 @@ public final class WaitingRoomManager {
         };
     }
 
-    private enum CouchSide {
-        NORTH,
-        SOUTH,
-        EAST,
-        WEST
-    }
+    private enum CouchSide { NORTH, SOUTH, EAST, WEST }
 
     private static void prepareChunks(World world, int centerX, int centerZ, int radius) {
         int margin = Math.max(4, radius / 2);
@@ -442,11 +390,7 @@ public final class WaitingRoomManager {
         int maxChunkX = (centerX + radius + margin) >> 4;
         int minChunkZ = (centerZ - radius - margin) >> 4;
         int maxChunkZ = (centerZ + radius + margin) >> 4;
-        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-                world.loadChunk(chunkX, chunkZ, true);
-            }
-        }
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) world.loadChunk(chunkX, chunkZ, true);
     }
 
     private static void refreshChunks(World world, int centerX, int centerZ, int radius) {
@@ -455,11 +399,7 @@ public final class WaitingRoomManager {
         int maxChunkX = (centerX + radius + margin) >> 4;
         int minChunkZ = (centerZ - radius - margin) >> 4;
         int maxChunkZ = (centerZ + radius + margin) >> 4;
-        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-                world.refreshChunk(chunkX, chunkZ);
-            }
-        }
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) world.refreshChunk(chunkX, chunkZ);
     }
 
     private static int radius(String text) {
@@ -475,11 +415,7 @@ public final class WaitingRoomManager {
         };
     }
 
-    private static int height(int radius) {
-        if (radius >= 11) return 6;
-        if (radius >= 7) return 5;
-        return 4;
-    }
+    private static int height(int radius) { if (radius >= 11) return 6; if (radius >= 7) return 5; return 4; }
 
     private static void writeLocation(String path, Location location) {
         config.set(path + ".world", location.getWorld().getName());
