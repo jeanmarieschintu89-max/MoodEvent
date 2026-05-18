@@ -40,11 +40,11 @@ public class PrisonEscapeListener implements Listener {
     private static final Material PUZZLE_MARKER = Material.LODESTONE;
     private static final Material GATE_MARKER = Material.RESPAWN_ANCHOR;
 
-    private final Map<UUID, Integer> roomProgress = new HashMap<>();
-    private final Map<UUID, Long> startTimes = new HashMap<>();
-    private final Map<UUID, Long> finishElapsed = new HashMap<>();
-    private final Map<UUID, Location> checkpoints = new HashMap<>();
-    private final Map<UUID, BossBar> bossBars = new HashMap<>();
+    private static final Map<UUID, Integer> ROOM_PROGRESS = new HashMap<>();
+    private static final Map<UUID, Long> START_TIMES = new HashMap<>();
+    private static final Map<UUID, Long> FINISH_ELAPSED = new HashMap<>();
+    private static final Map<UUID, Location> CHECKPOINTS = new HashMap<>();
+    private static final Map<UUID, BossBar> BOSS_BARS = new HashMap<>();
 
     public PrisonEscapeListener() {
         new BukkitRunnable() {
@@ -53,6 +53,13 @@ public class PrisonEscapeListener implements Listener {
                 tickBossBars();
             }
         }.runTaskTimer(Main.getInstance(), 20L, 20L);
+    }
+
+    public static String resultChrono(Player player) {
+        if (player == null) return "00:00";
+        UUID uuid = player.getUniqueId();
+        long elapsed = FINISH_ELAPSED.getOrDefault(uuid, Math.max(0L, (System.currentTimeMillis() - START_TIMES.getOrDefault(uuid, System.currentTimeMillis())) / 1000L));
+        return formatElapsed(elapsed);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -116,7 +123,7 @@ public class PrisonEscapeListener implements Listener {
         if (!isPrisonPlayer(player)) return;
         ensureState(player);
         event.setCancelled(true);
-        Location checkpoint = checkpoints.get(player.getUniqueId());
+        Location checkpoint = CHECKPOINTS.get(player.getUniqueId());
         if (checkpoint != null && checkpoint.getWorld() != null && !isFinished(player)) {
             player.teleport(checkpoint);
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 0.6f, 1.25f);
@@ -138,10 +145,10 @@ public class PrisonEscapeListener implements Listener {
 
     private void ensureState(Player player) {
         UUID uuid = player.getUniqueId();
-        roomProgress.putIfAbsent(uuid, 1);
-        startTimes.putIfAbsent(uuid, System.currentTimeMillis());
-        checkpoints.putIfAbsent(uuid, player.getLocation().clone());
-        bossBars.computeIfAbsent(uuid, ignored -> {
+        ROOM_PROGRESS.putIfAbsent(uuid, 1);
+        START_TIMES.putIfAbsent(uuid, System.currentTimeMillis());
+        CHECKPOINTS.putIfAbsent(uuid, player.getLocation().clone());
+        BOSS_BARS.computeIfAbsent(uuid, ignored -> {
             BossBar bar = Bukkit.createBossBar("", BarColor.YELLOW, BarStyle.SEGMENTED_10);
             bar.addPlayer(player);
             return bar;
@@ -153,28 +160,28 @@ public class PrisonEscapeListener implements Listener {
         if (isFinished(player)) return;
         UUID uuid = player.getUniqueId();
         int next = Math.min(totalRooms(), currentRoom(player) + 1);
-        roomProgress.put(uuid, next);
-        checkpoints.put(uuid, player.getLocation().clone());
+        ROOM_PROGRESS.put(uuid, next);
+        CHECKPOINTS.put(uuid, player.getLocation().clone());
         updateBossBar(player);
     }
 
     private void finishUi(Player player) {
         UUID uuid = player.getUniqueId();
-        if (finishElapsed.containsKey(uuid)) return;
-        long elapsed = Math.max(0L, (System.currentTimeMillis() - startTimes.getOrDefault(uuid, System.currentTimeMillis())) / 1000L);
-        finishElapsed.put(uuid, elapsed);
-        roomProgress.put(uuid, totalRooms());
-        checkpoints.remove(uuid);
+        if (FINISH_ELAPSED.containsKey(uuid)) return;
+        long elapsed = Math.max(0L, (System.currentTimeMillis() - START_TIMES.getOrDefault(uuid, System.currentTimeMillis())) / 1000L);
+        FINISH_ELAPSED.put(uuid, elapsed);
+        ROOM_PROGRESS.put(uuid, totalRooms());
+        CHECKPOINTS.remove(uuid);
         updateBossBar(player);
-        player.sendActionBar("§aÉvasion réussie §8• §fChrono arrêté");
+        player.sendActionBar("§aÉvasion réussie §8• §fChrono arrêté : §e" + formatElapsed(elapsed));
     }
 
     private boolean isFinished(Player player) {
-        return finishElapsed.containsKey(player.getUniqueId());
+        return FINISH_ELAPSED.containsKey(player.getUniqueId());
     }
 
     private int currentRoom(Player player) {
-        return Math.max(1, roomProgress.getOrDefault(player.getUniqueId(), 1));
+        return Math.max(1, ROOM_PROGRESS.getOrDefault(player.getUniqueId(), 1));
     }
 
     private int totalRooms() {
@@ -182,13 +189,13 @@ public class PrisonEscapeListener implements Listener {
     }
 
     private void tickBossBars() {
-        for (UUID uuid : new HashMap<>(bossBars).keySet()) {
+        for (UUID uuid : new HashMap<>(BOSS_BARS).keySet()) {
             Player player = Bukkit.getPlayer(uuid);
             if (player == null || !player.isOnline() || EventManager.getType() != EventType.PRISON_BREAK || !EventManager.isRunning()) {
                 removeState(uuid);
                 continue;
             }
-            if (!EventManager.isParticipant(player) && !finishElapsed.containsKey(uuid)) {
+            if (!EventManager.isParticipant(player) && !FINISH_ELAPSED.containsKey(uuid)) {
                 removeState(uuid);
                 continue;
             }
@@ -198,25 +205,28 @@ public class PrisonEscapeListener implements Listener {
     }
 
     private void updateBossBar(Player player) {
-        BossBar bar = bossBars.get(player.getUniqueId());
+        BossBar bar = BOSS_BARS.get(player.getUniqueId());
         if (bar == null) return;
         int current = currentRoom(player);
         int total = totalRooms();
-        long elapsed = finishElapsed.getOrDefault(player.getUniqueId(), Math.max(0L, (System.currentTimeMillis() - startTimes.getOrDefault(player.getUniqueId(), System.currentTimeMillis())) / 1000L));
-        String time = String.format("%02d:%02d", elapsed / 60L, elapsed % 60L);
+        long elapsed = FINISH_ELAPSED.getOrDefault(player.getUniqueId(), Math.max(0L, (System.currentTimeMillis() - START_TIMES.getOrDefault(player.getUniqueId(), System.currentTimeMillis())) / 1000L));
         String status = isFinished(player) ? " §a✓" : "";
-        bar.setTitle("§6Prison Escape §8| §fSalle §e" + current + "§7/§e" + total + " §8| §f" + time + status);
+        bar.setTitle("§6Prison Escape §8| §fSalle §e" + current + "§7/§e" + total + " §8| §f" + formatElapsed(elapsed) + status);
         bar.setProgress(Math.max(0.05D, Math.min(1.0D, current / (double) total)));
         if (!bar.getPlayers().contains(player)) bar.addPlayer(player);
     }
 
     private void removeState(UUID uuid) {
-        roomProgress.remove(uuid);
-        startTimes.remove(uuid);
-        finishElapsed.remove(uuid);
-        checkpoints.remove(uuid);
-        BossBar bar = bossBars.remove(uuid);
+        ROOM_PROGRESS.remove(uuid);
+        START_TIMES.remove(uuid);
+        FINISH_ELAPSED.remove(uuid);
+        CHECKPOINTS.remove(uuid);
+        BossBar bar = BOSS_BARS.remove(uuid);
         if (bar != null) bar.removeAll();
+    }
+
+    private static String formatElapsed(long elapsed) {
+        return String.format("%02d:%02d", elapsed / 60L, elapsed % 60L);
     }
 
     private void punishWrongMechanism(Player player) {
