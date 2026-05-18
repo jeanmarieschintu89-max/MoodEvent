@@ -14,7 +14,7 @@ public final class WaitingRoomGUI {
     public static final String TITLE = MoodStyle.guiTitle("Salle d'attente");
     public static final String STYLE_TITLE = MoodStyle.guiTitle("Style salle manuel");
 
-    private static final int[] STYLE_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37};
+    private static final int[] STYLE_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38};
 
     private WaitingRoomGUI() {
     }
@@ -53,7 +53,7 @@ public final class WaitingRoomGUI {
                 "§6✦ §fChoisir le style §6✦",
                 MoodStyle.detail("Actuel : §e" + selectedStyle),
                 MoodStyle.detail("Ouvre la grille complète des styles."),
-                MoodStyle.detail("22 styles disponibles."),
+                MoodStyle.detail("23 styles disponibles."),
                 "",
                 MoodStyle.success("Ouvrir les styles")
         )));
@@ -94,6 +94,7 @@ public final class WaitingRoomGUI {
                 MoodStyle.detail("Choix manuel de la salle."),
                 MoodStyle.detail("Même grille que le générateur de pack."),
                 MoodStyle.detail("Après ce choix : retour aux tailles."),
+                MoodStyle.detail("23 styles disponibles."),
                 "",
                 MoodStyle.info("Choisis un thème")
         )));
@@ -112,7 +113,7 @@ public final class WaitingRoomGUI {
                 selected ? Material.EMERALD_BLOCK : theme.accent(),
                 (selected ? "§a✔ §f" : "§6✦ §f") + theme.displayName() + " §6✦",
                 MoodStyle.detail("Salle uniquement."),
-                theme == WaitingRoomTheme.TRAIN_TUNNEL ? MoodStyle.detail("Taille unique optimisée.") : MoodStyle.detail("Après ce choix : §etaille de salle."),
+                theme == WaitingRoomTheme.TRAIN_TUNNEL ? MoodStyle.detail("Taille unique optimisée.") : theme == WaitingRoomTheme.PRISON_CELL ? MoodStyle.detail("Cellule décorée pour Prison Escape.") : MoodStyle.detail("Après ce choix : §etaille de salle."),
                 "",
                 selected ? MoodStyle.success("Sélectionné") : MoodStyle.info("Choisir ce style")
         ));
